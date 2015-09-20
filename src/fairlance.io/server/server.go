@@ -22,6 +22,7 @@ func main() {
 	router := mux.NewRouter().StrictSlash(true)
 	router.HandleFunc("/", Index)
 
+	fmt.Println("Starting sever on port 3000...")
 	log.Fatal(http.ListenAndServe(":3000", router))
 
 }
