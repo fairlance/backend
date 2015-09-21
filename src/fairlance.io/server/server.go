@@ -1,64 +1,134 @@
 package main
 
 import (
+	"encoding/json"
+	"errors"
 	"fmt"
-	"github.com/gorilla/mux"
 	"gopkg.in/mgo.v2"
 	"log"
 	"net/http"
 )
 
+type appContext struct {
+	session *mgo.Session
+	// ... and the rest of our globals.
+}
+
 type RegisteredUser struct {
-	Name  string
 	Email string
 }
 
-func Register(w http.ResponseWriter, r *http.Request) {
-	name := r.FormValue("name")
-	email := r.FormValue("email")
-
-	if name != "" && email != "" {
-		session, err := mgo.Dial("localhost")
-		if err != nil {
-			fmt.Printf("Can't connect to mongo, go error %v\n", err)
-			panic(err)
-		}
-		defer session.Close()
-		c := session.DB("registration").C("people")
-		err = c.Insert(&RegisteredUser{name, email})
-		if err != nil {
-			fmt.Printf("Can't save to mongo, go error %v\n", err)
-			panic(err)
-		} else {
-			fmt.Fprintf(w, "Registered user %q with email %q", name, email)
-		}
-	}
-
+type appHandler struct {
+	context *appContext
+	handle  func(*appContext, http.ResponseWriter, *http.Request) (int, error)
 }
 
-func Index(w http.ResponseWriter, r *http.Request) {
+func (ah appHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	status, err := ah.handle(ah.context, w, r)
+	// handle errors
+	if err != nil {
+		// todo: implement better error handling
+		switch status {
+		case http.StatusNotFound:
+			http.NotFound(w, r)
+		case http.StatusInternalServerError:
+			log.Printf("HTTP %d: %q", status, err)
+		default:
+			log.Printf("HTTP %d: %q", status, err)
+		}
+	}
+}
+
+func IndexHandler(context *appContext, w http.ResponseWriter, r *http.Request) (int, error) {
+	if r.Method != "GET" {
+		// todo: err is never used
+		return http.StatusNotFound, errors.New("Bad method.")
+	}
+
 	var results []RegisteredUser
 
+	session := context.session.Copy()
+	defer session.Close()
+
+	people := session.DB("registration").C("people")
+
+	err := people.Find(nil).All(&results)
+	if err != nil {
+		return 500, err
+	}
+
+	response, err := json.Marshal(results)
+	if err != nil {
+		return 500, err
+	}
+
+	fmt.Fprintf(w, "{\"people\": %q}", response)
+	return 200, nil
+}
+
+func RegisterHandler(context *appContext, w http.ResponseWriter, r *http.Request) (int, error) {
+	if r.Method != "POST" {
+		// todo: err is never used
+		return http.StatusNotFound, errors.New("Bad method.")
+	}
+
+	email := r.FormValue("email")
+
+	if email != "" {
+		session := context.session.Copy()
+		defer session.Close()
+
+		people := session.DB("registration").C("people")
+
+		err := people.Insert(&RegisteredUser{email})
+		if err != nil {
+			if mgo.IsDup(err) {
+				fmt.Fprintf(w, "{\"success\": \"false\", \"error\": \"Email %q exists!\"}", email)
+				return 400, err
+			}
+
+			return 500, err
+		}
+
+		fmt.Fprintf(w, "{\"success\": \"true\", \"email\": \"%q\"}", email)
+		return 200, nil
+	}
+
+	fmt.Fprintf(w, "{\"success\": \"false\", \"error\": \"Email missing!\"}")
+	return 400, nil
+}
+
+func buildContext() *appContext {
+	// Setup db connection
 	session, err := mgo.Dial("localhost")
 	if err != nil {
-		fmt.Printf("Can't connect to mongo, go error %v\n", err)
 		panic(err)
 	}
-	defer session.Close()
-	c := session.DB("registration").C("people")
-	err = c.Find(nil).All(&results)
+
+	// Setup context
+	context := &appContext{session: session}
+
+	err = session.DB("registration").C("people").EnsureIndex(mgo.Index{Key: []string{"email"}, Unique: true})
 	if err != nil {
-		fmt.Printf("Can't query mongo, go error %v\n", err)
 		panic(err)
 	}
-	fmt.Fprintf(w, "Results All: %q", results)
+
+	return context
 }
 
 func main() {
-	router := mux.NewRouter().StrictSlash(true)
-	router.HandleFunc("/", Index).Methods("GET")
-	router.HandleFunc("/register", Register).Methods("POST")
+	context := buildContext()
+	defer context.session.Close()
+
+	// Instatiate handler
+	indexHandler := &appHandler{context, IndexHandler}
+	registerHandler := &appHandler{context, RegisterHandler}
+
+	// Setup mux
+	mux := http.NewServeMux()
+	mux.Handle("/", indexHandler)
+	mux.Handle("/register", registerHandler)
 
 	fmt.Println("Starting sever on port 3000...")
-	log.Fatal(http.ListenAndServe(":3000", router))
+	log.Fatal(http.ListenAndServe(":3000", mux))
 }
