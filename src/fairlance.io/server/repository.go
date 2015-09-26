@@ -20,7 +20,7 @@ func getMongoDBSession() *mgo.Session {
 }
 
 func getAllRegisteredUsers(context *appContext) ([]RegisteredUser, error) {
-	var registeredUsers []RegisteredUser
+	registeredUsers := []RegisteredUser{}
 
 	session := context.session.Copy()
 	defer session.Close()
