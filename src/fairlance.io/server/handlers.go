@@ -13,6 +13,8 @@ type appHandler struct {
 
 func (ah appHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
+	// TODO: make this configurable
+	w.Header().Set("Access-Control-Allow-Origin", "*")
 	err := ah.handle(ah.context, w, r)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
