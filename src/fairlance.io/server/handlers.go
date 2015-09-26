@@ -24,7 +24,7 @@ func (ah appHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 func indexHandler(context *appContext, w http.ResponseWriter, r *http.Request) error {
 	if r.Method != "GET" {
-		w.WriteHeader(http.StatusNotFound)
+		w.WriteHeader(http.StatusForbidden)
 		json.NewEncoder(w).Encode(struct {
 			Error string `json:"error"`
 		}{"Method not allowed! Use GET"})
@@ -43,7 +43,7 @@ func indexHandler(context *appContext, w http.ResponseWriter, r *http.Request) e
 
 func registerHandler(context *appContext, w http.ResponseWriter, r *http.Request) error {
 	if r.Method != "POST" {
-		w.WriteHeader(http.StatusNotFound)
+		w.WriteHeader(http.StatusForbidden)
 		json.NewEncoder(w).Encode(struct {
 			Error string `json:"error"`
 		}{"Method not allowed! Use POST"})
@@ -57,7 +57,7 @@ func registerHandler(context *appContext, w http.ResponseWriter, r *http.Request
 		err := addRegisteredUser(context, email)
 		if err != nil {
 			if mgo.IsDup(err) {
-				w.WriteHeader(http.StatusBadRequest)
+				w.WriteHeader(http.StatusConflict)
 				json.NewEncoder(w).Encode(struct {
 					Error string `json:"error"`
 				}{"Email exists!"})
@@ -67,7 +67,7 @@ func registerHandler(context *appContext, w http.ResponseWriter, r *http.Request
 			return err
 		}
 
-		w.WriteHeader(http.StatusOK)
+		w.WriteHeader(http.StatusCreated)
 		json.NewEncoder(w).Encode(struct {
 			Email string `json:"email"`
 		}{email})
