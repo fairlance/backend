@@ -20,7 +20,7 @@ func (ah appHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func IndexHandler(context *appContext, w http.ResponseWriter, r *http.Request) error {
+func indexHandler(context *appContext, w http.ResponseWriter, r *http.Request) error {
 	if r.Method != "GET" {
 		w.WriteHeader(http.StatusNotFound)
 		json.NewEncoder(w).Encode(struct {
@@ -39,7 +39,7 @@ func IndexHandler(context *appContext, w http.ResponseWriter, r *http.Request) e
 	return nil
 }
 
-func RegisterHandler(context *appContext, w http.ResponseWriter, r *http.Request) error {
+func registerHandler(context *appContext, w http.ResponseWriter, r *http.Request) error {
 	if r.Method != "POST" {
 		w.WriteHeader(http.StatusNotFound)
 		json.NewEncoder(w).Encode(struct {
