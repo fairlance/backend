@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"github.com/asaskevich/govalidator"
 	"gopkg.in/mgo.v2"
 	"net/http"
 )
@@ -53,6 +54,15 @@ func registerHandler(context *appContext, w http.ResponseWriter, r *http.Request
 	email := r.FormValue("email")
 
 	if email != "" {
+
+		// validate email first
+		if !govalidator.IsEmail(email) {
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(struct {
+				Error string `json:"error"`
+			}{"Email not valid!"})
+			return nil
+		}
 
 		err := addRegisteredUser(context, email)
 		if err != nil {
