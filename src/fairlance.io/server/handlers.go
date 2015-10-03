@@ -23,7 +23,7 @@ func (ah appHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func indexHandler(context *appContext, w http.ResponseWriter, r *http.Request) error {
+func IndexHandler(context *appContext, w http.ResponseWriter, r *http.Request) error {
 	if r.Method != "GET" {
 		w.WriteHeader(http.StatusForbidden)
 		json.NewEncoder(w).Encode(struct {
@@ -32,7 +32,7 @@ func indexHandler(context *appContext, w http.ResponseWriter, r *http.Request) e
 		return nil
 	}
 
-	users, err := getAllRegisteredUsers(context)
+	users, err := context.userRepository.GetAllRegisteredUsers()
 	if err != nil {
 		return err
 	}
@@ -42,7 +42,7 @@ func indexHandler(context *appContext, w http.ResponseWriter, r *http.Request) e
 	return nil
 }
 
-func registerHandler(context *appContext, w http.ResponseWriter, r *http.Request) error {
+func RegisterHandler(context *appContext, w http.ResponseWriter, r *http.Request) error {
 	if r.Method != "POST" {
 		w.WriteHeader(http.StatusForbidden)
 		json.NewEncoder(w).Encode(struct {
@@ -64,7 +64,7 @@ func registerHandler(context *appContext, w http.ResponseWriter, r *http.Request
 			return nil
 		}
 
-		err := addRegisteredUser(context, email)
+		err := context.userRepository.AddRegisteredUser(email)
 		if err != nil {
 			if mgo.IsDup(err) {
 				w.WriteHeader(http.StatusConflict)

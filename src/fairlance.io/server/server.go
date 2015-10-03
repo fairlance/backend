@@ -1,30 +1,28 @@
 package main
 
 import (
-	"gopkg.in/mgo.v2"
 	"log"
 	"net/http"
 )
 
 type appContext struct {
-	session *mgo.Session
+	userRepository *UserRepository
 	// ... and the rest of our globals.
 }
 
-func buildContext() *appContext {
+func buildContext(db string) *appContext {
 	// Setup context
-	context := &appContext{session: getMongoDBSession()}
+	context := &appContext{userRepository: NewUserRepository(db)}
 
 	return context
 }
 
 func main() {
-	context := buildContext()
-	defer context.session.Close()
+	context := buildContext("registration")
 
 	// Instantiate handler
-	indexHandler := &appHandler{context, indexHandler}
-	registerHandler := &appHandler{context, registerHandler}
+	indexHandler := &appHandler{context, IndexHandler}
+	registerHandler := &appHandler{context, RegisterHandler}
 
 	// Setup mux
 	mux := http.NewServeMux()
