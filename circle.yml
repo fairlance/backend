@@ -1,0 +1,15 @@
+dependencies:
+	pre:
+		- sudo chmod +x dependencies.sh
+	override:
+		- ./dependencies.sh
+test:
+	override:
+		- go test -v:
+			pwd:
+				src/fairlance.io/server
+	post:
+		- go install fairlance.io/server
+		- sudo cp server $CIRCLE_ARTIFACTS:
+			pwd:
+				bin
