@@ -1,4 +1,10 @@
-Fairlance backend
+# Fairlance backend
 
 ![CircleCI](https://circleci.com/gh/fairlance/backend.svg?style=shield&circle-token=274b1fc821de530df06b3cc3e99b599c12abfaab
  "")
+
+
+#### Run tests with:
+```go
+go test fairlance.io/server
+```
