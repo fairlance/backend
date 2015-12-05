@@ -10,11 +10,27 @@ import (
 	"testing"
 )
 
+type TestMailer struct{}
+
+func (tm TestMailer) SendWelcomeMessage(email string) (string, error) {
+	return "", nil
+}
+
+func buildTestContext(db string) *appContext {
+	// Setup context
+	context := buildContext("test")
+
+	// override
+	context.mailer = TestMailer{}
+
+	return context
+}
+
 func TestIndexHandler(t *testing.T) {
 	setUp()
 	req := getRequest("GET")
 	w := httptest.NewRecorder()
-	IndexHandler(buildContext("test"), w, req)
+	IndexHandler(buildTestContext("test"), w, req)
 
 	assertCode(t, w, http.StatusOK)
 	assertBody(t, w, "[]")
@@ -24,7 +40,7 @@ func TestPOSTIndexHandler(t *testing.T) {
 	setUp()
 	req := getRequest("POST")
 	w := httptest.NewRecorder()
-	IndexHandler(buildContext("test"), w, req)
+	IndexHandler(buildTestContext("test"), w, req)
 
 	assertCode(t, w, http.StatusForbidden)
 	assertBody(t, w, "{\"error\":\"Method not allowed! Use GET\"}")
@@ -36,7 +52,7 @@ func TestRegisterHandler(t *testing.T) {
 	req.PostForm.Set("email", "test@email.com")
 	req.ParseForm()
 	w := httptest.NewRecorder()
-	RegisterHandler(buildContext("test"), w, req)
+	RegisterHandler(buildTestContext("test"), w, req)
 
 	assertCode(t, w, http.StatusCreated)
 	assertBody(t, w, "{\"email\":\"test@email.com\"}")
@@ -46,7 +62,7 @@ func TestGETRegisterHandler(t *testing.T) {
 	setUp()
 	req := getRequest("GET")
 	w := httptest.NewRecorder()
-	RegisterHandler(buildContext("test"), w, req)
+	RegisterHandler(buildTestContext("test"), w, req)
 
 	assertCode(t, w, http.StatusForbidden)
 	assertBody(t, w, "{\"error\":\"Method not allowed! Use POST\"}")
@@ -58,10 +74,10 @@ func TestAddingExistingUser(t *testing.T) {
 	req.PostForm.Set("email", "test@email.com")
 	req.ParseForm()
 	w := httptest.NewRecorder()
-	RegisterHandler(buildContext("test"), w, req)
+	RegisterHandler(buildTestContext("test"), w, req)
 
 	w = httptest.NewRecorder()
-	RegisterHandler(buildContext("test"), w, req)
+	RegisterHandler(buildTestContext("test"), w, req)
 
 	assertCode(t, w, http.StatusConflict)
 	assertBody(t, w, "{\"error\":\"Email exists!\"}")
@@ -73,7 +89,7 @@ func TestAddingEmptyUser(t *testing.T) {
 	req.PostForm.Set("email", "")
 	req.ParseForm()
 	w := httptest.NewRecorder()
-	RegisterHandler(buildContext("test"), w, req)
+	RegisterHandler(buildTestContext("test"), w, req)
 
 	assertCode(t, w, http.StatusBadRequest)
 	assertBody(t, w, "{\"error\":\"Email missing!\"}")
@@ -85,7 +101,7 @@ func TestAddingInvalidUser(t *testing.T) {
 	req.PostForm.Set("email", "notanemail.com")
 	req.ParseForm()
 	w := httptest.NewRecorder()
-	RegisterHandler(buildContext("test"), w, req)
+	RegisterHandler(buildTestContext("test"), w, req)
 
 	assertCode(t, w, http.StatusBadRequest)
 	assertBody(t, w, "{\"error\":\"Email not valid!\"}")
@@ -97,11 +113,11 @@ func TestAddingAndReadingRegisteredUser(t *testing.T) {
 	req.PostForm.Set("email", "test@email.com")
 	req.ParseForm()
 	w := httptest.NewRecorder()
-	RegisterHandler(buildContext("test"), w, req)
+	RegisterHandler(buildTestContext("test"), w, req)
 
 	req = getRequest("GET")
 	w = httptest.NewRecorder()
-	IndexHandler(buildContext("test"), w, req)
+	IndexHandler(buildTestContext("test"), w, req)
 
 	assertCode(t, w, http.StatusOK)
 	assertBody(t, w, "[{\"email\":\"test@email.com\"}]")
@@ -120,7 +136,7 @@ func assertBody(t *testing.T, w *httptest.ResponseRecorder, expectedBody string)
 }
 
 func setUp() {
-	buildContext("test").userRepository.getUsers().RemoveAll(nil)
+	buildTestContext("test").userRepository.getUsers().RemoveAll(nil)
 }
 
 func getRequest(method string) *http.Request {

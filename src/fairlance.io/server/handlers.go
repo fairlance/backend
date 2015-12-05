@@ -81,7 +81,7 @@ func RegisterHandler(context *appContext, w http.ResponseWriter, r *http.Request
 		json.NewEncoder(w).Encode(struct {
 			Email string `json:"email"`
 		}{email})
-		SendWelcomeMessage(email)
+		context.mailer.SendWelcomeMessage(email)
 		return nil
 	}
 

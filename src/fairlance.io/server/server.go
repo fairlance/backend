@@ -7,12 +7,13 @@ import (
 
 type appContext struct {
 	userRepository *UserRepository
+	mailer         Mailer
 	// ... and the rest of our globals.
 }
 
 func buildContext(db string) *appContext {
 	// Setup context
-	context := &appContext{userRepository: NewUserRepository(db)}
+	context := &appContext{userRepository: NewUserRepository(db), mailer: MailgunMailer{}}
 
 	return context
 }

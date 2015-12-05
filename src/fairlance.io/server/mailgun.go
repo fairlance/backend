@@ -6,20 +6,23 @@ import (
 	"os"
 )
 
+var (
+	emailFrom    = "Fairlance <welcome@fairlance.io>"
+	emailTitle   = "Welcome"
+	emailContent = "You are super awesome!\n\nYour Fairlance Team"
+)
+
+type MailgunMailer struct{}
+
 // Send welcome message
-func SendWelcomeMessage(email string) (string, error) {
+func (m MailgunMailer) SendWelcomeMessage(email string) (string, error) {
 	var publicApiKey = os.Getenv("MAILGUN_PUBLIC_API_KEY")
 	var apiKey = os.Getenv("MAILGUN_API_KEY")
 	var domain = os.Getenv("MAILGUN_DOMAIN")
 
 	if apiKey != "" && domain != "" && email != "" {
 		mg := mailgun.NewMailgun(domain, apiKey, publicApiKey)
-		m := mg.NewMessage(
-			"Fairlance <welcome@fairlance.io>",
-			"Welcome",
-			"You are super awesome!\n\nYour Fairlance Team",
-			email,
-		)
+		m := mg.NewMessage(emailFrom, emailTitle, emailContent, email)
 		_, id, err := mg.Send(m)
 		return id, err
 	}
