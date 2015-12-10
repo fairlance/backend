@@ -5,11 +5,11 @@ dependencies:
         - ./dependencies.sh
 test:
     override:
-        - go test -v:
+        - go test -v ./...:
             pwd:
-                src/fairlance.io/server
+                src/fairlance.io/
     post:
-        - go install fairlance.io/server
-        - sudo cp server $CIRCLE_ARTIFACTS:
+        - go install fairlance.io/services/...
+        - sudo cp * $CIRCLE_ARTIFACTS:
             pwd:
                 bin

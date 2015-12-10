@@ -1,4 +1,4 @@
-package main
+package registration
 
 import (
 	"fmt"
@@ -16,9 +16,9 @@ func (tm TestMailer) SendWelcomeMessage(email string) (string, error) {
 	return "", nil
 }
 
-func buildTestContext(db string) *appContext {
+func buildTestContext(db string) *RegistrationContext {
 	// Setup context
-	context := buildContext("test")
+	context := NewContext("test")
 
 	// override
 	context.mailer = TestMailer{}

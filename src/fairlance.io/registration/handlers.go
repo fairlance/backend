@@ -1,4 +1,4 @@
-package main
+package registration
 
 import (
 	"encoding/json"
@@ -7,23 +7,23 @@ import (
 	"net/http"
 )
 
-type appHandler struct {
-	context *appContext
-	handle  func(*appContext, http.ResponseWriter, *http.Request) error
+type AppHandler struct {
+	Context *RegistrationContext
+	Handle  func(*RegistrationContext, http.ResponseWriter, *http.Request) error
 }
 
-func (ah appHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (ah AppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	// TODO: make this configurable
 	w.Header().Set("Access-Control-Allow-Origin", "*")
-	err := ah.handle(ah.context, w, r)
+	err := ah.Handle(ah.Context, w, r)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		panic(err)
 	}
 }
 
-func IndexHandler(context *appContext, w http.ResponseWriter, r *http.Request) error {
+func IndexHandler(context *RegistrationContext, w http.ResponseWriter, r *http.Request) error {
 	if r.Method != "GET" {
 		w.WriteHeader(http.StatusForbidden)
 		json.NewEncoder(w).Encode(struct {
@@ -42,7 +42,7 @@ func IndexHandler(context *appContext, w http.ResponseWriter, r *http.Request) e
 	return nil
 }
 
-func RegisterHandler(context *appContext, w http.ResponseWriter, r *http.Request) error {
+func RegisterHandler(context *RegistrationContext, w http.ResponseWriter, r *http.Request) error {
 	if r.Method != "POST" {
 		w.WriteHeader(http.StatusForbidden)
 		json.NewEncoder(w).Encode(struct {
