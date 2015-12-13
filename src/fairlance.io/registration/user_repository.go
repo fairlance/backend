@@ -9,20 +9,20 @@ type UserRepository struct {
 	db      string
 }
 
-func NewUserRepository(db string) *UserRepository {
+func NewUserRepository(db string) (*UserRepository, error) {
 	// Setup db connection
 	session, err := mgo.Dial("localhost")
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	repo := &UserRepository{session, db}
 	err = repo.getUsers().EnsureIndex(mgo.Index{Key: []string{"email"}, Unique: true})
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
-	return repo
+	return repo, nil
 }
 
 func (repo UserRepository) GetAllRegisteredUsers() ([]RegisteredUser, error) {

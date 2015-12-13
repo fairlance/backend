@@ -2,6 +2,7 @@ package registration
 
 import (
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"net/http/httptest"
@@ -22,6 +23,7 @@ func buildTestContext(db string) *RegistrationContext {
 
 	// override
 	context.mailer = TestMailer{}
+	context.Logger = log.New(ioutil.Discard, "", 0)
 
 	return context
 }

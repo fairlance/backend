@@ -19,7 +19,7 @@ func (ah AppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	err := ah.Handle(ah.Context, w, r)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		panic(err)
+		ah.Context.Logger.Println(err)
 	}
 }
 

@@ -2,7 +2,6 @@ package main
 
 import (
 	"fairlance.io/registration"
-	"log"
 	"net/http"
 )
 
@@ -18,5 +17,5 @@ func main() {
 	mux.Handle("/", indexHandler)
 	mux.Handle("/register", registerHandler)
 
-	log.Fatal(http.ListenAndServe(":3000", mux))
+	panic(http.ListenAndServe(":3000", mux))
 }
