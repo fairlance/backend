@@ -4,7 +4,8 @@ dependencies:
     override:
         - ./dependencies.sh
         - sudo mkdir -p /var/log/fairlance.io/
-        - touch /var/log/fairlance.io/registration.log
+        - sudo touch /var/log/fairlance.io/registration.log
+        - sudo chown -R $(whoami) /var/log/fairlance.io/*
 test:
     override:
         - go test -v ./...:
