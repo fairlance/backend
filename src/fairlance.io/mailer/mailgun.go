@@ -9,7 +9,7 @@ import (
 var (
 	emailFrom    = "Fairlance <welcome@fairlance.io>"
 	emailTitle   = "Welcome"
-	emailContent = "You are super awesome!\n\nYour Fairlance Team"
+	emailContent = WelcomeMessage
 )
 
 type MailgunMailer struct{}
