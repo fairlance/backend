@@ -15,7 +15,7 @@ type RegistrationContext struct {
 }
 
 func NewContext(dbName string) *RegistrationContext {
-	file, err := os.OpenFile("/var/log/fairlance/registration.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+	file, err := os.OpenFile("/var/log/fairlance.io/registration.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 	if err != nil {
 		log.Fatalln("Failed to open log file: %v", err)
 	}

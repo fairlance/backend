@@ -5,6 +5,8 @@ dependencies:
         - ./dependencies.sh
 test:
     override:
+        - mkdir -p /var/log/fairlance.io/
+        - touch /var/log/fairlance.io/registration.log
         - go test -v ./...:
             pwd:
                 src/fairlance.io/
