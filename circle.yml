@@ -3,10 +3,10 @@ dependencies:
         - sudo chmod +x dependencies.sh
     override:
         - ./dependencies.sh
+        - sudo mkdir -p /var/log/fairlance.io/
+        - touch /var/log/fairlance.io/registration.log
 test:
     override:
-        - mkdir -p /var/log/fairlance.io/
-        - touch /var/log/fairlance.io/registration.log
         - go test -v ./...:
             pwd:
                 src/fairlance.io/
