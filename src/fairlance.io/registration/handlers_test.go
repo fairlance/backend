@@ -65,7 +65,7 @@ func TestRegisterHandlerForm(t *testing.T) {
 	req := getPOSTRequest(nil)
 	req.PostForm = url.Values{}
 	req.PostForm.Set("email", "test@email.com")
-	req.Header.Del("Content-Type") // remove Content-Type header
+	req.Header.Del("Content-Type")
 	w := httptest.NewRecorder()
 	RegisterHandler(buildTestContext("test"), w, req)
 
