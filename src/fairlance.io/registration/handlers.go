@@ -47,14 +47,10 @@ func RegisterHandler(context *RegistrationContext, w http.ResponseWriter, r *htt
 		return nil
 	}
 
-	defer r.Body.Close()
-	var data map[string]string
-	if err := json.NewDecoder(r.Body).Decode(&data); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(RegisteredError{"Request not valid JSON!"})
+	email, err := getEmailFromRequest(w, r)
+	if err != nil {
 		return err
 	}
-	email := data["email"]
 
 	if email != "" {
 
@@ -85,4 +81,19 @@ func RegisterHandler(context *RegistrationContext, w http.ResponseWriter, r *htt
 	w.WriteHeader(http.StatusBadRequest)
 	json.NewEncoder(w).Encode(RegisteredError{"Email missing!"})
 	return nil
+}
+
+func getEmailFromRequest(w http.ResponseWriter, r *http.Request) (string, error) {
+	if r.Header.Get("Content-Type") == "application/json" {
+		defer r.Body.Close()
+		var data map[string]string
+		if err := json.NewDecoder(r.Body).Decode(&data); err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(RegisteredError{"Request not valid JSON!"})
+			return "", err
+		}
+		return data["email"], nil
+	}
+
+	return r.FormValue("email"), nil
 }

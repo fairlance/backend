@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"strings"
 	"testing"
 )
@@ -59,10 +60,22 @@ func TestGETRegisterHandler(t *testing.T) {
 	assertBody(t, w, "{\"error\":\"Method not allowed! Use POST\"}")
 }
 
-func TestRegisterHandler(t *testing.T) {
+func TestRegisterHandlerForm(t *testing.T) {
 	setUp()
-	body := bytes.NewBuffer([]byte(`{"email":"test@email.com"}`))
-	req := getPOSTRequest(body)
+	req := getPOSTRequest(nil)
+	req.PostForm = url.Values{}
+	req.PostForm.Set("email", "test@email.com")
+	req.Header.Del("Content-Type") // remove Content-Type header
+	w := httptest.NewRecorder()
+	RegisterHandler(buildTestContext("test"), w, req)
+
+	assertCode(t, w, http.StatusCreated)
+	assertBody(t, w, "{\"email\":\"test@email.com\"}")
+}
+
+func TestRegisterHandlerJSON(t *testing.T) {
+	setUp()
+	req := getPOSTRequest(bytes.NewBuffer([]byte(`{"email":"test@email.com"}`)))
 	w := httptest.NewRecorder()
 	RegisterHandler(buildTestContext("test"), w, req)
 
@@ -72,15 +85,13 @@ func TestRegisterHandler(t *testing.T) {
 
 func TestAddingExistingUser(t *testing.T) {
 	setUp()
-	body := bytes.NewBuffer([]byte(`{"email":"test@email.com"}`))
-	req := getPOSTRequest(body)
+	req := getPOSTRequest(bytes.NewBuffer([]byte(`{"email":"test@email.com"}`)))
 	w := httptest.NewRecorder()
 	RegisterHandler(buildTestContext("test"), w, req)
 
 	// body buffer gets emptied after RegisterHandler finishes
 	// so we create a new request, with new body
-	body = bytes.NewBuffer([]byte(`{"email":"test@email.com"}`))
-	req = getPOSTRequest(body)
+	req = getPOSTRequest(bytes.NewBuffer([]byte(`{"email":"test@email.com"}`)))
 	w = httptest.NewRecorder()
 	RegisterHandler(buildTestContext("test"), w, req)
 
@@ -101,8 +112,7 @@ func TestAddingEmptyUser(t *testing.T) {
 
 func TestAddingInvalidJSON(t *testing.T) {
 	setUp()
-	body := bytes.NewBuffer([]byte(`{"email":"invalid json`))
-	req := getPOSTRequest(body)
+	req := getPOSTRequest(bytes.NewBuffer([]byte(`{"email":"invalid json`)))
 	w := httptest.NewRecorder()
 	RegisterHandler(buildTestContext("test"), w, req)
 
@@ -112,8 +122,7 @@ func TestAddingInvalidJSON(t *testing.T) {
 
 func TestAddingInvalidUser(t *testing.T) {
 	setUp()
-	body := bytes.NewBuffer([]byte(`{"email":"notemail.com"}`))
-	req := getPOSTRequest(body)
+	req := getPOSTRequest(bytes.NewBuffer([]byte(`{"email":"notemail.com"}`)))
 	w := httptest.NewRecorder()
 	RegisterHandler(buildTestContext("test"), w, req)
 
@@ -123,8 +132,7 @@ func TestAddingInvalidUser(t *testing.T) {
 
 func TestAddingAndReadingRegisteredUser(t *testing.T) {
 	setUp()
-	body := bytes.NewBuffer([]byte(`{"email":"test@email.com"}`))
-	req := getPOSTRequest(body)
+	req := getPOSTRequest(bytes.NewBuffer([]byte(`{"email":"test@email.com"}`)))
 	w := httptest.NewRecorder()
 	RegisterHandler(buildTestContext("test"), w, req)
 
@@ -155,7 +163,10 @@ func assertBody(t *testing.T, w *httptest.ResponseRecorder, expectedBody string)
 }
 
 func getPOSTRequest(body io.Reader) *http.Request {
-	return getRequest("POST", body)
+	req := getRequest("POST", body)
+	req.Header.Set("Content-Type", "application/json")
+
+	return req
 }
 
 func getGETRequest() *http.Request {
