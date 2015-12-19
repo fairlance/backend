@@ -26,7 +26,7 @@ func (ah AppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func IndexHandler(context *RegistrationContext, w http.ResponseWriter, r *http.Request) error {
 	if r.Method != "GET" {
 		w.WriteHeader(http.StatusForbidden)
-		json.NewEncoder(w).Encode(RegisteredError{"Method not allowed! Use GET"})
+		json.NewEncoder(w).Encode(RegistrationError{"Method not allowed! Use GET"})
 		return nil
 	}
 
@@ -43,7 +43,7 @@ func IndexHandler(context *RegistrationContext, w http.ResponseWriter, r *http.R
 func RegisterHandler(context *RegistrationContext, w http.ResponseWriter, r *http.Request) error {
 	if r.Method != "POST" {
 		w.WriteHeader(http.StatusForbidden)
-		json.NewEncoder(w).Encode(RegisteredError{"Method not allowed! Use POST"})
+		json.NewEncoder(w).Encode(RegistrationError{"Method not allowed! Use POST"})
 		return nil
 	}
 
@@ -57,7 +57,7 @@ func RegisterHandler(context *RegistrationContext, w http.ResponseWriter, r *htt
 		// validate email first
 		if !govalidator.IsEmail(email) {
 			w.WriteHeader(http.StatusBadRequest)
-			json.NewEncoder(w).Encode(RegisteredError{"Email not valid!"})
+			json.NewEncoder(w).Encode(RegistrationError{"Email not valid!"})
 			return nil
 		}
 
@@ -65,7 +65,7 @@ func RegisterHandler(context *RegistrationContext, w http.ResponseWriter, r *htt
 		if err != nil {
 			if mgo.IsDup(err) {
 				w.WriteHeader(http.StatusConflict)
-				json.NewEncoder(w).Encode(RegisteredError{"Email exists!"})
+				json.NewEncoder(w).Encode(RegistrationError{"Email exists!"})
 				return nil
 			}
 
@@ -79,7 +79,7 @@ func RegisterHandler(context *RegistrationContext, w http.ResponseWriter, r *htt
 	}
 
 	w.WriteHeader(http.StatusBadRequest)
-	json.NewEncoder(w).Encode(RegisteredError{"Email missing!"})
+	json.NewEncoder(w).Encode(RegistrationError{"Email missing!"})
 	return nil
 }
 
@@ -89,7 +89,7 @@ func getEmailFromRequest(w http.ResponseWriter, r *http.Request) (string, error)
 		var data map[string]string
 		if err := json.NewDecoder(r.Body).Decode(&data); err != nil {
 			w.WriteHeader(http.StatusBadRequest)
-			json.NewEncoder(w).Encode(RegisteredError{"Request not valid JSON!"})
+			json.NewEncoder(w).Encode(RegistrationError{"Request not valid JSON!"})
 			return "", err
 		}
 		return data["email"], nil

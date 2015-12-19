@@ -4,6 +4,6 @@ type RegisteredUser struct {
 	Email string `json:"email"`
 }
 
-type RegisteredError struct {
+type RegistrationError struct {
 	Error string `json:"error"`
 }
