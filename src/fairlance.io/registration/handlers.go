@@ -25,7 +25,8 @@ func (ah AppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 func IndexHandler(context *RegistrationContext, w http.ResponseWriter, r *http.Request) error {
 	if r.Method != "GET" {
-		w.WriteHeader(http.StatusForbidden)
+		w.Header().Set("Allow", "GET")
+		w.WriteHeader(http.StatusMethodNotAllowed)
 		json.NewEncoder(w).Encode(RegistrationError{"Method not allowed! Use GET"})
 		return nil
 	}
@@ -42,7 +43,8 @@ func IndexHandler(context *RegistrationContext, w http.ResponseWriter, r *http.R
 
 func RegisterHandler(context *RegistrationContext, w http.ResponseWriter, r *http.Request) error {
 	if r.Method != "POST" {
-		w.WriteHeader(http.StatusForbidden)
+		w.Header().Set("Allow", "POST")
+		w.WriteHeader(http.StatusMethodNotAllowed)
 		json.NewEncoder(w).Encode(RegistrationError{"Method not allowed! Use POST"})
 		return nil
 	}

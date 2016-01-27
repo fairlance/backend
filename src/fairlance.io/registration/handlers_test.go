@@ -46,7 +46,7 @@ func TestPOSTIndexHandler(t *testing.T) {
 	w := httptest.NewRecorder()
 	IndexHandler(buildTestContext("test"), w, req)
 
-	assertCode(t, w, http.StatusForbidden)
+	assertCode(t, w, http.StatusMethodNotAllowed)
 	assertBody(t, w, "{\"error\":\"Method not allowed! Use GET\"}")
 }
 
@@ -56,7 +56,7 @@ func TestGETRegisterHandler(t *testing.T) {
 	w := httptest.NewRecorder()
 	RegisterHandler(buildTestContext("test"), w, req)
 
-	assertCode(t, w, http.StatusForbidden)
+	assertCode(t, w, http.StatusMethodNotAllowed)
 	assertBody(t, w, "{\"error\":\"Method not allowed! Use POST\"}")
 }
 
