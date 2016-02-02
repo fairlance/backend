@@ -23,7 +23,8 @@ _testmain.go
 *.test
 *.prof
 
-bin/
+.idea
 
+bin/
 src/
 !src/fairlance.io/*
