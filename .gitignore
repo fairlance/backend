@@ -26,5 +26,7 @@ _testmain.go
 .idea
 
 bin/
-src/
+pkg/
+src/*
+!src/fairlance.io/
 !src/fairlance.io/*
