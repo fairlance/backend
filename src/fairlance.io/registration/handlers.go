@@ -25,10 +25,9 @@ func (ah AppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 func IndexHandler(context *RegistrationContext, w http.ResponseWriter, r *http.Request) error {
 	if r.Method != "GET" {
-		w.WriteHeader(http.StatusForbidden)
-		json.NewEncoder(w).Encode(struct {
-			Error string `json:"error"`
-		}{"Method not allowed! Use GET"})
+		w.Header().Set("Allow", "GET")
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		json.NewEncoder(w).Encode(RegistrationError{"Method not allowed! Use GET"})
 		return nil
 	}
 
@@ -44,23 +43,23 @@ func IndexHandler(context *RegistrationContext, w http.ResponseWriter, r *http.R
 
 func RegisterHandler(context *RegistrationContext, w http.ResponseWriter, r *http.Request) error {
 	if r.Method != "POST" {
-		w.WriteHeader(http.StatusForbidden)
-		json.NewEncoder(w).Encode(struct {
-			Error string `json:"error"`
-		}{"Method not allowed! Use POST"})
+		w.Header().Set("Allow", "POST")
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		json.NewEncoder(w).Encode(RegistrationError{"Method not allowed! Use POST"})
 		return nil
 	}
 
-	email := r.FormValue("email")
+	email, err := getEmailFromRequest(w, r)
+	if err != nil {
+		return err
+	}
 
 	if email != "" {
 
 		// validate email first
 		if !govalidator.IsEmail(email) {
 			w.WriteHeader(http.StatusBadRequest)
-			json.NewEncoder(w).Encode(struct {
-				Error string `json:"error"`
-			}{"Email not valid!"})
+			json.NewEncoder(w).Encode(RegistrationError{"Email not valid!"})
 			return nil
 		}
 
@@ -68,9 +67,7 @@ func RegisterHandler(context *RegistrationContext, w http.ResponseWriter, r *htt
 		if err != nil {
 			if mgo.IsDup(err) {
 				w.WriteHeader(http.StatusConflict)
-				json.NewEncoder(w).Encode(struct {
-					Error string `json:"error"`
-				}{"Email exists!"})
+				json.NewEncoder(w).Encode(RegistrationError{"Email exists!"})
 				return nil
 			}
 
@@ -78,16 +75,27 @@ func RegisterHandler(context *RegistrationContext, w http.ResponseWriter, r *htt
 		}
 
 		w.WriteHeader(http.StatusCreated)
-		json.NewEncoder(w).Encode(struct {
-			Email string `json:"email"`
-		}{email})
+		json.NewEncoder(w).Encode(RegisteredUser{email})
 		context.mailer.SendWelcomeMessage(email)
 		return nil
 	}
 
 	w.WriteHeader(http.StatusBadRequest)
-	json.NewEncoder(w).Encode(struct {
-		Error string `json:"error"`
-	}{"Email missing!"})
+	json.NewEncoder(w).Encode(RegistrationError{"Email missing!"})
 	return nil
+}
+
+func getEmailFromRequest(w http.ResponseWriter, r *http.Request) (string, error) {
+	if r.Header.Get("Content-Type") == "application/json" {
+		defer r.Body.Close()
+		var data map[string]string
+		if err := json.NewDecoder(r.Body).Decode(&data); err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(RegistrationError{"Request not valid JSON!"})
+			return "", err
+		}
+		return data["email"], nil
+	}
+
+	return r.FormValue("email"), nil
 }
