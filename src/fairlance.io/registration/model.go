@@ -1,9 +1,9 @@
 package registration
 
 type RegisteredUser struct {
-	Email string `json:"email"`
+    Email string `json:"email"`
 }
 
 type RegistrationError struct {
-	Error string `json:"error"`
+    Error string `json:"error"`
 }
