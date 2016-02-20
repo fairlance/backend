@@ -6,8 +6,6 @@ import (
     "os"
 )
 
-var context = NewContext("registration")
-
 type RegistrationContext struct {
     userRepository *UserRepository
     mailer         mailer.Mailer
