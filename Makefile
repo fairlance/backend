@@ -1,10 +1,11 @@
 help:
-	@echo "Available targets:"
-	@echo "- test: run tests"
-	@echo "- installdependencies: installs dependencies declared in dependencies.txt"
+    @echo "Available targets:"
+    @echo "- test: run tests"
+    @echo "- installdependencies: installs dependencies declared in dependencies.txt"
 
 installdependencies:
-	cat dependencies.txt | xargs go get
+    cat dependencies.txt | xargs go get
 
 test: installdependencies
-	go test fairlance.io/... -v
+    go test fairlance.io/... -v
+
