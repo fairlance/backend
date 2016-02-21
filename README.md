@@ -4,9 +4,14 @@
  "")
 
 
-#### Run all tests with:
-```go
-go test fairlance.io/...
+#### Run tests with:
+```bash
+make test
+```
+
+#### See available *make* commands
+```bash
+make
 ```
 
 #### Structure:

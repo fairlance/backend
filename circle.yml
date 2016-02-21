@@ -1,16 +1,11 @@
 dependencies:
-    pre:
-        - sudo chmod +x dependencies.sh
     override:
-        - ./dependencies.sh
         - sudo mkdir -p /var/log/fairlance.io/
         - sudo touch /var/log/fairlance.io/registration.log
         - sudo chown -R $(whoami) /var/log/fairlance.io/*
 test:
     override:
-        - go test -v ./...:
-            pwd:
-                src/fairlance.io/
+        - make test
     post:
         - go install fairlance.io/services/...
         - sudo cp * $CIRCLE_ARTIFACTS:

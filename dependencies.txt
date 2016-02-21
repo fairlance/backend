@@ -1,0 +1,4 @@
+gopkg.in/mgo.v2
+github.com/asaskevich/govalidator
+github.com/mailgun/mailgun-go
+github.com/mattbaird/elastigo
