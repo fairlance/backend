@@ -7,9 +7,9 @@ import (
 )
 
 type RegistrationContext struct {
-    userRepository *UserRepository
-    mailer         mailer.Mailer
-    Logger         *log.Logger
+    registeredUserRepository    *RegisteredUserRepository
+    mailer                      mailer.Mailer
+    Logger                      *log.Logger
 }
 
 func NewContext(dbName string) *RegistrationContext {
@@ -20,14 +20,14 @@ func NewContext(dbName string) *RegistrationContext {
 
     logger := log.New(file, "register: ", log.Ldate | log.Ltime | log.Lshortfile)
 
-    userRepository, err := NewUserRepository(dbName)
+    registeredUserRepository, err := NewRegisteredUserRepository(dbName)
     if err != nil {
         logger.Println("Failed to open user repository: %v", err)
     }
 
     // Setup context
     context := &RegistrationContext{
-        userRepository: userRepository,
+        registeredUserRepository: registeredUserRepository,
         mailer:         mailer.MailgunMailer{},
         Logger:         logger,
     }

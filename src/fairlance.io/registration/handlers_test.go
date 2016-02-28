@@ -21,7 +21,7 @@ func (tm TestMailer) SendWelcomeMessage(email string) (string, error) {
 
 func buildTestContext(db string) *RegistrationContext {
     // Setup context
-    context := NewContext("test")
+    context := NewContext(db)
 
     // override
     context.mailer = TestMailer{}
@@ -34,7 +34,7 @@ func TestIndexHandler(t *testing.T) {
     setUp()
     req := getGETRequest()
     w := httptest.NewRecorder()
-    IndexHandler(buildTestContext("test"), w, req)
+    IndexHandler(buildTestContext("registration_test"), w, req)
 
     assertCode(t, w, http.StatusOK)
     assertBody(t, w, "[]")
@@ -145,7 +145,7 @@ func TestAddingAndReadingRegisteredUser(t *testing.T) {
 }
 
 func setUp() {
-    buildTestContext("test").userRepository.getUsers().RemoveAll(nil)
+    buildTestContext("test").registeredUserRepository.getUsersCollection().RemoveAll(nil)
 }
 
 // helper functions

@@ -31,7 +31,7 @@ func IndexHandler(context *RegistrationContext, w http.ResponseWriter, r *http.R
         return nil
     }
 
-    users, err := context.userRepository.GetAllRegisteredUsers()
+    users, err := context.registeredUserRepository.GetAllRegisteredUsers()
     if err != nil {
         return err
     }
@@ -63,7 +63,7 @@ func RegisterHandler(context *RegistrationContext, w http.ResponseWriter, r *htt
             return nil
         }
 
-        err := context.userRepository.AddRegisteredUser(email)
+        err := context.registeredUserRepository.AddRegisteredUser(email)
         if err != nil {
             if mgo.IsDup(err) {
                 w.WriteHeader(http.StatusConflict)
