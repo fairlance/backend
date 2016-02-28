@@ -9,7 +9,6 @@ import (
 var (
     emailFrom = "Fairlance <welcome@fairlance.io>"
     emailTitle = "Welcome"
-    emailContent = WelcomeMessage
 )
 
 type MailgunMailer struct{}
@@ -22,7 +21,9 @@ func (m MailgunMailer) SendWelcomeMessage(email string) (string, error) {
 
     if apiKey != "" && domain != "" && email != "" {
         mg := mailgun.NewMailgun(domain, apiKey, publicApiKey)
-        m := mg.NewMessage(emailFrom, emailTitle, emailContent, email)
+        m := mg.NewMessage(emailFrom, emailTitle, WelcomeMessage, email)
+        m.SetHtml(HTMLWelcomeMessage)
+        m.AddHeader("Content-Type", "text/html")
         _, id, err := mg.Send(m)
         return id, err
     }
