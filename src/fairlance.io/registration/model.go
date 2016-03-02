@@ -1,7 +1,10 @@
 package registration
 
+import "time"
+
 type RegisteredUser struct {
-    Email string `json:"email"`
+    Email   string    `json:"email"`
+    Created time.Time `json:"created,omitempty"`
 }
 
 type RegistrationError struct {

@@ -36,8 +36,8 @@ func (repo RegisteredUserRepository) GetAllRegisteredUsers() ([]RegisteredUser, 
     return registeredUsers, nil
 }
 
-func (repo RegisteredUserRepository) AddRegisteredUser(userEmail string) error {
-    err := repo.getUsersCollection().Insert(&RegisteredUser{userEmail})
+func (repo RegisteredUserRepository) AddRegisteredUser(user RegisteredUser) error {
+    err := repo.getUsersCollection().Insert(&user)
     if err != nil {
         if mgo.IsDup(err) {
             return err

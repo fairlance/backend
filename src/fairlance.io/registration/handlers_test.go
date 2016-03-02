@@ -11,6 +11,7 @@ import (
     "net/url"
     "strings"
     "testing"
+    "encoding/json"
 )
 
 type TestMailer struct{}
@@ -37,7 +38,9 @@ func TestIndexHandler(t *testing.T) {
     IndexHandler(buildTestContext("registration_test"), w, req)
 
     assertCode(t, w, http.StatusOK)
-    assertBody(t, w, "[]")
+    if w.Body.String() != "[]\n" {
+        t.Error(fmt.Printf("Body not ok (%q)\n", w.Body.String()))
+    }
 }
 
 func TestPOSTIndexHandler(t *testing.T) {
@@ -47,7 +50,10 @@ func TestPOSTIndexHandler(t *testing.T) {
     IndexHandler(buildTestContext("test"), w, req)
 
     assertCode(t, w, http.StatusMethodNotAllowed)
-    assertBody(t, w, "{\"error\":\"Method not allowed! Use GET\"}")
+    body := getBodyMap(w)
+    if body["error"] != "Method not allowed! Use GET" && body["created"] != "" {
+        t.Error(fmt.Printf("Body not ok (%q)\n", body))
+    }
 }
 
 func TestGETRegisterHandler(t *testing.T) {
@@ -57,7 +63,10 @@ func TestGETRegisterHandler(t *testing.T) {
     RegisterHandler(buildTestContext("test"), w, req)
 
     assertCode(t, w, http.StatusMethodNotAllowed)
-    assertBody(t, w, "{\"error\":\"Method not allowed! Use POST\"}")
+    body := getBodyMap(w)
+    if body["error"] != "Method not allowed! Use POST" {
+        t.Error(fmt.Printf("Body not ok (%q)\n", body))
+    }
 }
 
 func TestRegisterHandlerForm(t *testing.T) {
@@ -70,7 +79,10 @@ func TestRegisterHandlerForm(t *testing.T) {
     RegisterHandler(buildTestContext("test"), w, req)
 
     assertCode(t, w, http.StatusCreated)
-    assertBody(t, w, "{\"email\":\"test@email.com\"}")
+    body := getBodyMap(w)
+    if _, present := body["created"]; !present || body["email"] != "test@email.com" {
+        t.Error(fmt.Printf("Body not ok (%q)\n", body))
+    }
 }
 
 func TestRegisterHandlerJSON(t *testing.T) {
@@ -80,7 +92,10 @@ func TestRegisterHandlerJSON(t *testing.T) {
     RegisterHandler(buildTestContext("test"), w, req)
 
     assertCode(t, w, http.StatusCreated)
-    assertBody(t, w, "{\"email\":\"test@email.com\"}")
+    body := getBodyMap(w)
+    if _, present := body["created"]; !present || body["email"] != "test@email.com" {
+        t.Error(fmt.Printf("Body not ok (%q)\n", body))
+    }
 }
 
 func TestAddingExistingUser(t *testing.T) {
@@ -96,7 +111,10 @@ func TestAddingExistingUser(t *testing.T) {
     RegisterHandler(buildTestContext("test"), w, req)
 
     assertCode(t, w, http.StatusConflict)
-    assertBody(t, w, "{\"error\":\"Email exists!\"}")
+    body := getBodyMap(w)
+    if body["error"] != "Email exists!" {
+        t.Error(fmt.Printf("Body not ok (%q)\n", body))
+    }
 }
 
 func TestAddingEmptyUser(t *testing.T) {
@@ -107,7 +125,11 @@ func TestAddingEmptyUser(t *testing.T) {
     RegisterHandler(buildTestContext("test"), w, req)
 
     assertCode(t, w, http.StatusBadRequest)
-    assertBody(t, w, "{\"error\":\"Email missing!\"}")
+
+    respBody := getBodyMap(w)
+    if respBody["error"] != "Email missing!" {
+        t.Error(fmt.Printf("Body not ok (%q)\n", respBody))
+    }
 }
 
 func TestAddingInvalidJSON(t *testing.T) {
@@ -117,7 +139,10 @@ func TestAddingInvalidJSON(t *testing.T) {
     RegisterHandler(buildTestContext("test"), w, req)
 
     assertCode(t, w, http.StatusBadRequest)
-    assertBody(t, w, "{\"error\":\"Request not valid JSON!\"}")
+    body := getBodyMap(w)
+    if body["error"] != "Request not valid JSON!" {
+        t.Error(fmt.Printf("Body not ok (%q)\n", body))
+    }
 }
 
 func TestAddingInvalidUser(t *testing.T) {
@@ -127,7 +152,10 @@ func TestAddingInvalidUser(t *testing.T) {
     RegisterHandler(buildTestContext("test"), w, req)
 
     assertCode(t, w, http.StatusBadRequest)
-    assertBody(t, w, "{\"error\":\"Email not valid!\"}")
+    body := getBodyMap(w)
+    if body["error"] != "Email not valid!" {
+        t.Error(fmt.Printf("Body not ok (%q)\n", body))
+    }
 }
 
 func TestAddingAndReadingRegisteredUser(t *testing.T) {
@@ -141,7 +169,13 @@ func TestAddingAndReadingRegisteredUser(t *testing.T) {
     IndexHandler(buildTestContext("test"), w, req)
 
     assertCode(t, w, http.StatusOK)
-    assertBody(t, w, "[{\"email\":\"test@email.com\"}]")
+    var body []map[string]interface{}
+    if err := json.Unmarshal([]byte(getBody(w)), &body); err != nil {
+        t.Error(err)
+    }
+    if body[0]["email"] != "test@email.com" {
+        t.Error(fmt.Printf("Body not ok (%q)\n", body))
+    }
 }
 
 func setUp() {
@@ -156,10 +190,17 @@ func assertCode(t *testing.T, w *httptest.ResponseRecorder, expectedCode int) {
     }
 }
 
-func assertBody(t *testing.T, w *httptest.ResponseRecorder, expectedBody string) {
-    if strings.Replace(w.Body.String(), "\n", "", -1) != expectedBody {
-        t.Error(fmt.Printf("Body not ok (%q)\n", w.Body.String()))
+func getBody(w *httptest.ResponseRecorder) string {
+    return strings.Replace(w.Body.String(), "\n", "", -1)
+}
+
+func getBodyMap(w *httptest.ResponseRecorder) map[string]interface{} {
+    var body map[string]interface{}
+    if err := json.Unmarshal([]byte(getBody(w)), &body); err != nil {
+        panic(err)
     }
+
+    return body
 }
 
 func getPOSTRequest(body io.Reader) *http.Request {

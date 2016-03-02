@@ -5,6 +5,7 @@ import (
     "github.com/asaskevich/govalidator"
     "gopkg.in/mgo.v2"
     "net/http"
+    "time"
 )
 
 type AppHandler struct {
@@ -63,7 +64,8 @@ func RegisterHandler(context *RegistrationContext, w http.ResponseWriter, r *htt
             return nil
         }
 
-        err := context.registeredUserRepository.AddRegisteredUser(email)
+        registerTime := time.Now()
+        err := context.registeredUserRepository.AddRegisteredUser(RegisteredUser{email, registerTime})
         if err != nil {
             if mgo.IsDup(err) {
                 w.WriteHeader(http.StatusConflict)
@@ -75,7 +77,7 @@ func RegisterHandler(context *RegistrationContext, w http.ResponseWriter, r *htt
         }
 
         w.WriteHeader(http.StatusCreated)
-        json.NewEncoder(w).Encode(RegisteredUser{email})
+        json.NewEncoder(w).Encode(RegisteredUser{email, registerTime})
         context.mailer.SendWelcomeMessage(email)
         return nil
     }
