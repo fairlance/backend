@@ -10,10 +10,11 @@ func NewRouter(appContext *ApplicationContext) *mux.Router {
     router := mux.NewRouter().StrictSlash(true)
     for _, route := range routes {
         var handler http.Handler
-        handler = route.HandlerFunc
+        handler = route.Handler
         handler = ContextAwareHandler(handler, appContext)
         handler = CORSHandler(handler)
         handler = LoggerHandler(handler, route.Name)
+        handler = recoverHandler(handler)
 
         router.
         Methods(getMethods(route)...).

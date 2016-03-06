@@ -7,22 +7,22 @@ import (
     "github.com/gorilla/context"
 )
 
-func LoggerHandler(handler http.Handler, name string) http.Handler {
+func LoggerHandler(next http.Handler, name string) http.Handler {
     return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
         start := time.Now()
-        handler.ServeHTTP(w, r)
+        next.ServeHTTP(w, r)
         log.Printf("%s\t%s\t%s\t%s", r.Method, r.RequestURI, name, time.Since(start))
     })
 }
 
-func ContextAwareHandler(handler http.Handler, appContext *ApplicationContext) http.Handler {
+func ContextAwareHandler(next http.Handler, appContext *ApplicationContext) http.Handler {
     return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
         context.Set(r, "context", appContext)
-        handler.ServeHTTP(w, r)
+        next.ServeHTTP(w, r)
     })
 }
 
-func CORSHandler(handler http.Handler) http.Handler {
+func CORSHandler(next http.Handler) http.Handler {
     return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
         if origin := r.Header.Get("Origin"); origin != "" {
             w.Header().Set("Access-Control-Allow-Origin", "*")
@@ -37,9 +37,27 @@ func CORSHandler(handler http.Handler) http.Handler {
             return
         }
 
-
         w.Header().Set("Content-Type", "application/json")
-        // Lets Gorilla work
-        handler.ServeHTTP(w, r)
+        next.ServeHTTP(w, r)
+    })
+}
+
+func recoverHandler(next http.Handler) http.Handler {
+    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+        defer func() {
+            if err := recover(); err != nil {
+                log.Printf("panic: %+v", err)
+                http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+            }
+        }()
+
+        next.ServeHTTP(w, r)
+    })
+}
+
+func AuthHandler(next http.Handler) http.Handler {
+    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+        // do auth
+        next.ServeHTTP(w, r)
     })
 }

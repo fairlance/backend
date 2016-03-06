@@ -5,18 +5,18 @@ import (
 )
 
 type Route struct {
-    Name        string
-    Method      string
-    Pattern     string
-    HandlerFunc http.HandlerFunc
+    Name    string
+    Method  string
+    Pattern string
+    Handler http.Handler
 }
 
 type Routes []Route
 
 var routes = Routes{
-    Route{"Index", "GET", "/", Index},
-    Route{"IndexFreelancer", "GET", "/freelancer/", IndexFreelancer},
-    Route{"NewFreelancer", "PUT", "/freelancer/new", NewFreelancer},
-    Route{"GetFreelancer", "GET", "/freelancer/{id}", GetFreelancer},
-    Route{"DeleteFreelancer", "DELETE", "/freelancer/{id}", DeleteFreelancer},
+    Route{"Index", "GET", "/", http.HandlerFunc(Index)},
+    Route{"IndexFreelancer", "GET", "/freelancer/", AuthHandler(http.HandlerFunc(IndexFreelancer))},
+    Route{"NewFreelancer", "PUT", "/freelancer/new", AuthHandler(http.HandlerFunc(NewFreelancer))},
+    Route{"GetFreelancer", "GET", "/freelancer/{id}", AuthHandler(http.HandlerFunc(GetFreelancer))},
+    Route{"DeleteFreelancer", "DELETE", "/freelancer/{id}", AuthHandler(http.HandlerFunc(DeleteFreelancer))},
 }
