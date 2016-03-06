@@ -3,9 +3,9 @@ help:
 	@echo "- install: install all services"
 	@echo "- test: run tests"
 	@echo "- installDependenciesAndTest: install dependencies declared in dependencies.txt and run tests"
-	@echo "- installdependencies: installs dependencies declared in dependencies.txt"
+	@echo "- installDependencies: installs dependencies declared in dependencies.txt"
 
-installdependencies:
+installDependencies:
 	cat dependencies.txt | xargs go get
 
 test:
