@@ -97,7 +97,7 @@ func (repo FreelancerRepository) GetFreelancer(id string) (Freelancer, error) {
     return freelancer, nil
 }
 
-func (repo FreelancerRepository) CheckCredentials(email string, password string) (bool, error) {
+func (repo FreelancerRepository) CheckCredentials(email string, password string) (Freelancer, error) {
     session := repo.session.Copy()
     defer session.Close()
 
@@ -105,16 +105,16 @@ func (repo FreelancerRepository) CheckCredentials(email string, password string)
     collection := session.DB(repo.db).C(collectionName)
     if err := collection.Find(bson.M{"email": email}).One(&freelancer); err != nil {
         if err == mgo.ErrNotFound {
-            return false, errors.New("Freelancer not found")
+            return freelancer, errors.New("Freelancer not found")
         }
-        return false, err
+        return freelancer, err
     }
 
     if err := bcrypt.CompareHashAndPassword([]byte(freelancer.Password), []byte(password)); err != nil {
-        return false, errors.New("Freelancer not found (password is wrong)")
+        return freelancer, errors.New("Freelancer not found (password is wrong)")
     }
 
-    return true, nil
+    return freelancer, nil
 }
 
 func (repo FreelancerRepository) UpdateFreelancer(id string, data Freelancer) error {

@@ -4,3 +4,4 @@ github.com/mailgun/mailgun-go
 github.com/gorilla/mux
 github.com/gorilla/context
 golang.org/x/crypto/bcrypt
+github.com/dgrijalva/jwt-go

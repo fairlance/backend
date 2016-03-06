@@ -14,7 +14,7 @@ func NewRouter(appContext *ApplicationContext) *mux.Router {
         handler = ContextAwareHandler(handler, appContext)
         handler = CORSHandler(handler)
         handler = LoggerHandler(handler, route.Name)
-        handler = recoverHandler(handler)
+        handler = RecoverHandler(handler)
 
         router.
         Methods(getMethods(route)...).

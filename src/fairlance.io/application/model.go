@@ -14,6 +14,15 @@ type Freelancer struct {
     Created   time.Time     `valid:"required"`
 }
 
+func (freelancer *Freelancer) getRepresentationMap() map[string]string  {
+    return map[string]string{
+        "id":freelancer.Id.Hex(),
+        "firstName":freelancer.FirstName,
+        "lastName":freelancer.LastName,
+        "email":freelancer.Email,
+    }
+}
+
 type Client struct {
     Id          bson.ObjectId  `bson:"_id,omitempty"`
     Name        string

@@ -7,7 +7,45 @@ import (
     "github.com/asaskevich/govalidator"
     "github.com/gorilla/context"
     "github.com/gorilla/mux"
+    "github.com/dgrijalva/jwt-go"
 )
+
+func Login(w http.ResponseWriter, r *http.Request) {
+    decoder := json.NewDecoder(r.Body)
+    defer r.Body.Close()
+
+    var body map[string]string
+    if err := decoder.Decode(&body); err != nil {
+        w.WriteHeader(http.StatusBadRequest)
+        w.Write([]byte(err.Error()))
+        return
+    }
+    email := body["email"]
+    password := body["password"]
+
+    var appContext = context.Get(r, "context").(*ApplicationContext)
+    freelancer, err := appContext.FreelancerRepository.CheckCredentials(email, password)
+    if err != nil {
+        w.WriteHeader(http.StatusUnauthorized)
+        w.Write([]byte(err.Error()))
+        return
+    }
+
+    // Create the token
+    token := jwt.New(jwt.SigningMethodHS256)
+    // Set some claims
+    token.Claims["user"] = freelancer.getRepresentationMap()
+    token.Claims["exp"] = time.Now().Add(time.Minute * 5).Unix()
+    // Sign and get the complete encoded token as a string
+    tokenString, err := token.SignedString([]byte(appContext.JwtSecret))
+    if err != nil {
+        w.WriteHeader(http.StatusInternalServerError)
+        w.Write([]byte(err.Error()))
+        return
+    }
+
+    json.NewEncoder(w).Encode(tokenString)
+}
 
 func Index(w http.ResponseWriter, r *http.Request) {
     w.Write([]byte("Hi"))

@@ -5,6 +5,8 @@ import (
     "time"
     "log"
     "github.com/gorilla/context"
+    "github.com/dgrijalva/jwt-go"
+    "fmt"
 )
 
 func LoggerHandler(next http.Handler, name string) http.Handler {
@@ -42,7 +44,7 @@ func CORSHandler(next http.Handler) http.Handler {
     })
 }
 
-func recoverHandler(next http.Handler) http.Handler {
+func RecoverHandler(next http.Handler) http.Handler {
     return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
         defer func() {
             if err := recover(); err != nil {
@@ -57,7 +59,27 @@ func recoverHandler(next http.Handler) http.Handler {
 
 func AuthHandler(next http.Handler) http.Handler {
     return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-        // do auth
+        tokenString := r.Header.Get("Authorization")
+        if tokenString == "" {
+            w.WriteHeader(http.StatusForbidden)
+            w.Write([]byte(jwt.ErrNoTokenInRequest.Error()))
+            return
+        }
+
+        var appContext = context.Get(r, "context").(*ApplicationContext)
+
+        token, err := jwt.Parse(tokenString[7:], func(token *jwt.Token) (interface{}, error) {
+            // Don't forget to validate the alg is what you expect:
+            if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+                return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
+            }
+            return []byte(appContext.JwtSecret), nil
+        })
+
+        if err != nil || !token.Valid {
+            w.WriteHeader(http.StatusForbidden)
+            return
+        }
         next.ServeHTTP(w, r)
     })
 }
