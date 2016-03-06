@@ -11,7 +11,7 @@ installDependencies:
 test:
 	go test fairlance.io/... -v
 
-installDependenciesAndTest: installdependencies test
+installDependenciesAndTest: installDependencies test
 
 install:
 	go install fairlance.io/services/...

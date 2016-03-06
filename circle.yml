@@ -4,6 +4,8 @@ dependencies:
         - sudo touch /var/log/fairlance.io/registration.log
         - sudo chown -R $(whoami) /var/log/fairlance.io/*
 test:
+    pre:
+        - make installDependencies
     override:
         - make test
     post:
