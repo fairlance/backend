@@ -44,7 +44,13 @@ func Login(w http.ResponseWriter, r *http.Request) {
         return
     }
 
-    json.NewEncoder(w).Encode(tokenString)
+    json.NewEncoder(w).Encode(struct {
+        UserId string `json:"id"`
+        Token  string `json:"token"`
+    }{
+        UserId: freelancer.Id.Hex(),
+        Token: tokenString,
+    })
 }
 
 func Index(w http.ResponseWriter, r *http.Request) {
