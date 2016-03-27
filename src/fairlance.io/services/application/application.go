@@ -7,7 +7,10 @@ import (
 
 
 func main() {
-    var appContext = app.NewContext("application")
+    var appContext, err = app.NewContext("application")
+    if err != nil {
+        panic(err)
+    }
     router := app.NewRouter(appContext)
     http.Handle("/", router)
     if err := http.ListenAndServe(":3001", nil); err != nil {

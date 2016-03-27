@@ -7,6 +7,7 @@ import (
     "github.com/gorilla/context"
     "github.com/dgrijalva/jwt-go"
     "fmt"
+    "errors"
 )
 
 func LoggerHandler(next http.Handler, name string) http.Handler {
@@ -61,8 +62,7 @@ func AuthHandler(next http.Handler) http.Handler {
     return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
         tokenString := r.Header.Get("Authorization")
         if tokenString == "" {
-            w.WriteHeader(http.StatusForbidden)
-            w.Write([]byte(jwt.ErrNoTokenInRequest.Error()))
+            WriteError(w, http.StatusBadRequest, jwt.ErrNoTokenInRequest)
             return
         }
 
@@ -77,7 +77,7 @@ func AuthHandler(next http.Handler) http.Handler {
         })
 
         if err != nil || !token.Valid {
-            w.WriteHeader(http.StatusForbidden)
+            WriteError(w, http.StatusBadRequest, errors.New("Not logged in."))
             return
         }
         next.ServeHTTP(w, r)

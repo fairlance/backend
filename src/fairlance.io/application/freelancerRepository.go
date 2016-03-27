@@ -1,78 +1,186 @@
 package application
 
 import (
-    "gopkg.in/mgo.v2"
-    "gopkg.in/mgo.v2/bson"
-    "errors"
     "golang.org/x/crypto/bcrypt"
+    "errors"
+    "database/sql"
+    _ "github.com/lib/pq"
 )
 
-var collectionName = "freelancers"
-
 type FreelancerRepository struct {
-    session *mgo.Session
-    db      string
+    db *sql.DB
 }
 
-func NewFreelancerRepository(db string) (*FreelancerRepository, error) {
-    session, err := mgo.Dial("localhost")
-    if err != nil {
-        return nil, err
-    }
-
-    repo := &FreelancerRepository{session, db}
-    if err != nil {
-        return nil, err
-    }
+func NewFreelancerRepository(db *sql.DB) (*FreelancerRepository, error) {
+    repo := &FreelancerRepository{db}
 
     return repo, nil
 }
 
-func (repo FreelancerRepository) GetAllFreelancers() ([]Freelancer, error) {
-    session := repo.session.Copy()
-    defer session.Close()
-
+func (repo *FreelancerRepository) GetAllFreelancers() ([]Freelancer, error) {
     freelancers := []Freelancer{}
 
-    collection := session.DB(repo.db).C(collectionName)
-    err := collection.Find(nil).All(&freelancers)
+    //todo: extract prepare statement outside of the function
+    queryStmt, err := repo.db.Prepare("SELECT id,first_name,last_name,email,created FROM freelancers")
     if err != nil {
         return freelancers, err
+    }
+
+    rows, err := queryStmt.Query()
+    defer rows.Close()
+    if err != nil {
+        return freelancers, err
+    }
+
+    for rows.Next() {
+        freelancer := Freelancer{}
+
+        if err := rows.Scan(
+            &freelancer.Id,
+            &freelancer.FirstName,
+            &freelancer.LastName,
+            &freelancer.Email,
+            &freelancer.Created,
+        ); err != nil {
+            return freelancers, err
+        }
+
+        projects, err := repo.getProjects(freelancer.Id)
+        if err != nil {
+            return freelancers, err
+        }
+
+        freelancer.Projects = projects
+        freelancers = append(freelancers, freelancer)
     }
 
     return freelancers, nil
 }
 
-func (repo FreelancerRepository) AddFreelancer(freelancer Freelancer) error {
-    session := repo.session.Copy()
-    defer session.Close()
+func (repo *FreelancerRepository) getProjects(freelancerId int) ([]Project, error) {
+    projects := []Project{}
 
+    queryStmt, err := repo.db.Prepare(`
+        SELECT p.*, c.name, c.description, c.created
+        FROM projects p
+            LEFT JOIN clients c
+                    ON p.client_id = c.id
+            INNER JOIN project_freelancers
+                ON project_freelancers.project_id = p.id
+        WHERE project_freelancers.freelancer_id = $1`)
+
+    if err != nil {
+        return projects, err
+    }
+    rows, err := queryStmt.Query(freelancerId)
+    defer rows.Close()
+
+    for rows.Next() {
+        project := Project{}
+        client := Client{}
+        client.Projects = []Project{}
+        client.Jobs = []Job{}
+
+        if err := queryStmt.QueryRow(freelancerId).Scan(
+            &project.Id,
+            &project.Name,
+            &project.Description,
+            &client.Id,
+            &project.IsActive,
+            &project.Created,
+            &client.Name,
+            &client.Description,
+            &client.Created,
+        ); err != nil {
+            return projects, err
+        }
+
+        project.Freelancers = []Freelancer{}
+        project.Client = &client
+
+        projects = append(projects, project)
+    }
+
+    return projects, nil
+}
+
+func (repo *FreelancerRepository) GetFreelancer(id int) (Freelancer, error) {
+    freelancer := Freelancer{}
+
+    queryStmt, err := repo.db.Prepare(`
+        SELECT id,first_name,last_name,email,created
+        FROM freelancers
+        WHERE id = $1`)
+    if err != nil {
+        return freelancer, err
+    }
+
+    if err := queryStmt.QueryRow(id).Scan(
+        &freelancer.Id,
+        &freelancer.FirstName,
+        &freelancer.LastName,
+        &freelancer.Email,
+        &freelancer.Created,
+    ); err != nil {
+        return freelancer, err
+    }
+
+    projects, err := repo.getProjects(freelancer.Id)
+    if err != nil {
+        return freelancer, err
+    }
+
+    freelancer.Projects = projects
+
+    return freelancer, nil
+}
+
+func (repo *FreelancerRepository) GetFreelancerByEmail(email string) (Freelancer, error) {
+    freelancer := Freelancer{}
+
+    queryStmt, err := repo.db.Prepare(`
+        SELECT id,first_name,last_name,email,created
+        FROM freelancers
+        WHERE email = $1`)
+    if err != nil {
+        return freelancer, err
+    }
+
+    if err := queryStmt.QueryRow(email).Scan(
+        &freelancer.Id,
+        &freelancer.FirstName,
+        &freelancer.LastName,
+        &freelancer.Email,
+        &freelancer.Created,
+    ); err != nil {
+        return freelancer, err
+    }
+
+    projects, err := repo.getProjects(freelancer.Id)
+    if err != nil {
+        return freelancer, err
+    }
+
+    freelancer.Projects = projects
+
+    return freelancer, nil
+}
+
+func (repo *FreelancerRepository) AddFreelancer(freelancer Freelancer) error {
     hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(freelancer.Password), bcrypt.DefaultCost)
     freelancer.Password = string(hashedPassword)
 
-    collection := session.DB(repo.db).C(collectionName)
-    err := collection.Insert(&freelancer)
-    if err != nil {
-        if mgo.IsDup(err) {
-            return err
-        }
+    var insertId int
+    err := repo.db.QueryRow(`
+            INSERT INTO freelancers(first_name,last_name,email,password,created)
+            VALUES($1,$2,$3,$4,$5) returning uid;`,
+        freelancer.FirstName,
+        freelancer.LastName,
+        freelancer.Email,
+        freelancer.Password,
+        freelancer.Created,
+    ).Scan(&insertId)
 
-        return err
-    }
-
-    return nil
-}
-
-func (repo FreelancerRepository) DeleteFreelancer(id string) error {
-    if !bson.IsObjectIdHex(id) {
-        return errors.New("Invalid id provided")
-    }
-
-    session := repo.session.Copy()
-    defer session.Close()
-
-    collection := session.DB(repo.db).C(collectionName)
-    err := collection.RemoveId(bson.ObjectIdHex(id))
     if err != nil {
         return err
     }
@@ -80,60 +188,33 @@ func (repo FreelancerRepository) DeleteFreelancer(id string) error {
     return nil
 }
 
-func (repo FreelancerRepository) GetFreelancer(id string) (Freelancer, error) {
-    freelancer := Freelancer{}
-    if !bson.IsObjectIdHex(id) {
-        return freelancer, errors.New("Invalid id provided")
-    }
-
-    session := repo.session.Copy()
-    defer session.Close()
-
-    collection := session.DB(repo.db).C(collectionName)
-    if err := collection.FindId(bson.ObjectIdHex(id)).One(&freelancer); err != nil {
-        return freelancer, err
-    }
-
-    return freelancer, nil
-}
-
-func (repo FreelancerRepository) CheckCredentials(email string, password string) (Freelancer, error) {
-    session := repo.session.Copy()
-    defer session.Close()
-
-    freelancer := Freelancer{}
-    collection := session.DB(repo.db).C(collectionName)
-    if err := collection.Find(bson.M{"email": email}).One(&freelancer); err != nil {
-        if err == mgo.ErrNotFound {
-            return freelancer, errors.New("Freelancer not found")
-        }
-        return freelancer, err
-    }
-
-    if err := bcrypt.CompareHashAndPassword([]byte(freelancer.Password), []byte(password)); err != nil {
-        return freelancer, errors.New("Freelancer not found (password is wrong)")
-    }
-
-    return freelancer, nil
-}
-
-func (repo FreelancerRepository) UpdateFreelancer(id string, data Freelancer) error {
-    if !bson.IsObjectIdHex(id) {
-        return errors.New("Invalid id provided")
-    }
-
-    change := bson.M{"name": data.FirstName, "email": data.Email}
-    if data.Password != "" {
-        change["password"] = data.Password
-    }
-    update := bson.M{"$set": change}
-
-    session := repo.session.Copy()
-    defer session.Close()
-
-    collection := session.DB(repo.db).C(collectionName)
-    if err := collection.UpdateId(bson.ObjectIdHex(id), update); err != nil {
+func (repo *FreelancerRepository) DeleteFreelancer(id string) error {
+    queryStmt, err := repo.db.Prepare("DELETE FROM freelancers WHERE id = $1")
+    if err != nil {
         return err
+    }
+
+    _, err = queryStmt.Exec(id)
+    if err != nil {
+        return err
+    }
+
+    return nil
+}
+
+func (repo *FreelancerRepository) CheckCredentials(email string, password string) error {
+    queryStmt, err := repo.db.Prepare("SELECT f.password FROM freelancers f WHERE email = $1")
+    if err != nil {
+        return err
+    }
+
+    var foundPassword string
+    if err = queryStmt.QueryRow(email).Scan(&foundPassword); err != nil {
+        return err
+    }
+
+    if err := bcrypt.CompareHashAndPassword([]byte(foundPassword), []byte(password)); err != nil {
+        return errors.New("Freelancer not found (password is wrong)")
     }
 
     return nil

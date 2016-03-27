@@ -8,6 +8,8 @@ import (
     "github.com/gorilla/context"
     "github.com/gorilla/mux"
     "github.com/dgrijalva/jwt-go"
+    "strconv"
+    "errors"
 )
 
 func Login(w http.ResponseWriter, r *http.Request) {
@@ -16,18 +18,22 @@ func Login(w http.ResponseWriter, r *http.Request) {
 
     var body map[string]string
     if err := decoder.Decode(&body); err != nil {
-        w.WriteHeader(http.StatusBadRequest)
-        w.Write([]byte(err.Error()))
+        WriteError(w, http.StatusBadRequest, err)
         return
     }
     email := body["email"]
     password := body["password"]
 
     var appContext = context.Get(r, "context").(*ApplicationContext)
-    freelancer, err := appContext.FreelancerRepository.CheckCredentials(email, password)
+    err := appContext.FreelancerRepository.CheckCredentials(email, password)
     if err != nil {
-        w.WriteHeader(http.StatusUnauthorized)
-        w.Write([]byte(err.Error()))
+        WriteError(w, http.StatusUnauthorized, err)
+        return
+    }
+
+    freelancer, err := appContext.FreelancerRepository.GetFreelancerByEmail(email)
+    if err != nil {
+        WriteError(w, http.StatusUnauthorized, err)
         return
     }
 
@@ -39,16 +45,15 @@ func Login(w http.ResponseWriter, r *http.Request) {
     // Sign and get the complete encoded token as a string
     tokenString, err := token.SignedString([]byte(appContext.JwtSecret))
     if err != nil {
-        w.WriteHeader(http.StatusInternalServerError)
-        w.Write([]byte(err.Error()))
+        WriteError(w, http.StatusUnauthorized, err)
         return
     }
 
     json.NewEncoder(w).Encode(struct {
-        UserId string `json:"id"`
-        Token  string `json:"token"`
+        UserId int      `json:"id"`
+        Token  string   `json:"token"`
     }{
-        UserId: freelancer.Id.Hex(),
+        UserId: freelancer.Id,
         Token: tokenString,
     })
 }
@@ -62,12 +67,35 @@ func IndexFreelancer(w http.ResponseWriter, r *http.Request) {
     var appContext = context.Get(r, "context").(*ApplicationContext)
     freelancers, err := appContext.FreelancerRepository.GetAllFreelancers()
     if err != nil {
-        w.WriteHeader(http.StatusBadRequest)
-        w.Write([]byte(err.Error()))
+        WriteError(w, http.StatusBadRequest, err)
         return
     }
 
     json.NewEncoder(w).Encode(freelancers)
+}
+
+func IndexProject(w http.ResponseWriter, r *http.Request) {
+
+    var appContext = context.Get(r, "context").(*ApplicationContext)
+    projects, err := appContext.ProjectRepository.GetAllProjects()
+    if err != nil {
+        WriteError(w, http.StatusBadRequest, err)
+        return
+    }
+
+    json.NewEncoder(w).Encode(projects)
+}
+
+func IndexClient(w http.ResponseWriter, r *http.Request) {
+
+    var appContext = context.Get(r, "context").(*ApplicationContext)
+    clients, err := appContext.ClientRepository.GetAllClients()
+    if err != nil {
+        WriteError(w, http.StatusBadRequest, err)
+        return
+    }
+
+    json.NewEncoder(w).Encode(clients)
 }
 
 func NewFreelancer(w http.ResponseWriter, r *http.Request) {
@@ -76,8 +104,7 @@ func NewFreelancer(w http.ResponseWriter, r *http.Request) {
 
     var body map[string]string
     if err := decoder.Decode(&body); err != nil {
-        w.WriteHeader(http.StatusBadRequest)
-        w.Write([]byte(err.Error()))
+        WriteError(w, http.StatusBadRequest, err)
         return
     }
 
@@ -98,8 +125,7 @@ func NewFreelancer(w http.ResponseWriter, r *http.Request) {
 
     var appContext = context.Get(r, "context").(*ApplicationContext)
     if err := appContext.FreelancerRepository.AddFreelancer(freelancer); err != nil {
-        w.WriteHeader(http.StatusBadRequest)
-        w.Write([]byte(err.Error()))
+        WriteError(w, http.StatusBadRequest, err)
         return
     }
 
@@ -112,15 +138,20 @@ func GetFreelancer(w http.ResponseWriter, r *http.Request) {
     freelancer := Freelancer{}
 
     if vars["id"] == "" {
-        w.Write([]byte("Id not provided."))
+        WriteError(w, http.StatusBadRequest, errors.New("Id not provided."))
+        return
+    }
+
+    id, err := strconv.Atoi(vars["id"])
+    if err != nil {
+        WriteError(w, http.StatusBadRequest, err)
         return
     }
 
     var appContext = context.Get(r, "context").(*ApplicationContext)
-    freelancer, err := appContext.FreelancerRepository.GetFreelancer(vars["id"])
+    freelancer, err = appContext.FreelancerRepository.GetFreelancer(id)
     if err != nil {
-        w.WriteHeader(http.StatusBadRequest)
-        w.Write([]byte(err.Error()))
+        WriteError(w, http.StatusBadRequest, err)
         return
     }
 
@@ -132,16 +163,26 @@ func DeleteFreelancer(w http.ResponseWriter, r *http.Request) {
     vars := mux.Vars(r)
 
     if vars["id"] == "" {
-        w.Write([]byte("Id not provided."))
+        WriteError(w, http.StatusBadRequest, errors.New("Id not provided."))
         return
     }
 
     var appContext = context.Get(r, "context").(*ApplicationContext)
     if err := appContext.FreelancerRepository.DeleteFreelancer(vars["id"]); err != nil {
-        w.WriteHeader(http.StatusBadRequest)
-        w.Write([]byte(err.Error()))
+        WriteError(w, http.StatusBadRequest, err)
         return
     }
 
     w.WriteHeader(http.StatusOK)
+}
+
+func WriteError(w http.ResponseWriter, status int, err error) {
+    body, _ := json.Marshal(struct {
+        Error string `json:"error"`
+    }{
+        err.Error(),
+    })
+
+    w.WriteHeader(status)
+    w.Write(body)
 }
