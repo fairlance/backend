@@ -5,13 +5,15 @@ import (
 )
 
 type Freelancer struct {
-    Id        int
-    FirstName string        `valid:"required"`
-    LastName  string        `valid:"required"`
-    Password  string        `valid:"required" json:",omitempty"`
-    Email     string        `valid:"required,email"`
-    Projects  []Project     `json:",omitempty"`
-    Created   time.Time     `valid:"required"`
+    Id        int             `json:"id"`
+    FirstName string          `valid:"required" json:"firstName"`
+    LastName  string          `valid:"required" json:"lastName"`
+    Password  string          `valid:"required" json:",omitempty"`
+    Email     string          `valid:"required,email" json:"email"`
+    _Data     string          `sql:"data" json:"-"`
+    Data      FreelancerData  `json:"data"`
+    Projects  []Project       `json:"projects,omitempty"`
+    Created   time.Time       `valid:"required" json:"created"`
 }
 
 func (freelancer *Freelancer) getRepresentationMap() map[string]interface{} {
@@ -28,7 +30,6 @@ type ProjectFreelancers struct {
     ProjectId    int
 }
 
-
 type Client struct {
     Id          int
     Name        string
@@ -44,7 +45,7 @@ type Project struct {
     Description string
     Freelancers []Freelancer    `json:",omitempty"`
     ClientId    int             `json:"-"`
-    Client      *Client         `json:",omitempty"`
+    Client      Client          `json:",omitempty"`
     IsActive    bool
     Created     time.Time
 }
@@ -52,9 +53,22 @@ type Project struct {
 type Job struct {
     Id          int
     ClientId    int     `json:"-"`
-    Client      *Client `json:",omitempty"`
+    Client      Client  `json:",omitempty"`
     Name        string
     Description string
     IsActive    bool
     Created     time.Time
+}
+
+type Review struct {
+    Title    string     `json:"title"`
+    Content  string     `json:"content"`
+    Rating   float32    `json:"rating"`
+    Created  string     `json:"created"`
+    ClientId int        `json:"clientId"`
+    Client   Client     `json:"client"`
+}
+
+type FreelancerData struct {
+    Reviews []Review `json:"reviews"`
 }

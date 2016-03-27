@@ -57,7 +57,7 @@ func (repo *ProjectRepository) GetAllProjects() ([]Project, error) {
             return projects, err
         }
         project.Freelancers = freelancers
-        project.Client = &client
+        project.Client = client
 
         projects = append(projects, project)
     }
