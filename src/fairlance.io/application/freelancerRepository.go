@@ -173,7 +173,7 @@ func (repo *FreelancerRepository) AddFreelancer(freelancer Freelancer) error {
     var insertId int
     err := repo.db.QueryRow(`
             INSERT INTO freelancers(first_name,last_name,email,password,created)
-            VALUES($1,$2,$3,$4,$5) returning uid;`,
+            VALUES($1,$2,$3,$4,$5) returning id;`,
         freelancer.FirstName,
         freelancer.LastName,
         freelancer.Email,
