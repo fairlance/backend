@@ -9,7 +9,8 @@ test:
     override:
         - make test
     post:
-        - go install fairlance.io/services/...
+        - make install
+        - make installARM
         - sudo cp * $CIRCLE_ARTIFACTS:
             pwd:
                 bin
