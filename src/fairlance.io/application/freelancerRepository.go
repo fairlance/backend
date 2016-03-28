@@ -22,7 +22,7 @@ func (repo *FreelancerRepository) GetAllFreelancers() ([]Freelancer, error) {
     freelancers := []Freelancer{}
 
     //todo: extract prepare statement outside of the function
-    queryStmt, err := repo.db.Prepare("SELECT id,first_name,last_name,email,data,created FROM freelancers")
+    queryStmt, err := repo.db.Prepare("SELECT id,title,first_name,last_name,email,data,created FROM freelancers")
     if err != nil {
         return freelancers, err
     }
@@ -38,6 +38,7 @@ func (repo *FreelancerRepository) GetAllFreelancers() ([]Freelancer, error) {
 
         if err := rows.Scan(
             &freelancer.Id,
+            &freelancer.Title,
             &freelancer.FirstName,
             &freelancer.LastName,
             &freelancer.Email,
@@ -111,7 +112,7 @@ func (repo *FreelancerRepository) GetFreelancer(id int) (Freelancer, error) {
     freelancer := Freelancer{}
 
     queryStmt, err := repo.db.Prepare(`
-        SELECT id,first_name,last_name,email,data,created
+        SELECT id,title,first_name,last_name,email,data,created
         FROM freelancers
         WHERE id = $1`)
     if err != nil {
@@ -120,6 +121,7 @@ func (repo *FreelancerRepository) GetFreelancer(id int) (Freelancer, error) {
 
     if err := queryStmt.QueryRow(id).Scan(
         &freelancer.Id,
+        &freelancer.Title,
         &freelancer.FirstName,
         &freelancer.LastName,
         &freelancer.Email,
@@ -143,7 +145,7 @@ func (repo *FreelancerRepository) GetFreelancerByEmail(email string) (Freelancer
     freelancer := Freelancer{}
 
     queryStmt, err := repo.db.Prepare(`
-        SELECT id,first_name,last_name,email,data,created
+        SELECT id,title,first_name,last_name,email,data,created
         FROM freelancers
         WHERE email = $1`)
     if err != nil {
@@ -152,6 +154,7 @@ func (repo *FreelancerRepository) GetFreelancerByEmail(email string) (Freelancer
 
     if err := queryStmt.QueryRow(email).Scan(
         &freelancer.Id,
+        &freelancer.Title,
         &freelancer.FirstName,
         &freelancer.LastName,
         &freelancer.Email,
@@ -261,4 +264,27 @@ func (repo *FreelancerRepository) getClient(clientId int) (Client, error) {
     client.Projects = []Project{}
 
     return client, nil
+}
+
+func (repo *FreelancerRepository) addReference(freelancerId int, reference Reference) error {
+
+    //TODO: wrong
+    freelancer, _ := repo.GetFreelancer(freelancerId)
+    freelancer.Data.References = append(freelancer.Data.References, reference)
+    dataJson, err := json.Marshal(freelancer.Data)
+    if err != nil {
+        return err
+    }
+
+    _, err = repo.db.Exec(`
+            UPDATE freelancers SET data = $1 WHERE id = $2;`,
+        dataJson,
+        freelancerId,
+    )
+
+    if err != nil {
+        return err
+    }
+
+    return nil
 }

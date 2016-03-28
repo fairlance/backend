@@ -22,6 +22,8 @@ var routes = Routes{
     Route{"GetFreelancer", "GET", "/freelancer/{id}", AuthHandler(http.HandlerFunc(GetFreelancer))},
     Route{"DeleteFreelancer", "DELETE", "/freelancer/{id}", AuthHandler(http.HandlerFunc(DeleteFreelancer))},
 
+    Route{"NewFreelancer", "POST", "/freelancer/{id}/reference/new", http.HandlerFunc(NewFreelancerReference)},
+
     Route{"IndexProject", "GET", "/project/", http.HandlerFunc(IndexProject)},
 
     Route{"IndexClient", "GET", "/client/", http.HandlerFunc(IndexClient)},

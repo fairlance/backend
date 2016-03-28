@@ -133,6 +133,45 @@ func NewFreelancer(w http.ResponseWriter, r *http.Request) {
     json.NewEncoder(w).Encode(freelancer)
 }
 
+func NewFreelancerReference(w http.ResponseWriter, r *http.Request) {
+    vars := mux.Vars(r)
+
+    if vars["id"] == "" {
+        WriteError(w, http.StatusBadRequest, errors.New("Id not provided."))
+        return
+    }
+
+    id, err := strconv.Atoi(vars["id"])
+    if err != nil {
+        WriteError(w, http.StatusBadRequest, err)
+        return
+    }
+
+    decoder := json.NewDecoder(r.Body)
+    defer r.Body.Close()
+
+    var reference Reference
+    if err := decoder.Decode(&reference); err != nil {
+        WriteError(w, http.StatusBadRequest, err)
+        return
+    }
+
+    if ok, err := govalidator.ValidateStruct(reference); ok == false || err != nil {
+        errs := govalidator.ErrorsByField(err)
+        w.WriteHeader(http.StatusBadRequest)
+        json.NewEncoder(w).Encode(errs)
+        return
+    }
+
+    var appContext = context.Get(r, "context").(*ApplicationContext)
+    if err := appContext.FreelancerRepository.addReference(id, reference); err != nil {
+        WriteError(w, http.StatusBadRequest, err)
+        return
+    }
+
+    w.WriteHeader(http.StatusOK)
+}
+
 func GetFreelancer(w http.ResponseWriter, r *http.Request) {
     vars := mux.Vars(r)
     freelancer := Freelancer{}
