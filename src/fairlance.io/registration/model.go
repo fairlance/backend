@@ -3,10 +3,10 @@ package registration
 import "time"
 
 type RegisteredUser struct {
-    Email   string    `json:"email"`
-    Created time.Time `json:"created,omitempty"`
+	Email   string    `json:"email"`
+	Created time.Time `json:"created,omitempty"`
 }
 
 type RegistrationError struct {
-    Error string `json:"error"`
+	Error string `json:"error"`
 }

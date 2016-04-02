@@ -11,6 +11,9 @@ installDependencies:
 test:
 	go test fairlance.io/... -v
 
+format:
+	go fmt fairlance.io/...
+
 installDependenciesAndTest: installDependencies test
 
 install:

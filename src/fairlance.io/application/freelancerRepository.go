@@ -1,70 +1,70 @@
 package application
 
 import (
-    "golang.org/x/crypto/bcrypt"
-    "errors"
-    "database/sql"
-    _ "github.com/lib/pq"
-    "encoding/json"
+	"database/sql"
+	"encoding/json"
+	"errors"
+	_ "github.com/lib/pq"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type FreelancerRepository struct {
-    db *sql.DB
+	db *sql.DB
 }
 
 func NewFreelancerRepository(db *sql.DB) (*FreelancerRepository, error) {
-    repo := &FreelancerRepository{db}
+	repo := &FreelancerRepository{db}
 
-    return repo, nil
+	return repo, nil
 }
 
 func (repo *FreelancerRepository) GetAllFreelancers() ([]Freelancer, error) {
-    freelancers := []Freelancer{}
+	freelancers := []Freelancer{}
 
-    //todo: extract prepare statement outside of the function
-    queryStmt, err := repo.db.Prepare("SELECT id,title,first_name,last_name,email,data,created FROM freelancers")
-    if err != nil {
-        return freelancers, err
-    }
+	//todo: extract prepare statement outside of the function
+	queryStmt, err := repo.db.Prepare("SELECT id,title,first_name,last_name,email,data,created FROM freelancers")
+	if err != nil {
+		return freelancers, err
+	}
 
-    rows, err := queryStmt.Query()
-    defer rows.Close()
-    if err != nil {
-        return freelancers, err
-    }
+	rows, err := queryStmt.Query()
+	defer rows.Close()
+	if err != nil {
+		return freelancers, err
+	}
 
-    for rows.Next() {
-        freelancer := Freelancer{}
+	for rows.Next() {
+		freelancer := Freelancer{}
 
-        if err := rows.Scan(
-            &freelancer.Id,
-            &freelancer.Title,
-            &freelancer.FirstName,
-            &freelancer.LastName,
-            &freelancer.Email,
-            &freelancer._Data,
-            &freelancer.Created,
-        ); err != nil {
-            return freelancers, err
-        }
+		if err := rows.Scan(
+			&freelancer.Id,
+			&freelancer.Title,
+			&freelancer.FirstName,
+			&freelancer.LastName,
+			&freelancer.Email,
+			&freelancer._Data,
+			&freelancer.Created,
+		); err != nil {
+			return freelancers, err
+		}
 
-        if freelancer.Data, err = repo.getFreelancerData(freelancer._Data); err != nil {
-            return freelancers, err
-        }
-        if freelancer.Projects, err = repo.getProjects(freelancer.Id); err != nil {
-            return freelancers, err
-        }
+		if freelancer.Data, err = repo.getFreelancerData(freelancer._Data); err != nil {
+			return freelancers, err
+		}
+		if freelancer.Projects, err = repo.getProjects(freelancer.Id); err != nil {
+			return freelancers, err
+		}
 
-        freelancers = append(freelancers, freelancer)
-    }
+		freelancers = append(freelancers, freelancer)
+	}
 
-    return freelancers, nil
+	return freelancers, nil
 }
 
 func (repo *FreelancerRepository) getProjects(freelancerId int) ([]Project, error) {
-    projects := []Project{}
+	projects := []Project{}
 
-    queryStmt, err := repo.db.Prepare(`
+	queryStmt, err := repo.db.Prepare(`
         SELECT p.*, c.name, c.description, c.created
         FROM projects p
             LEFT JOIN clients c
@@ -73,218 +73,218 @@ func (repo *FreelancerRepository) getProjects(freelancerId int) ([]Project, erro
                 ON project_freelancers.project_id = p.id
         WHERE project_freelancers.freelancer_id = $1`)
 
-    if err != nil {
-        return projects, err
-    }
-    rows, err := queryStmt.Query(freelancerId)
-    defer rows.Close()
+	if err != nil {
+		return projects, err
+	}
+	rows, err := queryStmt.Query(freelancerId)
+	defer rows.Close()
 
-    for rows.Next() {
-        project := Project{}
-        client := Client{}
-        client.Projects = []Project{}
-        client.Jobs = []Job{}
+	for rows.Next() {
+		project := Project{}
+		client := Client{}
+		client.Projects = []Project{}
+		client.Jobs = []Job{}
 
-        if err := queryStmt.QueryRow(freelancerId).Scan(
-            &project.Id,
-            &project.Name,
-            &project.Description,
-            &client.Id,
-            &project.IsActive,
-            &project.Created,
-            &client.Name,
-            &client.Description,
-            &client.Created,
-        ); err != nil {
-            return projects, err
-        }
+		if err := queryStmt.QueryRow(freelancerId).Scan(
+			&project.Id,
+			&project.Name,
+			&project.Description,
+			&client.Id,
+			&project.IsActive,
+			&project.Created,
+			&client.Name,
+			&client.Description,
+			&client.Created,
+		); err != nil {
+			return projects, err
+		}
 
-        project.Freelancers = []Freelancer{}
-        project.Client = client
+		project.Freelancers = []Freelancer{}
+		project.Client = client
 
-        projects = append(projects, project)
-    }
+		projects = append(projects, project)
+	}
 
-    return projects, nil
+	return projects, nil
 }
 
 func (repo *FreelancerRepository) GetFreelancer(id int) (Freelancer, error) {
-    freelancer := Freelancer{}
+	freelancer := Freelancer{}
 
-    queryStmt, err := repo.db.Prepare(`
+	queryStmt, err := repo.db.Prepare(`
         SELECT id,title,first_name,last_name,email,data,created
         FROM freelancers
         WHERE id = $1`)
-    if err != nil {
-        return freelancer, err
-    }
+	if err != nil {
+		return freelancer, err
+	}
 
-    if err := queryStmt.QueryRow(id).Scan(
-        &freelancer.Id,
-        &freelancer.Title,
-        &freelancer.FirstName,
-        &freelancer.LastName,
-        &freelancer.Email,
-        &freelancer._Data,
-        &freelancer.Created,
-    ); err != nil {
-        return freelancer, err
-    }
+	if err := queryStmt.QueryRow(id).Scan(
+		&freelancer.Id,
+		&freelancer.Title,
+		&freelancer.FirstName,
+		&freelancer.LastName,
+		&freelancer.Email,
+		&freelancer._Data,
+		&freelancer.Created,
+	); err != nil {
+		return freelancer, err
+	}
 
-    if freelancer.Data, err = repo.getFreelancerData(freelancer._Data); err != nil {
-        return freelancer, err
-    }
-    if freelancer.Projects, err = repo.getProjects(freelancer.Id); err != nil {
-        return freelancer, err
-    }
+	if freelancer.Data, err = repo.getFreelancerData(freelancer._Data); err != nil {
+		return freelancer, err
+	}
+	if freelancer.Projects, err = repo.getProjects(freelancer.Id); err != nil {
+		return freelancer, err
+	}
 
-    return freelancer, nil
+	return freelancer, nil
 }
 
 func (repo *FreelancerRepository) GetFreelancerByEmail(email string) (Freelancer, error) {
-    freelancer := Freelancer{}
+	freelancer := Freelancer{}
 
-    queryStmt, err := repo.db.Prepare(`
+	queryStmt, err := repo.db.Prepare(`
         SELECT id,title,first_name,last_name,email,data,created
         FROM freelancers
         WHERE email = $1`)
-    if err != nil {
-        return freelancer, err
-    }
+	if err != nil {
+		return freelancer, err
+	}
 
-    if err := queryStmt.QueryRow(email).Scan(
-        &freelancer.Id,
-        &freelancer.Title,
-        &freelancer.FirstName,
-        &freelancer.LastName,
-        &freelancer.Email,
-        &freelancer._Data,
-        &freelancer.Created,
-    ); err != nil {
-        return freelancer, err
-    }
+	if err := queryStmt.QueryRow(email).Scan(
+		&freelancer.Id,
+		&freelancer.Title,
+		&freelancer.FirstName,
+		&freelancer.LastName,
+		&freelancer.Email,
+		&freelancer._Data,
+		&freelancer.Created,
+	); err != nil {
+		return freelancer, err
+	}
 
-    if freelancer.Data, err = repo.getFreelancerData(freelancer._Data); err != nil {
-        return freelancer, err
-    }
-    if freelancer.Projects, err = repo.getProjects(freelancer.Id); err != nil {
-        return freelancer, err
-    }
+	if freelancer.Data, err = repo.getFreelancerData(freelancer._Data); err != nil {
+		return freelancer, err
+	}
+	if freelancer.Projects, err = repo.getProjects(freelancer.Id); err != nil {
+		return freelancer, err
+	}
 
-    return freelancer, nil
+	return freelancer, nil
 }
 
 func (repo *FreelancerRepository) AddFreelancer(freelancer Freelancer) error {
-    hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(freelancer.Password), bcrypt.DefaultCost)
-    freelancer.Password = string(hashedPassword)
+	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(freelancer.Password), bcrypt.DefaultCost)
+	freelancer.Password = string(hashedPassword)
 
-    var insertId int
-    err := repo.db.QueryRow(`
+	var insertId int
+	err := repo.db.QueryRow(`
             INSERT INTO freelancers(first_name,last_name,email,password,created)
             VALUES($1,$2,$3,$4,$5) returning id;`,
-        freelancer.FirstName,
-        freelancer.LastName,
-        freelancer.Email,
-        freelancer.Password,
-        freelancer.Created,
-    ).Scan(&insertId)
+		freelancer.FirstName,
+		freelancer.LastName,
+		freelancer.Email,
+		freelancer.Password,
+		freelancer.Created,
+	).Scan(&insertId)
 
-    if err != nil {
-        return err
-    }
+	if err != nil {
+		return err
+	}
 
-    return nil
+	return nil
 }
 
 func (repo *FreelancerRepository) DeleteFreelancer(id string) error {
-    queryStmt, err := repo.db.Prepare("DELETE FROM freelancers WHERE id = $1")
-    if err != nil {
-        return err
-    }
+	queryStmt, err := repo.db.Prepare("DELETE FROM freelancers WHERE id = $1")
+	if err != nil {
+		return err
+	}
 
-    _, err = queryStmt.Exec(id)
-    if err != nil {
-        return err
-    }
+	_, err = queryStmt.Exec(id)
+	if err != nil {
+		return err
+	}
 
-    return nil
+	return nil
 }
 
 func (repo *FreelancerRepository) CheckCredentials(email string, password string) error {
-    queryStmt, err := repo.db.Prepare("SELECT f.password FROM freelancers f WHERE email = $1")
-    if err != nil {
-        return err
-    }
+	queryStmt, err := repo.db.Prepare("SELECT f.password FROM freelancers f WHERE email = $1")
+	if err != nil {
+		return err
+	}
 
-    var foundPassword string
-    if err = queryStmt.QueryRow(email).Scan(&foundPassword); err != nil {
-        return err
-    }
+	var foundPassword string
+	if err = queryStmt.QueryRow(email).Scan(&foundPassword); err != nil {
+		return err
+	}
 
-    if err := bcrypt.CompareHashAndPassword([]byte(foundPassword), []byte(password)); err != nil {
-        return errors.New("Freelancer not found (password is wrong)")
-    }
+	if err := bcrypt.CompareHashAndPassword([]byte(foundPassword), []byte(password)); err != nil {
+		return errors.New("Freelancer not found (password is wrong)")
+	}
 
-    return nil
+	return nil
 }
 
 func (repo *FreelancerRepository) getFreelancerData(data string) (FreelancerData, error) {
-    var freelancerData = FreelancerData{}
-    json.Unmarshal([]byte(data), &freelancerData)
+	var freelancerData = FreelancerData{}
+	json.Unmarshal([]byte(data), &freelancerData)
 
-    for i, review := range freelancerData.Reviews {
-        client, err := repo.getClient(review.ClientId)
-        if err != nil {
-            return freelancerData, err
-        }
-        freelancerData.Reviews[i].Client = client
-    }
+	for i, review := range freelancerData.Reviews {
+		client, err := repo.getClient(review.ClientId)
+		if err != nil {
+			return freelancerData, err
+		}
+		freelancerData.Reviews[i].Client = client
+	}
 
-    return freelancerData, nil
+	return freelancerData, nil
 }
 
 func (repo *FreelancerRepository) getClient(clientId int) (Client, error) {
-    client := Client{}
+	client := Client{}
 
-    queryStmt, err := repo.db.Prepare("SELECT id,name,description,created FROM clients WHERE id = $1")
-    if err != nil {
-        return client, err
-    }
+	queryStmt, err := repo.db.Prepare("SELECT id,name,description,created FROM clients WHERE id = $1")
+	if err != nil {
+		return client, err
+	}
 
-    if err := queryStmt.QueryRow(clientId).Scan(
-        &client.Id,
-        &client.Name,
-        &client.Description,
-        &client.Created,
-    ); err != nil {
-        return client, err
-    }
+	if err := queryStmt.QueryRow(clientId).Scan(
+		&client.Id,
+		&client.Name,
+		&client.Description,
+		&client.Created,
+	); err != nil {
+		return client, err
+	}
 
-    client.Jobs = []Job{}
-    client.Projects = []Project{}
+	client.Jobs = []Job{}
+	client.Projects = []Project{}
 
-    return client, nil
+	return client, nil
 }
 
 func (repo *FreelancerRepository) addReference(freelancerId int, reference Reference) error {
 
-    //TODO: wrong
-    freelancer, _ := repo.GetFreelancer(freelancerId)
-    freelancer.Data.References = append(freelancer.Data.References, reference)
-    dataJson, err := json.Marshal(freelancer.Data)
-    if err != nil {
-        return err
-    }
+	//TODO: wrong
+	freelancer, _ := repo.GetFreelancer(freelancerId)
+	freelancer.Data.References = append(freelancer.Data.References, reference)
+	dataJson, err := json.Marshal(freelancer.Data)
+	if err != nil {
+		return err
+	}
 
-    _, err = repo.db.Exec(`
+	_, err = repo.db.Exec(`
             UPDATE freelancers SET data = $1 WHERE id = $2;`,
-        dataJson,
-        freelancerId,
-    )
+		dataJson,
+		freelancerId,
+	)
 
-    if err != nil {
-        return err
-    }
+	if err != nil {
+		return err
+	}
 
-    return nil
+	return nil
 }
