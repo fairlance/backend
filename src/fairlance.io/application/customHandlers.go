@@ -7,14 +7,15 @@ import (
 	"github.com/gorilla/context"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 )
 
-func LoggerHandler(next http.Handler, name string) http.Handler {
+func LoggerHandler(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
 		next.ServeHTTP(w, r)
-		log.Printf("%s\t%s\t%s\t%s", r.Method, r.RequestURI, name, time.Since(start))
+		log.Printf("%s\t%s\t%s", r.Method, r.RequestURI, time.Since(start))
 	})
 }
 
@@ -25,12 +26,12 @@ func ContextAwareHandler(next http.Handler, appContext *ApplicationContext) http
 	})
 }
 
-func CORSHandler(next http.Handler) http.Handler {
+func CORSHandler(next http.Handler, route Route) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if origin := r.Header.Get("Origin"); origin != "" {
+			// todo: make configurable
 			w.Header().Set("Access-Control-Allow-Origin", "*")
-			// todo: make this list configurable per route
-			w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
+			w.Header().Set("Access-Control-Allow-Methods", strings.Join(route.AllowedMethods, ","))
 			w.Header().Set("Access-Control-Allow-Headers",
 				"Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
 		}

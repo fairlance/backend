@@ -1,6 +1,7 @@
 package application
 
 import (
+	"github.com/gorilla/context"
 	"github.com/gorilla/mux"
 	"net/http"
 )
@@ -11,25 +12,15 @@ func NewRouter(appContext *ApplicationContext) *mux.Router {
 	for _, route := range routes {
 		var handler http.Handler
 		handler = route.Handler
-		handler = ContextAwareHandler(handler, appContext)
-		handler = CORSHandler(handler)
-		handler = LoggerHandler(handler, route.Name)
-		handler = RecoverHandler(handler)
+		handler = context.ClearHandler(RecoverHandler(LoggerHandler(handler)))
+		handler = CORSHandler(ContextAwareHandler(route.Handler, appContext), route)
 
 		router.
-			Methods(getMethods(route)...).
+			Methods(route.AllowedMethods...).
 			Path(route.Pattern).
 			Name(route.Name).
 			Handler(handler)
 	}
 
 	return router
-}
-
-func getMethods(route Route) []string {
-	if route.Method != "GET" {
-		// add OPTIONS for CORS
-		return []string{route.Method, "OPTIONS"}
-	}
-	return []string{route.Method}
 }

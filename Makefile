@@ -2,6 +2,7 @@ help:
 	@echo "Available targets:"
 	@echo "- install: install all services"
 	@echo "- test: run tests"
+	@echo "- format: format go code"
 	@echo "- installDependenciesAndTest: install dependencies declared in dependencies.txt and run tests"
 	@echo "- installDependencies: installs dependencies declared in dependencies.txt"
 
