@@ -35,7 +35,7 @@ type Project struct {
 	Name        string
 	Description string
 	Freelancers []Freelancer `gorm:"many2many:project_freelancers;"`
-	ClientId    int
+	ClientId    uint
 	IsActive    bool
 }
 
@@ -43,7 +43,7 @@ type Job struct {
 	gorm.Model
 	Name        string
 	Description string
-	ClientId    int
+	ClientId    uint
 	IsActive    bool
 }
 
