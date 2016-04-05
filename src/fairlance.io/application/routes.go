@@ -59,14 +59,14 @@ var routes = Routes{
 		[]string{"OPTIONS", "DELETE"},
 	},
 
-	Route{
-		"NewFreelancerReference",
-		"POST",
-		"/freelancer/{id}/reference/new",
-		http.HandlerFunc(NewFreelancerReference),
-		[]string{"OPTIONS", "POST"},
-	},
-
+	//Route{
+	//	"NewFreelancerReference",
+	//	"POST",
+	//	"/freelancer/{id}/reference/new",
+	//	http.HandlerFunc(NewFreelancerReference),
+	//	[]string{"OPTIONS", "POST"},
+	//},
+	//
 	Route{
 		"IndexProject",
 		"GET",

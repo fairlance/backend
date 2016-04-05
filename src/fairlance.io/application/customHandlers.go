@@ -3,12 +3,14 @@ package application
 import (
 	"errors"
 	"fmt"
-	"github.com/dgrijalva/jwt-go"
-	"github.com/gorilla/context"
 	"log"
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/dgrijalva/jwt-go"
+	"github.com/gorilla/context"
+	"gopkg.in/matryer/respond.v1"
 )
 
 func LoggerHandler(next http.Handler) http.Handler {
@@ -41,7 +43,6 @@ func CORSHandler(next http.Handler, route Route) http.Handler {
 			return
 		}
 
-		w.Header().Set("Content-Type", "application/json")
 		next.ServeHTTP(w, r)
 	})
 }
@@ -51,7 +52,7 @@ func RecoverHandler(next http.Handler) http.Handler {
 		defer func() {
 			if err := recover(); err != nil {
 				log.Printf("panic: %+v", err)
-				http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+				respond.With(w, r, http.StatusInternalServerError, nil)
 			}
 		}()
 
@@ -63,7 +64,7 @@ func AuthHandler(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		tokenString := r.Header.Get("Authorization")
 		if tokenString == "" {
-			WriteError(w, http.StatusBadRequest, jwt.ErrNoTokenInRequest)
+			respond.With(w, r, http.StatusBadRequest, jwt.ErrNoTokenInRequest)
 			return
 		}
 
@@ -78,7 +79,7 @@ func AuthHandler(next http.Handler) http.Handler {
 		})
 
 		if err != nil || !token.Valid {
-			WriteError(w, http.StatusBadRequest, errors.New("Not logged in."))
+			respond.With(w, r, http.StatusBadRequest, errors.New("Not logged in."))
 			return
 		}
 		next.ServeHTTP(w, r)
