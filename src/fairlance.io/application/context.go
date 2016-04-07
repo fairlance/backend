@@ -1,6 +1,8 @@
 package application
 
 import (
+	"encoding/json"
+
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 )
@@ -17,7 +19,6 @@ func NewContext(dbName string) (*ApplicationContext, error) {
 	if err != nil {
 		return nil, err
 	}
-	prepareTables(db)
 
 	freelancerRepository, _ := NewFreelancerRepository(db)
 	projectRepository, _ := NewProjectRepository(db)
@@ -30,27 +31,48 @@ func NewContext(dbName string) (*ApplicationContext, error) {
 		JwtSecret:            "fairlance", //base64.StdEncoding.EncodeToString([]byte("fairlance")),
 	}
 
+	context.prepareTables(db)
+
 	return context, nil
 }
 
-func prepareTables(db *gorm.DB) {
-	db.DropTableIfExists(&Freelancer{})
-	db.DropTableIfExists(&Project{})
-	db.DropTableIfExists(&Client{})
-	db.DropTableIfExists(&Job{})
-
-	db.CreateTable(&Freelancer{})
-	db.CreateTable(&Project{})
-	db.CreateTable(&Client{})
-	db.CreateTable(&Job{})
+func (ac *ApplicationContext) prepareTables(db *gorm.DB) {
+	db.DropTableIfExists(&Freelancer{}, &Project{}, &Client{}, &Job{})
+	db.CreateTable(&Freelancer{}, &Project{}, &Client{}, &Job{})
 
 	db.Create(&Freelancer{
-		FirstName: "First",
-		LastName:  "Last",
-		Title:     "Dev",
-		Password:  "Pass",
-		Email:     "first@mail.com",
+		FirstName:      "First",
+		LastName:       "Last",
+		Title:          "Dev",
+		Password:       "Pass",
+		Email:          "first@mail.com",
+		JsonComments:   `[]`,
+		JsonReferences: `[]`,
 	})
+
+	freelancer, _ := ac.FreelancerRepository.GetFreelancerByEmail("first@mail.com")
+	js, _ := json.Marshal(append(freelancer.Comments, Comment{"text2", 1}))
+	freelancer.JsonComments = string(js)
+	js, _ = json.Marshal(append(freelancer.References, Reference{"title", "content", Media{"image", "video"}}))
+	freelancer.JsonReferences = string(js)
+	ac.FreelancerRepository.UpdateFreelancer(&freelancer)
+
+	db.Create(&Freelancer{
+		FirstName:      "Milos",
+		LastName:       "Krsmanovic",
+		Title:          "Dev",
+		Password:       "$2a$10$VJ8H9EYOIj9mnyW5mUm/nOWUrz/Rkak4/Ov3Lnw1GsAm4gmYU6sQu",
+		Email:          "milos@gmail.com",
+		JsonComments:   `[]`,
+		JsonReferences: `[]`,
+	})
+
+	milos, _ := ac.FreelancerRepository.GetFreelancerByEmail("milos@gmail.com")
+	js, _ = json.Marshal(append(milos.Comments, Comment{"text2", 1}))
+	milos.JsonComments = string(js)
+	js, _ = json.Marshal(append(milos.References, Reference{"title", "content", Media{"image", "video"}}))
+	milos.JsonReferences = string(js)
+	ac.FreelancerRepository.UpdateFreelancer(&milos)
 
 	db.Create(&Project{
 		Name:        "Project",
@@ -69,4 +91,6 @@ func prepareTables(db *gorm.DB) {
 		Description: "Desc Client",
 		ClientId:    1,
 	})
+
+	ac.FreelancerRepository.DeleteFreelancer(1)
 }

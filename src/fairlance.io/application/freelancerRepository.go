@@ -1,6 +1,7 @@
 package application
 
 import (
+	"encoding/json"
 	"errors"
 
 	"github.com/jinzhu/gorm"
@@ -19,7 +20,14 @@ func NewFreelancerRepository(db *gorm.DB) (*FreelancerRepository, error) {
 }
 func (repo *FreelancerRepository) GetAllFreelancers() ([]Freelancer, error) {
 	freelancers := []Freelancer{}
-	repo.db.Preload("Projects").Find(&freelancers)
+	if err := repo.db.Preload("Projects").Find(&freelancers).Limit(100).Error; err != nil {
+		return freelancers, err
+	}
+	for i := 0; i < len(freelancers); i++ {
+		if err := repo.hydrate(&freelancers[i]); err != nil {
+			return freelancers, err
+		}
+	}
 	return freelancers, nil
 }
 
@@ -31,9 +39,12 @@ func (repo *FreelancerRepository) GetFreelancerByEmail(email string) (Freelancer
 	return freelancer, nil
 }
 
-func (repo *FreelancerRepository) GetFreelancer(id int) (Freelancer, error) {
+func (repo *FreelancerRepository) GetFreelancer(id uint) (Freelancer, error) {
 	freelancer := Freelancer{}
 	if err := repo.db.Preload("Projects").Where("id = ?", id).Find(&freelancer).Error; err != nil {
+		return freelancer, err
+	}
+	if err := repo.hydrate(&freelancer); err != nil {
 		return freelancer, err
 	}
 	return freelancer, nil
@@ -53,9 +64,19 @@ func (repo *FreelancerRepository) CheckCredentials(email string, password string
 }
 
 func (repo *FreelancerRepository) AddFreelancer(freelancer *Freelancer) error {
-	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(freelancer.Password), bcrypt.DefaultCost)
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(freelancer.Password), bcrypt.DefaultCost)
+	if err != nil {
+		return err
+	}
 	freelancer.Password = string(hashedPassword)
 	return repo.db.Create(freelancer).Error
+}
+
+func (repo *FreelancerRepository) UpdateFreelancer(freelancer *Freelancer) error {
+	if freelancer.ID == 0 {
+		return errors.New("Can't update entity without id")
+	}
+	return repo.db.Save(freelancer).Error
 }
 
 func (repo *FreelancerRepository) DeleteFreelancer(id uint) error {
@@ -67,25 +88,27 @@ func (repo *FreelancerRepository) DeleteFreelancer(id uint) error {
 	return repo.db.Delete(&freelancer).Error
 }
 
-//func (repo *FreelancerRepository) addReference(freelancerId int, reference Reference) error {
-//
-//	//TODO: wrong
-//	freelancer, _ := repo.GetFreelancer(freelancerId)
-//	freelancer.Data.References = append(freelancer.Data.References, reference)
-//	dataJson, err := json.Marshal(freelancer.Data)
-//	if err != nil {
-//		return err
-//	}
-//
-//	_, err = repo.db.Exec(`
-//            UPDATE freelancers SET data = $1 WHERE id = $2;`,
-//		dataJson,
-//		freelancerId,
-//	)
-//
-//	if err != nil {
-//		return err
-//	}
-//
-//	return nil
-//}
+func (repo *FreelancerRepository) hydrate(freelancer *Freelancer) error {
+	if err := json.Unmarshal([]byte(freelancer.JsonComments), &freelancer.Comments); err != nil {
+		return err
+	}
+	if err := json.Unmarshal([]byte(freelancer.JsonReferences), &freelancer.References); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (repo *FreelancerRepository) AddReference(freelancerId uint, reference Reference) error {
+
+	freelancer, err := repo.GetFreelancer(freelancerId)
+	if err != nil {
+		return err
+	}
+	references, err := json.Marshal(append(freelancer.References, reference))
+	if err != nil {
+		return err
+	}
+	freelancer.JsonReferences = string(references)
+
+	return nil
+}

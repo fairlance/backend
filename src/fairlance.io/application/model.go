@@ -4,12 +4,16 @@ import "github.com/jinzhu/gorm"
 
 type Freelancer struct {
 	gorm.Model
-	Title     string    `valid:"required"`
-	FirstName string    `valid:"required"`
-	LastName  string    `valid:"required"`
-	Password  string    `valid:"required"`
-	Email     string    `valid:"required,email"`
-	Projects  []Project `gorm:"many2many:project_freelancers;"`
+	Title          string      `valid:"required"`
+	FirstName      string      `valid:"required"`
+	LastName       string      `valid:"required"`
+	Password       string      `valid:"required"`
+	Email          string      `valid:"required,email"`
+	Projects       []Project   `gorm:"many2many:project_freelancers;"`
+	JsonComments   string      `json:"-" sql:"type:JSONB NOT NULL"`
+	Comments       []Comment   `sql:"-"`
+	JsonReferences string      `json:"-" sql:"type:JSONB NOT NULL"`
+	References     []Reference `sql:"-"`
 }
 
 func (freelancer *Freelancer) getRepresentationMap() map[string]interface{} {
@@ -56,18 +60,18 @@ type Job struct {
 // 	Client   Client  `json:"client"`
 // }
 
-//type Reference struct {
-//	Title   string `json:"title"`
-//	Content string `json:"content"`
-//	Media   Media  `json:"media"`
-//}
-//
-//type Media struct {
-//	Image string `json:"image"`
-//	Video string `json:"video"`
-//}
-//
-//type FreelancerData struct {
-//	Reviews    []Review    `json:"reviews"`
-//	References []Reference `json:"references"`
-//}
+type Reference struct {
+	Title   string `json:"title"`
+	Content string `json:"content"`
+	Media   Media  `json:"media"`
+}
+
+type Media struct {
+	Image string `json:"image"`
+	Video string `json:"video"`
+}
+
+type Comment struct {
+	Text     string `json:"text"`
+	ClientId uint   `json:"clientId"`
+}

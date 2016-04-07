@@ -110,6 +110,7 @@ func NewFreelancer(w http.ResponseWriter, r *http.Request) {
 
 	respond.With(w, r, http.StatusOK, freelancer)
 }
+
 func GetFreelancer(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	freelancer := Freelancer{}
@@ -126,7 +127,7 @@ func GetFreelancer(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var appContext = context.Get(r, "context").(*ApplicationContext)
-	freelancer, err = appContext.FreelancerRepository.GetFreelancer(id)
+	freelancer, err = appContext.FreelancerRepository.GetFreelancer(uint(id))
 	if err != nil {
 		respond.With(w, r, http.StatusBadRequest, err)
 		return
@@ -182,42 +183,40 @@ func IndexClient(w http.ResponseWriter, r *http.Request) {
 	respond.With(w, r, http.StatusOK, clients)
 }
 
-//
-//func NewFreelancerReference(w http.ResponseWriter, r *http.Request) {
-//	vars := mux.Vars(r)
-//
-//	if vars["id"] == "" {
-//		WriteError(w, http.StatusBadRequest, errors.New("Id not provided."))
-//		return
-//	}
-//
-//	id, err := strconv.Atoi(vars["id"])
-//	if err != nil {
-//		WriteError(w, http.StatusBadRequest, err)
-//		return
-//	}
-//
-//	decoder := json.NewDecoder(r.Body)
-//	defer r.Body.Close()
-//
-//	var reference Reference
-//	if err := decoder.Decode(&reference); err != nil {
-//		WriteError(w, http.StatusBadRequest, err)
-//		return
-//	}
-//
-//	if ok, err := govalidator.ValidateStruct(reference); ok == false || err != nil {
-//		errs := govalidator.ErrorsByField(err)
-//		w.WriteHeader(http.StatusBadRequest)
-//		json.NewEncoder(w).Encode(errs)
-//		return
-//	}
-//
-//	var appContext = context.Get(r, "context").(*ApplicationContext)
-//	if err := appContext.FreelancerRepository.addReference(id, reference); err != nil {
-//		WriteError(w, http.StatusBadRequest, err)
-//		return
-//	}
-//
-//	w.WriteHeader(http.StatusOK)
-//}
+func AddFreelancerReference(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+
+	if vars["id"] == "" {
+		respond.With(w, r, http.StatusBadRequest, errors.New("Id not provided."))
+		return
+	}
+
+	id, err := strconv.Atoi(vars["id"])
+	if err != nil {
+		respond.With(w, r, http.StatusBadRequest, err)
+		return
+	}
+
+	decoder := json.NewDecoder(r.Body)
+	defer r.Body.Close()
+
+	var reference Reference
+	if err := decoder.Decode(&reference); err != nil {
+		respond.With(w, r, http.StatusBadRequest, err)
+		return
+	}
+
+	if ok, err := govalidator.ValidateStruct(reference); ok == false || err != nil {
+		errs := govalidator.ErrorsByField(err)
+		respond.With(w, r, http.StatusBadRequest, errs)
+		return
+	}
+
+	var appContext = context.Get(r, "context").(*ApplicationContext)
+	if err := appContext.FreelancerRepository.AddReference(uint(id), reference); err != nil {
+		respond.With(w, r, http.StatusBadRequest, err)
+		return
+	}
+
+	respond.With(w, r, http.StatusOK, nil)
+}

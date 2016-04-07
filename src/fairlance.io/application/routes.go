@@ -48,7 +48,7 @@ var routes = Routes{
 		"GetFreelancer",
 		"GET",
 		"/freelancer/{id}",
-		AuthHandler(http.HandlerFunc(GetFreelancer)),
+		http.HandlerFunc(GetFreelancer),
 		[]string{"GET"},
 	},
 	Route{
@@ -59,14 +59,14 @@ var routes = Routes{
 		[]string{"OPTIONS", "DELETE"},
 	},
 
-	//Route{
-	//	"NewFreelancerReference",
-	//	"POST",
-	//	"/freelancer/{id}/reference/new",
-	//	http.HandlerFunc(NewFreelancerReference),
-	//	[]string{"OPTIONS", "POST"},
-	//},
-	//
+	Route{
+		"AddFreelancerReference",
+		"POST",
+		"/freelancer/{id}/reference/new",
+		http.HandlerFunc(AddFreelancerReference),
+		[]string{"OPTIONS", "POST"},
+	},
+
 	Route{
 		"IndexProject",
 		"GET",
