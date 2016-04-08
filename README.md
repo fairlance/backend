@@ -23,7 +23,7 @@ make
 │       ├── fairlance.io
 │       │   ├── mailer.a
 │       │   └── registration.a
-│       └── ... 
+│       └── ...
 └── src
     └── fairlance.io/
         ├── mailer                  <---- Utility package
@@ -35,7 +35,7 @@ make
         │   ├── handlers_test.go
         │   ├── model.go
         │   └── user_repository.go
-        └── services                <---- Folder that contains all runable services
+        └── services                <---- Folder that contains all runnable services
             └── registration        <---- Every service is located in a folder with the same name
                 └── registration.go <---- Service with package "main"
 ```
