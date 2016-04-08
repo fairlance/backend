@@ -1,10 +1,11 @@
 package application
 
 import (
+	"net/http"
+
 	"github.com/gorilla/context"
 	"github.com/gorilla/mux"
 	"gopkg.in/matryer/respond.v1"
-	"net/http"
 )
 
 func NewRouter(appContext *ApplicationContext) *mux.Router {
@@ -28,7 +29,7 @@ func NewRouter(appContext *ApplicationContext) *mux.Router {
 		var handler http.Handler
 		handler = opts.Handler(route.Handler)
 		handler = CORSHandler(ContextAwareHandler(handler, appContext), route)
-		handler = context.ClearHandler(LoggerHandler(handler))
+		handler = context.ClearHandler(handler)
 
 		router.
 			Methods(route.AllowedMethods...).

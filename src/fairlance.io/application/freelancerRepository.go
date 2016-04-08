@@ -20,13 +20,8 @@ func NewFreelancerRepository(db *gorm.DB) (*FreelancerRepository, error) {
 }
 func (repo *FreelancerRepository) GetAllFreelancers() ([]Freelancer, error) {
 	freelancers := []Freelancer{}
-	if err := repo.db.Preload("Projects").Find(&freelancers).Limit(100).Error; err != nil {
+	if err := repo.db.Preload("Projects").Preload("Reviews").Find(&freelancers).Error; err != nil {
 		return freelancers, err
-	}
-	for i := 0; i < len(freelancers); i++ {
-		if err := repo.hydrate(&freelancers[i]); err != nil {
-			return freelancers, err
-		}
 	}
 	return freelancers, nil
 }
@@ -41,10 +36,7 @@ func (repo *FreelancerRepository) GetFreelancerByEmail(email string) (Freelancer
 
 func (repo *FreelancerRepository) GetFreelancer(id uint) (Freelancer, error) {
 	freelancer := Freelancer{}
-	if err := repo.db.Preload("Projects").Where("id = ?", id).Find(&freelancer).Error; err != nil {
-		return freelancer, err
-	}
-	if err := repo.hydrate(&freelancer); err != nil {
+	if err := repo.db.Preload("Projects").Preload("Reviews").Find(&freelancer, id).Error; err != nil {
 		return freelancer, err
 	}
 	return freelancer, nil
@@ -73,33 +65,18 @@ func (repo *FreelancerRepository) AddFreelancer(freelancer *Freelancer) error {
 }
 
 func (repo *FreelancerRepository) UpdateFreelancer(freelancer *Freelancer) error {
-	if freelancer.ID == 0 {
-		return errors.New("Can't update entity without id")
-	}
 	return repo.db.Save(freelancer).Error
 }
 
 func (repo *FreelancerRepository) DeleteFreelancer(id uint) error {
 	freelancer := Freelancer{}
-	freelancer.ID = id
-	if repo.db.Find(&freelancer).RecordNotFound() {
+	if repo.db.Find(&freelancer, id).RecordNotFound() {
 		return errors.New("Freelancer not found")
 	}
 	return repo.db.Delete(&freelancer).Error
 }
 
-func (repo *FreelancerRepository) hydrate(freelancer *Freelancer) error {
-	if err := json.Unmarshal([]byte(freelancer.JsonComments), &freelancer.Comments); err != nil {
-		return err
-	}
-	if err := json.Unmarshal([]byte(freelancer.JsonReferences), &freelancer.References); err != nil {
-		return err
-	}
-	return nil
-}
-
 func (repo *FreelancerRepository) AddReference(freelancerId uint, reference Reference) error {
-
 	freelancer, err := repo.GetFreelancer(freelancerId)
 	if err != nil {
 		return err
@@ -109,6 +86,23 @@ func (repo *FreelancerRepository) AddReference(freelancerId uint, reference Refe
 		return err
 	}
 	freelancer.JsonReferences = string(references)
+	return repo.db.Save(freelancer).Error
+}
 
-	return nil
+func (repo *FreelancerRepository) AddReview(newReview Review) error {
+	freelancer := Freelancer{}
+	err := repo.db.Preload("Reviews").Find(&freelancer, newReview.FreelancerId).Error
+	if err != nil {
+		return err
+	}
+	rating := newReview.Rating
+	for _, review := range freelancer.Reviews {
+		rating += review.Rating
+	}
+	freelancer.Rating = rating / float64(len(freelancer.Reviews)+1)
+	err = repo.db.Save(&newReview).Error
+	if err != nil {
+		return err
+	}
+	return repo.db.Save(&freelancer).Error
 }

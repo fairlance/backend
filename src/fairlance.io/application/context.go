@@ -1,8 +1,6 @@
 package application
 
 import (
-	"encoding/json"
-
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 )
@@ -37,42 +35,44 @@ func NewContext(dbName string) (*ApplicationContext, error) {
 }
 
 func (ac *ApplicationContext) prepareTables(db *gorm.DB) {
-	db.DropTableIfExists(&Freelancer{}, &Project{}, &Client{}, &Job{})
-	db.CreateTable(&Freelancer{}, &Project{}, &Client{}, &Job{})
+	db.DropTableIfExists(&Freelancer{}, &Project{}, &Client{}, &Job{}, &Review{})
+	db.CreateTable(&Freelancer{}, &Project{}, &Client{}, &Job{}, &Review{})
 
-	db.Create(&Freelancer{
-		FirstName:      "First",
-		LastName:       "Last",
-		Title:          "Dev",
-		Password:       "Pass",
-		Email:          "first@mail.com",
-		JsonComments:   `[]`,
-		JsonReferences: `[]`,
+	db.Create(NewFreelancer("First", "Last", "Dev", "Pass", "first@mail.com"))
+
+	ac.FreelancerRepository.AddReview(Review{
+		Title:        "text2",
+		Content:      "content",
+		Rating:       4.1,
+		ClientId:     1,
+		FreelancerId: 1,
+	})
+	ac.FreelancerRepository.AddReference(1, Reference{"title", "content", Media{"image", "video"}})
+
+	db.Create(NewFreelancer(
+		"Milos",
+		"Krsmanovic",
+		"Dev",
+		"$2a$10$VJ8H9EYOIj9mnyW5mUm/nOWUrz/Rkak4/Ov3Lnw1GsAm4gmYU6sQu",
+		"milos@gmail.com",
+	))
+
+	ac.FreelancerRepository.AddReview(Review{
+		Title:        "text2",
+		Content:      "content",
+		Rating:       4.1,
+		ClientId:     1,
+		FreelancerId: 2,
 	})
 
-	freelancer, _ := ac.FreelancerRepository.GetFreelancerByEmail("first@mail.com")
-	js, _ := json.Marshal(append(freelancer.Comments, Comment{"text2", 1}))
-	freelancer.JsonComments = string(js)
-	js, _ = json.Marshal(append(freelancer.References, Reference{"title", "content", Media{"image", "video"}}))
-	freelancer.JsonReferences = string(js)
-	ac.FreelancerRepository.UpdateFreelancer(&freelancer)
-
-	db.Create(&Freelancer{
-		FirstName:      "Milos",
-		LastName:       "Krsmanovic",
-		Title:          "Dev",
-		Password:       "$2a$10$VJ8H9EYOIj9mnyW5mUm/nOWUrz/Rkak4/Ov3Lnw1GsAm4gmYU6sQu",
-		Email:          "milos@gmail.com",
-		JsonComments:   `[]`,
-		JsonReferences: `[]`,
+	ac.FreelancerRepository.AddReview(Review{
+		Title:        "text2",
+		Content:      "content",
+		Rating:       2.4,
+		ClientId:     2,
+		FreelancerId: 2,
 	})
-
-	milos, _ := ac.FreelancerRepository.GetFreelancerByEmail("milos@gmail.com")
-	js, _ = json.Marshal(append(milos.Comments, Comment{"text2", 1}))
-	milos.JsonComments = string(js)
-	js, _ = json.Marshal(append(milos.References, Reference{"title", "content", Media{"image", "video"}}))
-	milos.JsonReferences = string(js)
-	ac.FreelancerRepository.UpdateFreelancer(&milos)
+	ac.FreelancerRepository.AddReference(2, Reference{"title", "content", Media{"image", "video"}})
 
 	db.Create(&Project{
 		Name:        "Project",

@@ -41,7 +41,7 @@ var routes = Routes{
 		"NewFreelancer",
 		"POST",
 		"/freelancer/new",
-		http.HandlerFunc(NewFreelancer),
+		http.HandlerFunc(AddFreelancer),
 		[]string{"OPTIONS", "POST"},
 	},
 	Route{
@@ -62,8 +62,16 @@ var routes = Routes{
 	Route{
 		"AddFreelancerReference",
 		"POST",
-		"/freelancer/{id}/reference/new",
+		"/freelancer/{id}/reference",
 		http.HandlerFunc(AddFreelancerReference),
+		[]string{"OPTIONS", "POST"},
+	},
+
+	Route{
+		"AddFreelancerReview",
+		"POST",
+		"/freelancer/review",
+		http.HandlerFunc(AddFreelancerReview),
 		[]string{"OPTIONS", "POST"},
 	},
 

@@ -17,6 +17,6 @@ func NewClientRepository(db *gorm.DB) (*ClientRepository, error) {
 
 func (repo *ClientRepository) GetAllClients() ([]Client, error) {
 	clients := []Client{}
-	repo.db.Preload("Projects").Find(&clients)
+	repo.db.Preload("Projects").Preload("Reviews").Find(&clients)
 	return clients, nil
 }

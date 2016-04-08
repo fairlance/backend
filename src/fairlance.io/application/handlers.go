@@ -78,7 +78,7 @@ func IndexFreelancer(w http.ResponseWriter, r *http.Request) {
 	respond.With(w, r, http.StatusOK, freelancers)
 }
 
-func NewFreelancer(w http.ResponseWriter, r *http.Request) {
+func AddFreelancer(w http.ResponseWriter, r *http.Request) {
 	decoder := json.NewDecoder(r.Body)
 	defer r.Body.Close()
 
@@ -214,6 +214,31 @@ func AddFreelancerReference(w http.ResponseWriter, r *http.Request) {
 
 	var appContext = context.Get(r, "context").(*ApplicationContext)
 	if err := appContext.FreelancerRepository.AddReference(uint(id), reference); err != nil {
+		respond.With(w, r, http.StatusBadRequest, err)
+		return
+	}
+
+	respond.With(w, r, http.StatusOK, nil)
+}
+
+func AddFreelancerReview(w http.ResponseWriter, r *http.Request) {
+	decoder := json.NewDecoder(r.Body)
+	defer r.Body.Close()
+
+	var review Review
+	if err := decoder.Decode(&review); err != nil {
+		respond.With(w, r, http.StatusBadRequest, err)
+		return
+	}
+
+	if ok, err := govalidator.ValidateStruct(review); ok == false || err != nil {
+		errs := govalidator.ErrorsByField(err)
+		respond.With(w, r, http.StatusBadRequest, errs)
+		return
+	}
+
+	var appContext = context.Get(r, "context").(*ApplicationContext)
+	if err := appContext.FreelancerRepository.AddReview(review); err != nil {
 		respond.With(w, r, http.StatusBadRequest, err)
 		return
 	}
