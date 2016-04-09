@@ -30,16 +30,25 @@ type Freelancer struct {
 	References     []Reference `json:"references" sql:"-"`
 }
 
-func NewFreelancer(title string, firstName string, lastName string, password string, email string) *Freelancer {
+func NewFreelancer(
+	title string,
+	firstName string,
+	lastName string,
+	password string,
+	email string,
+	hourlyRateFrom float64,
+	hourlyRateTo float64,
+	timeZone string,
+) *Freelancer {
 	return &Freelancer{
 		Title:          title,
 		FirstName:      firstName,
 		LastName:       lastName,
 		Password:       password,
 		Email:          email,
-		TimeZone:       "UTC",
-		HourlyRateFrom: 2,
-		HourlyRateTo:   52,
+		TimeZone:       timeZone,
+		HourlyRateFrom: hourlyRateFrom,
+		HourlyRateTo:   hourlyRateTo,
 		JsonReferences: `[]`,
 	}
 }
@@ -65,8 +74,8 @@ func (freelancer *Freelancer) AfterFind() (err error) {
 
 type Client struct {
 	Model
-	Name        string    `json:"name"`
-	Description string    `json:"description"`
+	Name        string    `json:"name" valid:"required"`
+	Description string    `json:"description" valid:"required"`
 	Jobs        []Job     `json:"jobs"`
 	Projects    []Project `json:"projects"`
 	Reviews     []Review  `json:"reviews"`
@@ -74,32 +83,32 @@ type Client struct {
 
 type Project struct {
 	Model
-	Name        string       `json:"name"`
-	Description string       `json:"description"`
+	Name        string       `json:"name" valid:"required"`
+	Description string       `json:"description" valid:"required"`
 	Freelancers []Freelancer `json:"freelancers" gorm:"many2many:project_freelancers;"`
-	ClientId    uint         `json:"clientId"`
+	ClientId    uint         `json:"clientId" valid:"required"`
 	IsActive    bool         `json:"isActive"`
 }
 
 type Job struct {
 	Model
-	Name        string `json:"name"`
-	Description string `json:"description"`
-	ClientId    uint   `json:"clientId"`
+	Name        string `json:"name" valid:"required"`
+	Description string `json:"description" valid:"required"`
+	ClientId    uint   `json:"clientId" valid:"required"`
 	IsActive    bool   `json:"isActive"`
 }
 
 type Review struct {
 	Model
-	Title        string  `json:"title"`
+	Title        string  `json:"title" valid:"required"`
 	Content      string  `json:"content"`
-	Rating       float64 `json:"rating"`
-	ClientId     uint    `json:"clientId"`
-	FreelancerId uint    `json:"freelancerId"`
+	Rating       float64 `json:"rating" valid:"required"`
+	ClientId     uint    `json:"clientId" valid:"required"`
+	FreelancerId uint    `json:"freelancerId" valid:"required"`
 }
 
 type Reference struct {
-	Title   string `json:"title"`
+	Title   string `json:"title" valid:"required"`
 	Content string `json:"content"`
 	Media   Media  `json:"media"`
 }

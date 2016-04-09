@@ -38,7 +38,7 @@ func (ac *ApplicationContext) prepareTables(db *gorm.DB) {
 	db.DropTableIfExists(&Freelancer{}, &Project{}, &Client{}, &Job{}, &Review{})
 	db.CreateTable(&Freelancer{}, &Project{}, &Client{}, &Job{}, &Review{})
 
-	db.Create(NewFreelancer("First", "Last", "Dev", "Pass", "first@mail.com"))
+	ac.FreelancerRepository.AddFreelancer(NewFreelancer("First", "Last", "Dev", "Pass", "first@mail.com", 3, 55, "UTC"))
 
 	ac.FreelancerRepository.AddReview(Review{
 		Title:        "text2",
@@ -48,13 +48,15 @@ func (ac *ApplicationContext) prepareTables(db *gorm.DB) {
 		FreelancerId: 1,
 	})
 	ac.FreelancerRepository.AddReference(1, Reference{"title", "content", Media{"image", "video"}})
-
-	db.Create(NewFreelancer(
+	ac.FreelancerRepository.AddFreelancer(NewFreelancer(
 		"Milos",
 		"Krsmanovic",
 		"Dev",
 		"$2a$10$VJ8H9EYOIj9mnyW5mUm/nOWUrz/Rkak4/Ov3Lnw1GsAm4gmYU6sQu",
 		"milos@gmail.com",
+		12,
+		22,
+		"CET",
 	))
 
 	ac.FreelancerRepository.AddReview(Review{
@@ -92,5 +94,6 @@ func (ac *ApplicationContext) prepareTables(db *gorm.DB) {
 		ClientId:    1,
 	})
 
-	ac.FreelancerRepository.DeleteFreelancer(1)
+	ac.FreelancerRepository.AddFreelancer(NewFreelancer("Third", "Last", "Dev", "Pass", "third@mail.com", 3, 55, "UTC"))
+	ac.FreelancerRepository.DeleteFreelancer(3)
 }
