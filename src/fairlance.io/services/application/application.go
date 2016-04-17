@@ -1,12 +1,14 @@
 package main
 
 import (
-	app "fairlance.io/application"
 	"net/http"
+
+	app "fairlance.io/application"
 )
 
 func main() {
 	var appContext, err = app.NewContext("application")
+	appContext.PrepareTables()
 	if err != nil {
 		panic(err)
 	}

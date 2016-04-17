@@ -31,9 +31,9 @@ type Freelancer struct {
 }
 
 func NewFreelancer(
-	title string,
 	firstName string,
 	lastName string,
+	title string,
 	password string,
 	email string,
 	hourlyRateFrom float64,
@@ -46,10 +46,14 @@ func NewFreelancer(
 		LastName:       lastName,
 		Password:       password,
 		Email:          email,
-		TimeZone:       timeZone,
 		HourlyRateFrom: hourlyRateFrom,
 		HourlyRateTo:   hourlyRateTo,
+		TimeZone:       timeZone,
+		Reviews:        []Review{},
+		Projects:       []Project{},
+
 		JsonReferences: `[]`,
+		References:     []Reference{},
 	}
 }
 

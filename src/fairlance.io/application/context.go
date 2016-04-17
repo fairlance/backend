@@ -6,6 +6,7 @@ import (
 )
 
 type ApplicationContext struct {
+	db                   *gorm.DB
 	FreelancerRepository *FreelancerRepository
 	ProjectRepository    *ProjectRepository
 	ClientRepository     *ClientRepository
@@ -13,7 +14,7 @@ type ApplicationContext struct {
 }
 
 func NewContext(dbName string) (*ApplicationContext, error) {
-	db, err := gorm.Open("postgres", "user=fairlance password=fairlance dbname=application sslmode=disable")
+	db, err := gorm.Open("postgres", "user=fairlance password=fairlance dbname="+dbName+" sslmode=disable")
 	if err != nil {
 		return nil, err
 	}
@@ -23,20 +24,33 @@ func NewContext(dbName string) (*ApplicationContext, error) {
 	clientRepository, _ := NewClientRepository(db)
 
 	context := &ApplicationContext{
+		db:                   db,
 		FreelancerRepository: freelancerRepository,
 		ProjectRepository:    projectRepository,
 		ClientRepository:     clientRepository,
 		JwtSecret:            "fairlance", //base64.StdEncoding.EncodeToString([]byte("fairlance")),
 	}
 
-	context.prepareTables(db)
-
 	return context, nil
 }
 
-func (ac *ApplicationContext) prepareTables(db *gorm.DB) {
-	db.DropTableIfExists(&Freelancer{}, &Project{}, &Client{}, &Job{}, &Review{})
-	db.CreateTable(&Freelancer{}, &Project{}, &Client{}, &Job{}, &Review{})
+func (ac *ApplicationContext) truncateTable(entity interface{}) {
+	if ac.db.HasTable(entity) {
+		ac.db.Delete(entity)
+	}
+}
+
+func (ac *ApplicationContext) TruncateTables() {
+	ac.truncateTable(&Freelancer{})
+	ac.truncateTable(&Project{})
+	ac.truncateTable(&Client{})
+	ac.truncateTable(&Job{})
+	ac.truncateTable(&Review{})
+}
+
+func (ac *ApplicationContext) PrepareTables() {
+	ac.db.DropTableIfExists(&Freelancer{}, &Project{}, &Client{}, &Job{}, &Review{})
+	ac.db.CreateTable(&Freelancer{}, &Project{}, &Client{}, &Job{}, &Review{})
 
 	ac.FreelancerRepository.AddFreelancer(NewFreelancer("First", "Last", "Dev", "Pass", "first@mail.com", 3, 55, "UTC"))
 
@@ -49,11 +63,11 @@ func (ac *ApplicationContext) prepareTables(db *gorm.DB) {
 	})
 	ac.FreelancerRepository.AddReference(1, Reference{"title", "content", Media{"image", "video"}})
 	ac.FreelancerRepository.AddFreelancer(NewFreelancer(
-		"Milos",
-		"Krsmanovic",
+		"Pera",
+		"Peric",
 		"Dev",
 		"$2a$10$VJ8H9EYOIj9mnyW5mUm/nOWUrz/Rkak4/Ov3Lnw1GsAm4gmYU6sQu",
-		"milos@gmail.com",
+		"pera@gmail.com",
 		12,
 		22,
 		"CET",
@@ -76,19 +90,19 @@ func (ac *ApplicationContext) prepareTables(db *gorm.DB) {
 	})
 	ac.FreelancerRepository.AddReference(2, Reference{"title", "content", Media{"image", "video"}})
 
-	db.Create(&Project{
+	ac.db.Create(&Project{
 		Name:        "Project",
 		Description: "Description",
 		ClientId:    1,
 		IsActive:    true,
 	})
 
-	db.Create(&Client{
+	ac.db.Create(&Client{
 		Name:        "Client",
 		Description: "Desc Client",
 	})
 
-	db.Create(&Job{
+	ac.db.Create(&Job{
 		Name:        "Client",
 		Description: "Desc Client",
 		ClientId:    1,

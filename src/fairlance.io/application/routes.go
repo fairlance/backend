@@ -38,40 +38,38 @@ var routes = Routes{
 		[]string{"GET"},
 	},
 	Route{
-		"NewFreelancer",
+		"AddFreelancer",
 		"POST",
 		"/freelancer/new",
-		http.HandlerFunc(AddFreelancer),
+		FreelancerHandler(http.HandlerFunc(AddFreelancer)),
 		[]string{"OPTIONS", "POST"},
 	},
 	Route{
 		"GetFreelancer",
 		"GET",
 		"/freelancer/{id}",
-		http.HandlerFunc(GetFreelancer),
+		IdHandler(http.HandlerFunc(GetFreelancer)),
 		[]string{"GET"},
 	},
 	Route{
 		"DeleteFreelancer",
 		"DELETE",
 		"/freelancer/{id}",
-		AuthHandler(http.HandlerFunc(DeleteFreelancer)),
+		AuthHandler(IdHandler(http.HandlerFunc(DeleteFreelancer))),
 		[]string{"OPTIONS", "DELETE"},
 	},
-
 	Route{
 		"AddFreelancerReference",
 		"POST",
 		"/freelancer/{id}/reference",
-		http.HandlerFunc(AddFreelancerReference),
+		IdHandler(FreelancerReferenceHandler(http.HandlerFunc(AddFreelancerReference))),
 		[]string{"OPTIONS", "POST"},
 	},
-
 	Route{
 		"AddFreelancerReview",
 		"POST",
 		"/freelancer/review",
-		http.HandlerFunc(AddFreelancerReview),
+		FreelancerReviewHandler(http.HandlerFunc(AddFreelancerReview)),
 		[]string{"OPTIONS", "POST"},
 	},
 

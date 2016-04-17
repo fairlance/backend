@@ -5,13 +5,34 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gorilla/context"
+	"github.com/gorilla/mux"
 	"gopkg.in/matryer/respond.v1"
 )
+
+func IdHandler(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+
+		if vars["id"] == "" {
+			respond.With(w, r, http.StatusBadRequest, errors.New("Id not provided."))
+			return
+		}
+
+		id, err := strconv.ParseUint(vars["id"], 10, 64)
+		if err != nil {
+			respond.With(w, r, http.StatusBadRequest, err)
+			return
+		}
+		context.Set(r, "id", id)
+		next.ServeHTTP(w, r)
+	})
+}
 
 func LoggerHandler(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

@@ -1,9 +1,10 @@
 package registration
 
 import (
-	"fairlance.io/mailer"
 	"log"
 	"os"
+
+	"fairlance.io/mailer"
 )
 
 type RegistrationContext struct {
@@ -22,7 +23,7 @@ func NewContext(dbName string) *RegistrationContext {
 
 	registeredUserRepository, err := NewRegisteredUserRepository(dbName)
 	if err != nil {
-		logger.Println("Failed to open user repository: %v", err)
+		logger.Println("Failed to open user repository: %v", err.Error())
 	}
 
 	// Setup context
