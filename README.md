@@ -4,14 +4,19 @@
  "")
 
 
+#### Available *make* commands
+```bash
+Available targets:
+- install: install all services
+- test: run tests
+- installDependenciesAndTest: install dependencies declared in dependencies.txt and run tests
+- installDependencies: installs dependencies declared in dependencies.txt
+
+```
+
 #### Run tests with:
 ```bash
 make test
-```
-
-#### See available *make* commands
-```bash
-make
 ```
 
 #### Structure:
@@ -26,16 +31,23 @@ make
 │       └── ...
 └── src
     └── fairlance.io/
-        ├── mailer                  <---- Utility package
+        ├── mailer                  <---- Utility package; package mailer
         │   ├── mailer.go
         │   └── mailgun.go
-        ├── registration            <---- Package that contains all service relevant functionality
+        │
+        ├── registration            <---- Package that contains a service; generates a binary; package main
+        │   ├── main.go             <---- contains main function
         │   ├── context.go
         │   ├── handlers.go
         │   ├── handlers_test.go
         │   ├── model.go
         │   └── user_repository.go
-        └── services                <---- Folder that contains all runnable services
-            └── registration        <---- Every service is located in a folder with the same name
-                └── registration.go <---- Service with package "main"
+        │
+        └── application             <---- Second package that also generates a binary; package main
+            ├── main.go
+            ├── context.go
+            ├── handlers.go
+            ├── handlers_test.go
+            ├── model.go
+            └── repository.go
 ```

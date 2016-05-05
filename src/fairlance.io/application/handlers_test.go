@@ -1,4 +1,4 @@
-package application_test
+package main
 
 import (
 	"bytes"
@@ -6,7 +6,6 @@ import (
 	"log"
 	"testing"
 
-	app "fairlance.io/application"
 	"github.com/cheekybits/is"
 	"github.com/gorilla/context"
 	"github.com/gorilla/mux"
@@ -17,7 +16,7 @@ import (
 )
 
 var (
-	appContext   *app.ApplicationContext
+	appContext   *ApplicationContext
 	emptyHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 )
 
@@ -26,7 +25,7 @@ func TestIndex(t *testing.T) {
 
 	w := httptest.NewRecorder()
 	r, _ := http.NewRequest("GET", "/", nil)
-	app.Index(w, r)
+	Index(w, r)
 
 	is.Equal(w.Code, http.StatusOK)
 	var data string
@@ -40,15 +39,15 @@ func TestIdHandler(t *testing.T) {
 	r, _ := http.NewRequest("GET", "/1", nil)
 	w := httptest.NewRecorder()
 	router := mux.NewRouter()
-	router.Handle("/{id}", app.IdHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	router.Handle("/{id}", IdHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		id := context.Get(r, "id").(uint64)
 		is.Equal(id, 1)
 	}))).Methods("GET")
 	router.ServeHTTP(w, r)
 }
 
-func buildTestContext(db string) *app.ApplicationContext {
-	context, err := app.NewContext(db)
+func buildTestContext(db string) *ApplicationContext {
+	context, err := NewContext(db)
 	if err != nil {
 		panic(err)
 	}

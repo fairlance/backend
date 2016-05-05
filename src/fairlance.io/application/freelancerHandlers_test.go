@@ -1,4 +1,4 @@
-package application_test
+package main
 
 import (
 	"encoding/json"
@@ -8,8 +8,6 @@ import (
 
 	"github.com/cheekybits/is"
 	"github.com/gorilla/context"
-
-	app "fairlance.io/application"
 )
 
 func TestFreelancerHandler(t *testing.T) {
@@ -29,8 +27,8 @@ func TestFreelancerHandler(t *testing.T) {
 	w := httptest.NewRecorder()
 	r := getRequest("GET", requestBody)
 	emptyHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
-	app.FreelancerHandler(emptyHandler).ServeHTTP(w, r)
-	freelancer := context.Get(r, "freelancer").(*app.Freelancer)
+	FreelancerHandler(emptyHandler).ServeHTTP(w, r)
+	freelancer := context.Get(r, "freelancer").(*Freelancer)
 	is.Equal(freelancer.FirstName, "Pera")
 	is.Equal(freelancer.LastName, "Peric")
 	is.Equal(freelancer.Email, "pera@gmail.com")
@@ -49,7 +47,7 @@ func TestFreelancerHandlerWithInvalidBody(t *testing.T) {
 
 	w := httptest.NewRecorder()
 	r := getRequest("GET", requestBody)
-	app.FreelancerHandler(emptyHandler).ServeHTTP(w, r)
+	FreelancerHandler(emptyHandler).ServeHTTP(w, r)
 	is.Equal(w.Code, http.StatusBadRequest)
 	var errorBody map[string]string
 	is.NoErr(json.Unmarshal(w.Body.Bytes(), &errorBody))
@@ -79,7 +77,7 @@ func TestFreelancerHandlerWithInvalidEmail(t *testing.T) {
 
 	w := httptest.NewRecorder()
 	r := getRequest("GET", requestBody)
-	app.FreelancerHandler(emptyHandler).ServeHTTP(w, r)
+	FreelancerHandler(emptyHandler).ServeHTTP(w, r)
 	is.Equal(w.Code, http.StatusBadRequest)
 	var body map[string]string
 	is.NoErr(json.Unmarshal(w.Body.Bytes(), &body))
@@ -99,8 +97,8 @@ func TestFreelancerReviewHandler(t *testing.T) {
 
 	w := httptest.NewRecorder()
 	r := getRequest("GET", requestBody)
-	app.FreelancerReviewHandler(emptyHandler).ServeHTTP(w, r)
-	review := context.Get(r, "review").(*app.Review)
+	FreelancerReviewHandler(emptyHandler).ServeHTTP(w, r)
+	review := context.Get(r, "review").(*Review)
 	is.Equal(review.ClientId, 2)
 	is.Equal(review.Content, "content")
 	is.Equal(review.Rating, 2.4)
@@ -122,8 +120,8 @@ func TestFreelancerReferenceHandler(t *testing.T) {
 
 	w := httptest.NewRecorder()
 	r := getRequest("GET", requestBody)
-	app.FreelancerReferenceHandler(emptyHandler).ServeHTTP(w, r)
-	reference := context.Get(r, "reference").(*app.Reference)
+	FreelancerReferenceHandler(emptyHandler).ServeHTTP(w, r)
+	reference := context.Get(r, "reference").(*Reference)
 	is.Equal(reference.Title, "ttttt")
 	is.Equal(reference.Content, "ccccc")
 	is.Equal(reference.Media.Image, "i")

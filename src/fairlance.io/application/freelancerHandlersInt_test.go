@@ -1,4 +1,4 @@
-package application_test
+package main
 
 import (
 	"encoding/json"
@@ -8,8 +8,6 @@ import (
 
 	"github.com/cheekybits/is"
 	"github.com/gorilla/context"
-
-	app "fairlance.io/application"
 )
 
 func xTestIndexFreelancerWhenEmpty(t *testing.T) {
@@ -18,7 +16,7 @@ func xTestIndexFreelancerWhenEmpty(t *testing.T) {
 
 	w := httptest.NewRecorder()
 	r := getRequest("GET", "")
-	app.IndexFreelancer(w, r)
+	IndexFreelancer(w, r)
 
 	is.Equal(w.Code, http.StatusOK)
 	var data []interface{}
@@ -34,7 +32,7 @@ func xTestIndexFreelancerWithFreelancers(t *testing.T) {
 
 	w := httptest.NewRecorder()
 	r := getRequest("GET", "")
-	app.IndexFreelancer(w, r)
+	IndexFreelancer(w, r)
 
 	is.Equal(w.Code, http.StatusOK)
 	var data []interface{}
@@ -48,9 +46,9 @@ func xTestAddFreelancer(t *testing.T) {
 
 	w := httptest.NewRecorder()
 	r := getRequest("POST", "")
-	context.Set(r, "freelancer", GetFreelancer())
+	context.Set(r, "freelancer", GetMockFreelancer())
 
-	app.AddFreelancer(w, r)
+	AddFreelancer(w, r)
 
 	is.Equal(w.Code, http.StatusOK)
 	var data map[string]interface{}
@@ -85,7 +83,7 @@ func xTestDeleteFreelancer(t *testing.T) {
 	r := getRequest("POST", "")
 	context.Set(r, "id", id)
 
-	app.DeleteFreelancer(w, r)
+	DeleteFreelancer(w, r)
 
 	var data map[string]interface{}
 	is.Equal(w.Code, http.StatusOK)
@@ -94,8 +92,8 @@ func xTestDeleteFreelancer(t *testing.T) {
 	is.Equal(len(GetFreelancersFromDB()), 0)
 }
 
-func GetFreelancer() *app.Freelancer {
-	return app.NewFreelancer(
+func GetMockFreelancer() *Freelancer {
+	return NewFreelancer(
 		"Pera",
 		"Peric",
 		"Dev",
@@ -108,12 +106,12 @@ func GetFreelancer() *app.Freelancer {
 }
 
 func AddFreelancerToDB() uint {
-	f := GetFreelancer()
+	f := GetMockFreelancer()
 	appContext.FreelancerRepository.AddFreelancer(f)
 	return f.ID
 }
 
-func GetFreelancersFromDB() []app.Freelancer {
+func GetFreelancersFromDB() []Freelancer {
 	f, _ := appContext.FreelancerRepository.GetAllFreelancers()
 	return f
 }

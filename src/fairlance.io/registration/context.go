@@ -1,4 +1,4 @@
-package registration
+package main
 
 import (
 	"log"
@@ -23,7 +23,7 @@ func NewContext(dbName string) *RegistrationContext {
 
 	registeredUserRepository, err := NewRegisteredUserRepository(dbName)
 	if err != nil {
-		logger.Println("Failed to open user repository: %v", err.Error())
+		logger.Println("Failed to open user repository: %s", err.Error())
 	}
 
 	// Setup context
