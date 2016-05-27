@@ -11,7 +11,7 @@ import (
 	"github.com/gorilla/context"
 )
 
-func TestIndexFreelancerWhenEmpty(t *testing.T) {
+func xTestIndexFreelancerWhenEmpty(t *testing.T) {
 	setUp()
 	is := is.New(t)
 
@@ -25,7 +25,7 @@ func TestIndexFreelancerWhenEmpty(t *testing.T) {
 	is.Equal(data, []interface{}{})
 }
 
-func TestIndexFreelancerWithFreelancers(t *testing.T) {
+func xTestIndexFreelancerWithFreelancers(t *testing.T) {
 	setUp()
 	is := is.New(t)
 	AddFreelancerToDB()
@@ -41,7 +41,7 @@ func TestIndexFreelancerWithFreelancers(t *testing.T) {
 	is.Equal(len(data), 2)
 }
 
-func TestAddFreelancer(t *testing.T) {
+func xTestAddFreelancer(t *testing.T) {
 	setUp()
 	is := is.New(t)
 
@@ -75,7 +75,7 @@ func TestAddFreelancer(t *testing.T) {
 	is.Equal(freelancers[0].TimeZone, "CET")
 }
 
-func TestDeleteFreelancer(t *testing.T) {
+func xTestDeleteFreelancer(t *testing.T) {
 	setUp()
 	is := is.New(t)
 	id := AddFreelancerToDB()
