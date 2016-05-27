@@ -11,7 +11,10 @@ import (
 	"github.com/gorilla/context"
 )
 
-func xTestIndexFreelancerWhenEmpty(t *testing.T) {
+func TestIndexFreelancerWhenEmpty(t *testing.T) {
+	if testing.Short() {
+		t.Skip("Skipping TestIndexFreelancerWhenEmpty in short mode")
+	}
 	setUp()
 	is := is.New(t)
 
@@ -25,7 +28,10 @@ func xTestIndexFreelancerWhenEmpty(t *testing.T) {
 	is.Equal(data, []interface{}{})
 }
 
-func xTestIndexFreelancerWithFreelancers(t *testing.T) {
+func TestIndexFreelancerWithFreelancers(t *testing.T) {
+	if testing.Short() {
+		t.Skip("Skipping TestIndexFreelancerWithFreelancers in short mode")
+	}
 	setUp()
 	is := is.New(t)
 	AddFreelancerToDB()
@@ -41,7 +47,10 @@ func xTestIndexFreelancerWithFreelancers(t *testing.T) {
 	is.Equal(len(data), 2)
 }
 
-func xTestAddFreelancer(t *testing.T) {
+func TestAddFreelancer(t *testing.T) {
+	if testing.Short() {
+		t.Skip("Skipping TestAddFreelancer in short mode")
+	}
 	setUp()
 	is := is.New(t)
 
@@ -75,7 +84,10 @@ func xTestAddFreelancer(t *testing.T) {
 	is.Equal(freelancers[0].TimeZone, "CET")
 }
 
-func xTestDeleteFreelancer(t *testing.T) {
+func TestDeleteFreelancer(t *testing.T) {
+	if testing.Short() {
+		t.Skip("Skipping TestDeleteFreelancer in short mode")
+	}
 	setUp()
 	is := is.New(t)
 	id := AddFreelancerToDB()

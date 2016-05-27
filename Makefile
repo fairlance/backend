@@ -9,7 +9,7 @@ installDependencies:
 	cat dependencies.txt | xargs go get
 
 test:
-	go test fairlance.io/... -v
+	go test fairlance.io/... -v -short
 
 installDependenciesAndTest: installDependencies test
 
