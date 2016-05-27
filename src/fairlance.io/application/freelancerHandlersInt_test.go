@@ -1,4 +1,4 @@
-package main
+package main_test
 
 import (
 	"encoding/json"
@@ -6,17 +6,18 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	app "fairlance.io/application"
 	"github.com/cheekybits/is"
 	"github.com/gorilla/context"
 )
 
-func xTestIndexFreelancerWhenEmpty(t *testing.T) {
+func TestIndexFreelancerWhenEmpty(t *testing.T) {
 	setUp()
 	is := is.New(t)
 
 	w := httptest.NewRecorder()
 	r := getRequest("GET", "")
-	IndexFreelancer(w, r)
+	app.IndexFreelancer(w, r)
 
 	is.Equal(w.Code, http.StatusOK)
 	var data []interface{}
@@ -24,7 +25,7 @@ func xTestIndexFreelancerWhenEmpty(t *testing.T) {
 	is.Equal(data, []interface{}{})
 }
 
-func xTestIndexFreelancerWithFreelancers(t *testing.T) {
+func TestIndexFreelancerWithFreelancers(t *testing.T) {
 	setUp()
 	is := is.New(t)
 	AddFreelancerToDB()
@@ -32,7 +33,7 @@ func xTestIndexFreelancerWithFreelancers(t *testing.T) {
 
 	w := httptest.NewRecorder()
 	r := getRequest("GET", "")
-	IndexFreelancer(w, r)
+	app.IndexFreelancer(w, r)
 
 	is.Equal(w.Code, http.StatusOK)
 	var data []interface{}
@@ -40,7 +41,7 @@ func xTestIndexFreelancerWithFreelancers(t *testing.T) {
 	is.Equal(len(data), 2)
 }
 
-func xTestAddFreelancer(t *testing.T) {
+func TestAddFreelancer(t *testing.T) {
 	setUp()
 	is := is.New(t)
 
@@ -48,7 +49,7 @@ func xTestAddFreelancer(t *testing.T) {
 	r := getRequest("POST", "")
 	context.Set(r, "freelancer", GetMockFreelancer())
 
-	AddFreelancer(w, r)
+	app.AddFreelancer(w, r)
 
 	is.Equal(w.Code, http.StatusOK)
 	var data map[string]interface{}
@@ -74,7 +75,7 @@ func xTestAddFreelancer(t *testing.T) {
 	is.Equal(freelancers[0].TimeZone, "CET")
 }
 
-func xTestDeleteFreelancer(t *testing.T) {
+func TestDeleteFreelancer(t *testing.T) {
 	setUp()
 	is := is.New(t)
 	id := AddFreelancerToDB()
@@ -83,7 +84,7 @@ func xTestDeleteFreelancer(t *testing.T) {
 	r := getRequest("POST", "")
 	context.Set(r, "id", id)
 
-	DeleteFreelancer(w, r)
+	app.DeleteFreelancer(w, r)
 
 	var data map[string]interface{}
 	is.Equal(w.Code, http.StatusOK)
@@ -92,8 +93,8 @@ func xTestDeleteFreelancer(t *testing.T) {
 	is.Equal(len(GetFreelancersFromDB()), 0)
 }
 
-func GetMockFreelancer() *Freelancer {
-	return NewFreelancer(
+func GetMockFreelancer() *app.Freelancer {
+	return app.NewFreelancer(
 		"Pera",
 		"Peric",
 		"Dev",
@@ -111,7 +112,7 @@ func AddFreelancerToDB() uint {
 	return f.ID
 }
 
-func GetFreelancersFromDB() []Freelancer {
+func GetFreelancersFromDB() []app.Freelancer {
 	f, _ := appContext.FreelancerRepository.GetAllFreelancers()
 	return f
 }

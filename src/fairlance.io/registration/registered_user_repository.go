@@ -49,6 +49,10 @@ func (repo RegisteredUserRepository) AddRegisteredUser(user RegisteredUser) erro
 	return nil
 }
 
+func (repo RegisteredUserRepository) RemoveAll() {
+	repo.getUsersCollection().RemoveAll(nil)
+}
+
 func (repo RegisteredUserRepository) getUsersCollection() *mgo.Collection {
 	return repo.session.DB(repo.db).C("users")
 }

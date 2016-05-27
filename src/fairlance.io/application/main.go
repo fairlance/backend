@@ -10,7 +10,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	
+
 	router := NewRouter(appContext)
 	http.Handle("/", router)
 	if err := http.ListenAndServe(":3001", nil); err != nil {

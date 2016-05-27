@@ -34,24 +34,32 @@ func NewContext(dbName string) (*ApplicationContext, error) {
 	return context, nil
 }
 
-func (ac *ApplicationContext) truncateTable(entity interface{}) {
+func (ac *ApplicationContext) PrepareTables() {
+	ac.DropTables()
+	ac.CreateTables()
+	ac.FillTables()
+}
+
+func (ac *ApplicationContext) dropTable(entity interface{}) {
 	if ac.db.HasTable(entity) {
 		ac.db.Delete(entity)
 	}
 }
 
-func (ac *ApplicationContext) TruncateTables() {
-	ac.truncateTable(&Freelancer{})
-	ac.truncateTable(&Project{})
-	ac.truncateTable(&Client{})
-	ac.truncateTable(&Job{})
-	ac.truncateTable(&Review{})
+func (ac *ApplicationContext) DropTables() {
+	ac.dropTable(&Freelancer{})
+	ac.dropTable(&Project{})
+	ac.dropTable(&Client{})
+	ac.dropTable(&Job{})
+	ac.dropTable(&Review{})
 }
 
-func (ac *ApplicationContext) PrepareTables() {
+func (ac *ApplicationContext) CreateTables() {
 	ac.db.DropTableIfExists(&Freelancer{}, &Project{}, &Client{}, &Job{}, &Review{})
 	ac.db.CreateTable(&Freelancer{}, &Project{}, &Client{}, &Job{}, &Review{})
+}
 
+func (ac *ApplicationContext) FillTables() {
 	ac.FreelancerRepository.AddFreelancer(NewFreelancer("First", "Last", "Dev", "Pass", "first@mail.com", 3, 55, "UTC"))
 
 	ac.FreelancerRepository.AddReview(Review{

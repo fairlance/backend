@@ -1,4 +1,4 @@
-package main
+package main_test
 
 import (
 	"bytes"
@@ -13,10 +13,12 @@ import (
 
 	"net/http"
 	"net/http/httptest"
+
+	app "fairlance.io/application"
 )
 
 var (
-	appContext   *ApplicationContext
+	appContext   *app.ApplicationContext
 	emptyHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 )
 
@@ -25,7 +27,7 @@ func TestIndex(t *testing.T) {
 
 	w := httptest.NewRecorder()
 	r, _ := http.NewRequest("GET", "/", nil)
-	Index(w, r)
+	app.Index(w, r)
 
 	is.Equal(w.Code, http.StatusOK)
 	var data string
@@ -39,15 +41,15 @@ func TestIdHandler(t *testing.T) {
 	r, _ := http.NewRequest("GET", "/1", nil)
 	w := httptest.NewRecorder()
 	router := mux.NewRouter()
-	router.Handle("/{id}", IdHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	router.Handle("/{id}", app.IdHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		id := context.Get(r, "id").(uint64)
 		is.Equal(id, 1)
 	}))).Methods("GET")
 	router.ServeHTTP(w, r)
 }
 
-func buildTestContext(db string) *ApplicationContext {
-	context, err := NewContext(db)
+func buildTestContext(db string) *app.ApplicationContext {
+	context, err := app.NewContext(db)
 	if err != nil {
 		panic(err)
 	}
@@ -57,7 +59,8 @@ func buildTestContext(db string) *ApplicationContext {
 
 func setUp() {
 	appContext = buildTestContext("application_test")
-	appContext.TruncateTables()
+	appContext.DropTables()
+	appContext.CreateTables()
 }
 
 func getRequest(method string, requestBody string) *http.Request {

@@ -32,7 +32,7 @@ func IndexHandler(context *RegistrationContext, w http.ResponseWriter, r *http.R
 		return nil
 	}
 
-	users, err := context.registeredUserRepository.GetAllRegisteredUsers()
+	users, err := context.RegisteredUserRepository.GetAllRegisteredUsers()
 	if err != nil {
 		return err
 	}
@@ -65,7 +65,7 @@ func RegisterHandler(context *RegistrationContext, w http.ResponseWriter, r *htt
 		}
 
 		registerTime := time.Now()
-		err := context.registeredUserRepository.AddRegisteredUser(RegisteredUser{email, registerTime})
+		err := context.RegisteredUserRepository.AddRegisteredUser(RegisteredUser{email, registerTime})
 		if err != nil {
 			if mgo.IsDup(err) {
 				w.WriteHeader(http.StatusConflict)
@@ -78,7 +78,7 @@ func RegisterHandler(context *RegistrationContext, w http.ResponseWriter, r *htt
 
 		w.WriteHeader(http.StatusCreated)
 		json.NewEncoder(w).Encode(RegisteredUser{email, registerTime})
-		context.mailer.SendWelcomeMessage(email)
+		context.Mailer.SendWelcomeMessage(email)
 		return nil
 	}
 
