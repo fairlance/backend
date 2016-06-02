@@ -7,7 +7,7 @@ test:
     pre:
         - make installDependencies
     override:
-        - make test
+        - make testShort
     post:
         - make install
         - make installARM
