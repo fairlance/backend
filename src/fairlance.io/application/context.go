@@ -10,6 +10,7 @@ type ApplicationContext struct {
 	FreelancerRepository *FreelancerRepository
 	ProjectRepository    *ProjectRepository
 	ClientRepository     *ClientRepository
+	ReferenceRepository  *ReferenceRepository
 	JwtSecret            string
 }
 
@@ -22,19 +23,21 @@ func NewContext(dbName string) (*ApplicationContext, error) {
 	freelancerRepository, _ := NewFreelancerRepository(db)
 	projectRepository, _ := NewProjectRepository(db)
 	clientRepository, _ := NewClientRepository(db)
+	referenceRepository, _ := NewReferenceRepository(db)
 
 	context := &ApplicationContext{
 		db:                   db,
 		FreelancerRepository: freelancerRepository,
 		ProjectRepository:    projectRepository,
 		ClientRepository:     clientRepository,
+		ReferenceRepository:  referenceRepository,
 		JwtSecret:            "fairlance", //base64.StdEncoding.EncodeToString([]byte("fairlance")),
 	}
 
 	return context, nil
 }
 
-func (ac *ApplicationContext) PrepareTables() {
+func (ac *ApplicationContext) DropCreateFillTables() {
 	ac.DropTables()
 	ac.CreateTables()
 	ac.FillTables()
@@ -52,11 +55,12 @@ func (ac *ApplicationContext) DropTables() {
 	ac.dropTable(&Client{})
 	ac.dropTable(&Job{})
 	ac.dropTable(&Review{})
+	ac.dropTable(&Reference{})
 }
 
 func (ac *ApplicationContext) CreateTables() {
-	ac.db.DropTableIfExists(&Freelancer{}, &Project{}, &Client{}, &Job{}, &Review{})
-	ac.db.CreateTable(&Freelancer{}, &Project{}, &Client{}, &Job{}, &Review{})
+	ac.db.DropTableIfExists(&Freelancer{}, &Project{}, &Client{}, &Job{}, &Review{}, &Reference{})
+	ac.db.CreateTable(&Freelancer{}, &Project{}, &Client{}, &Job{}, &Review{}, &Reference{})
 }
 
 func (ac *ApplicationContext) FillTables() {
@@ -69,7 +73,12 @@ func (ac *ApplicationContext) FillTables() {
 		ClientId:     1,
 		FreelancerId: 1,
 	})
-	ac.FreelancerRepository.AddReference(1, Reference{"title", "content", Media{"image", "video"}})
+	ac.FreelancerRepository.AddReference(Reference{
+		Title:        "title",
+		Content:      "content",
+		Media:        Media{"image", "video"},
+		FreelancerId: 1,
+	})
 	ac.FreelancerRepository.AddFreelancer(NewFreelancer(
 		"Pera",
 		"Peric",
@@ -96,7 +105,12 @@ func (ac *ApplicationContext) FillTables() {
 		ClientId:     2,
 		FreelancerId: 2,
 	})
-	ac.FreelancerRepository.AddReference(2, Reference{"title", "content", Media{"image", "video"}})
+	ac.FreelancerRepository.AddReference(Reference{
+		Title:        "title",
+		Content:      "content",
+		Media:        Media{"image", "video"},
+		FreelancerId: 2,
+	})
 
 	ac.db.Create(&Project{
 		Name:        "Project",

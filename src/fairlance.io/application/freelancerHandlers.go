@@ -55,10 +55,9 @@ func DeleteFreelancer(w http.ResponseWriter, r *http.Request) {
 }
 
 func AddFreelancerReference(w http.ResponseWriter, r *http.Request) {
-	var id = context.Get(r, "id").(uint)
 	var reference = context.Get(r, "reference").(*Reference)
 	var appContext = context.Get(r, "context").(*ApplicationContext)
-	if err := appContext.FreelancerRepository.AddReference(id, *reference); err != nil {
+	if err := appContext.FreelancerRepository.AddReference(*reference); err != nil {
 		respond.With(w, r, http.StatusBadRequest, err)
 		return
 	}
@@ -121,20 +120,16 @@ func FreelancerReferenceHandler(next http.Handler) http.Handler {
 	})
 }
 
-func FreelancerHandler(next http.Handler) http.Handler {
+func RegisterFreelancerHandler(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		decoder := json.NewDecoder(r.Body)
 		defer r.Body.Close()
 
 		var body struct {
-			Title          string  `json:"title" valid:"required"`
-			FirstName      string  `json:"firstName" valid:"required"`
-			LastName       string  `json:"lastName" valid:"required"`
-			Password       string  `json:"password" valid:"required"`
-			Email          string  `json:"email" valid:"required,email"`
-			TimeZone       string  `json:"timeZone" valid:"required"`
-			HourlyRateFrom float64 `json:"hourlyRateFrom" valid:"required"`
-			HourlyRateTo   float64 `json:"hourlyRateTo" valid:"required"`
+			FirstName string `json:"firstName" valid:"required"`
+			LastName  string `json:"lastName" valid:"required"`
+			Password  string `json:"password" valid:"required"`
+			Email     string `json:"email" valid:"required,email"`
 		}
 
 		if err := decoder.Decode(&body); err != nil {
@@ -148,15 +143,11 @@ func FreelancerHandler(next http.Handler) http.Handler {
 			return
 		}
 
-		freelancer := NewFreelancer(
+		freelancer := NewRegisterFreelancer(
 			body.FirstName,
 			body.LastName,
-			body.Title,
 			body.Password,
 			body.Email,
-			body.HourlyRateFrom,
-			body.HourlyRateTo,
-			body.TimeZone,
 		)
 
 		context.Set(r, "freelancer", freelancer)

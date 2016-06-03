@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"errors"
 
 	"github.com/jinzhu/gorm"
@@ -76,17 +75,8 @@ func (repo *FreelancerRepository) DeleteFreelancer(id uint) error {
 	return repo.db.Delete(&freelancer).Error
 }
 
-func (repo *FreelancerRepository) AddReference(freelancerId uint, reference Reference) error {
-	freelancer, err := repo.GetFreelancer(freelancerId)
-	if err != nil {
-		return err
-	}
-	references, err := json.Marshal(append(freelancer.References, reference))
-	if err != nil {
-		return err
-	}
-	freelancer.JsonReferences = string(references)
-	return repo.db.Save(freelancer).Error
+func (repo *FreelancerRepository) AddReference(reference Reference) error {
+	return repo.db.Create(&reference).Error
 }
 
 func (repo *FreelancerRepository) AddReview(newReview Review) error {

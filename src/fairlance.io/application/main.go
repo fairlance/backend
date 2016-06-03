@@ -6,7 +6,7 @@ import (
 
 func main() {
 	var appContext, err = NewContext("application")
-	appContext.PrepareTables()
+	appContext.DropCreateFillTables()
 	if err != nil {
 		panic(err)
 	}

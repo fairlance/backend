@@ -38,10 +38,10 @@ var routes = Routes{
 		[]string{"GET"},
 	},
 	Route{
-		"AddFreelancer",
+		"RegisterFreelancer",
 		"POST",
 		"/freelancer/new",
-		FreelancerHandler(http.HandlerFunc(AddFreelancer)),
+		RegisterFreelancerHandler(http.HandlerFunc(AddFreelancer)),
 		[]string{"OPTIONS", "POST"},
 	},
 	Route{

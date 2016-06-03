@@ -42,7 +42,7 @@ func TestIdHandler(t *testing.T) {
 	w := httptest.NewRecorder()
 	router := mux.NewRouter()
 	router.Handle("/{id}", app.IdHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		id := context.Get(r, "id").(uint64)
+		id := context.Get(r, "id").(uint)
 		is.Equal(id, 1)
 	}))).Methods("GET")
 	router.ServeHTTP(w, r)

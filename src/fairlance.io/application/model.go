@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"time"
 )
 
@@ -14,20 +13,18 @@ type Model struct {
 
 type Freelancer struct {
 	Model
-	Title          string    `json:"title" valid:"required"`
-	FirstName      string    `json:"firstName" valid:"required"`
-	LastName       string    `json:"lastName" valid:"required"`
-	Password       string    `json:"-" valid:"required"`
-	Email          string    `json:"email" valid:"required,email"`
-	TimeZone       string    `json:"timeZone"`
-	Rating         float64   `json:"rating"`
-	HourlyRateFrom float64   `json:"hourlyRateFrom"`
-	HourlyRateTo   float64   `json:"hourlyRateTo"`
-	Projects       []Project `json:"projects" gorm:"many2many:project_freelancers;"`
-	Reviews        []Review  `json:"reviews"`
-
-	JsonReferences string      `json:"-" sql:"type:JSONB NOT NULL DEFAULT '[]'::JSONB"`
-	References     []Reference `json:"references" sql:"-"`
+	Title          string      `json:"title" valid:"required"`
+	FirstName      string      `json:"firstName" valid:"required"`
+	LastName       string      `json:"lastName" valid:"required"`
+	Password       string      `json:"-" valid:"required"`
+	Email          string      `json:"email" valid:"required,email"`
+	TimeZone       string      `json:"timeZone"`
+	Rating         float64     `json:"rating"`
+	HourlyRateFrom float64     `json:"hourlyRateFrom"`
+	HourlyRateTo   float64     `json:"hourlyRateTo"`
+	Projects       []Project   `json:"projects" gorm:"many2many:project_freelancers;"`
+	Reviews        []Review    `json:"reviews"`
+	References     []Reference `json:"references"`
 }
 
 func NewFreelancer(
@@ -51,9 +48,24 @@ func NewFreelancer(
 		TimeZone:       timeZone,
 		Reviews:        []Review{},
 		Projects:       []Project{},
-
-		JsonReferences: `[]`,
 		References:     []Reference{},
+	}
+}
+
+func NewRegisterFreelancer(
+	firstName string,
+	lastName string,
+	password string,
+	email string,
+) *Freelancer {
+	return &Freelancer{
+		FirstName:  firstName,
+		LastName:   lastName,
+		Password:   password,
+		Email:      email,
+		Reviews:    []Review{},
+		Projects:   []Project{},
+		References: []Reference{},
 	}
 }
 
@@ -67,13 +79,6 @@ func (freelancer *Freelancer) getRepresentationMap() map[string]interface{} {
 		"timeZone":   freelancer.TimeZone,
 		"hourlyRate": []float64{freelancer.HourlyRateFrom, freelancer.HourlyRateTo},
 	}
-}
-
-func (freelancer *Freelancer) AfterFind() (err error) {
-	if err := json.Unmarshal([]byte(freelancer.JsonReferences), &freelancer.References); err != nil {
-		return err
-	}
-	return nil
 }
 
 type Client struct {
@@ -112,9 +117,11 @@ type Review struct {
 }
 
 type Reference struct {
-	Title   string `json:"title" valid:"required"`
-	Content string `json:"content"`
-	Media   Media  `json:"media"`
+	Model
+	Title        string `json:"title" valid:"required"`
+	Content      string `json:"content"`
+	Media        Media  `json:"media"`
+	FreelancerId uint   `json:"freelancerId" valid:"required"`
 }
 
 type Media struct {

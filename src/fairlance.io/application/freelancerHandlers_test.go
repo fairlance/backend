@@ -6,9 +6,9 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	app "fairlance.io/application"
 	"github.com/cheekybits/is"
 	"github.com/gorilla/context"
-	app "fairlance.io/application"
 )
 
 func TestFreelancerHandler(t *testing.T) {
@@ -18,25 +18,17 @@ func TestFreelancerHandler(t *testing.T) {
 	  "password": "123",
 	  "email": "pera@gmail.com",
 	  "firstName":"Pera",
-	  "lastName":"Peric",
-	  "title":"dev",
-	  "hourlyRateFrom": 12,
-	  "hourlyRateTo": 22,
-	  "timeZone": "CET"
+	  "lastName":"Peric"
 	}`
 
 	w := httptest.NewRecorder()
 	r := getRequest("GET", requestBody)
 	emptyHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
-	app.FreelancerHandler(emptyHandler).ServeHTTP(w, r)
+	app.RegisterFreelancerHandler(emptyHandler).ServeHTTP(w, r)
 	freelancer := context.Get(r, "freelancer").(*app.Freelancer)
 	is.Equal(freelancer.FirstName, "Pera")
 	is.Equal(freelancer.LastName, "Peric")
 	is.Equal(freelancer.Email, "pera@gmail.com")
-	is.Equal(freelancer.Title, "dev")
-	is.Equal(freelancer.HourlyRateFrom, 12)
-	is.Equal(freelancer.HourlyRateTo, 22)
-	is.Equal(freelancer.TimeZone, "CET")
 }
 
 func TestFreelancerHandlerWithInvalidBody(t *testing.T) {
@@ -48,37 +40,29 @@ func TestFreelancerHandlerWithInvalidBody(t *testing.T) {
 
 	w := httptest.NewRecorder()
 	r := getRequest("GET", requestBody)
-	app.FreelancerHandler(emptyHandler).ServeHTTP(w, r)
+	app.RegisterFreelancerHandler(emptyHandler).ServeHTTP(w, r)
 	is.Equal(w.Code, http.StatusBadRequest)
 	var errorBody map[string]string
 	is.NoErr(json.Unmarshal(w.Body.Bytes(), &errorBody))
 	is.OK(errorBody["Email"])
 	is.OK(errorBody["FirstName"])
 	is.OK(errorBody["LastName"])
-	is.OK(errorBody["HourlyRateFrom"])
-	is.OK(errorBody["HourlyRateTo"])
 	is.OK(errorBody["Password"])
-	is.OK(errorBody["TimeZone"])
-	is.OK(errorBody["Title"])
 }
 
 func TestFreelancerHandlerWithInvalidEmail(t *testing.T) {
 	is := is.New(t)
 	requestBody := `
 	{
-		"email": "invalid email",
+	  "email": "invalid email",
 	  "password": "123",
 	  "firstName":"Pera",
-	  "lastName":"Peric",
-	  "title":"dev",
-	  "hourlyRateFrom": 12,
-	  "hourlyRateTo": 22,
-	  "timeZone": "CET"
+	  "lastName":"Peric"
 	}`
 
 	w := httptest.NewRecorder()
 	r := getRequest("GET", requestBody)
-	app.FreelancerHandler(emptyHandler).ServeHTTP(w, r)
+	app.RegisterFreelancerHandler(emptyHandler).ServeHTTP(w, r)
 	is.Equal(w.Code, http.StatusBadRequest)
 	var body map[string]string
 	is.NoErr(json.Unmarshal(w.Body.Bytes(), &body))
@@ -116,7 +100,8 @@ func TestFreelancerReferenceHandler(t *testing.T) {
 		"media": {
 			"image": "i",
 			"video": "v"
-		}
+		},
+		"freelancerId": 12
 	}`
 
 	w := httptest.NewRecorder()

@@ -24,12 +24,12 @@ func IdHandler(next http.Handler) http.Handler {
 			return
 		}
 
-		id, err := strconv.ParseUint(vars["id"], 10, 64)
+		id, err := strconv.ParseUint(vars["id"], 10, 32)
 		if err != nil {
 			respond.With(w, r, http.StatusBadRequest, err)
 			return
 		}
-		context.Set(r, "id", id)
+		context.Set(r, "id", uint(id))
 		next.ServeHTTP(w, r)
 	})
 }
