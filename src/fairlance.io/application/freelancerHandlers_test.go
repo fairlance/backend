@@ -76,12 +76,14 @@ func TestFreelancerReviewHandler(t *testing.T) {
 		"title":        "tetetetetet",
 		"content":      "content",
 		"rating":       2.4,
+		"jobId":        2,
 		"clientId":     2,
 		"freelancerId": 12
 	}`
 
 	w := httptest.NewRecorder()
 	r := getRequest("GET", requestBody)
+	context.Set(r, "id", uint(12))
 	app.FreelancerReviewHandler(emptyHandler).ServeHTTP(w, r)
 	review := context.Get(r, "review").(*app.Review)
 	is.Equal(review.ClientId, 2)
@@ -101,11 +103,12 @@ func TestFreelancerReferenceHandler(t *testing.T) {
 			"image": "i",
 			"video": "v"
 		},
-		"freelancerId": 12
+		"freelancerId": 13
 	}`
 
 	w := httptest.NewRecorder()
 	r := getRequest("GET", requestBody)
+	context.Set(r, "id", uint(13))
 	app.FreelancerReferenceHandler(emptyHandler).ServeHTTP(w, r)
 	reference := context.Get(r, "reference").(*app.Reference)
 	is.Equal(reference.Title, "ttttt")

@@ -19,7 +19,7 @@ func NewFreelancerRepository(db *gorm.DB) (*FreelancerRepository, error) {
 }
 func (repo *FreelancerRepository) GetAllFreelancers() ([]Freelancer, error) {
 	freelancers := []Freelancer{}
-	if err := repo.db.Preload("Projects").Preload("Reviews").Find(&freelancers).Error; err != nil {
+	if err := repo.db.Preload("Projects").Preload("References").Preload("Reviews").Find(&freelancers).Error; err != nil {
 		return freelancers, err
 	}
 	return freelancers, nil
@@ -35,7 +35,7 @@ func (repo *FreelancerRepository) GetFreelancerByEmail(email string) (Freelancer
 
 func (repo *FreelancerRepository) GetFreelancer(id uint) (Freelancer, error) {
 	freelancer := Freelancer{}
-	if err := repo.db.Preload("Projects").Preload("Reviews").Find(&freelancer, id).Error; err != nil {
+	if err := repo.db.Preload("Projects").Preload("References").Preload("Reviews").Find(&freelancer, id).Error; err != nil {
 		return freelancer, err
 	}
 	return freelancer, nil
@@ -75,7 +75,7 @@ func (repo *FreelancerRepository) DeleteFreelancer(id uint) error {
 	return repo.db.Delete(&freelancer).Error
 }
 
-func (repo *FreelancerRepository) AddReview(newReview Review) error {
+func (repo *FreelancerRepository) AddReview(newReview *Review) error {
 	freelancer := Freelancer{}
 	err := repo.db.Preload("Reviews").Find(&freelancer, newReview.FreelancerId).Error
 	if err != nil {
@@ -86,7 +86,7 @@ func (repo *FreelancerRepository) AddReview(newReview Review) error {
 		rating += review.Rating
 	}
 	freelancer.Rating = rating / float64(len(freelancer.Reviews)+1)
-	err = repo.db.Save(&newReview).Error
+	err = repo.db.Save(newReview).Error
 	if err != nil {
 		return err
 	}

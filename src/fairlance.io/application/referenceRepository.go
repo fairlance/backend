@@ -21,6 +21,6 @@ func (repo *ReferenceRepository) GetReferences(freelancerId int) ([]Reference, e
 	return references, nil
 }
 
-func (repo *ReferenceRepository) AddReference(reference Reference) error {
-	return repo.db.Create(&reference).Error
+func (repo *ReferenceRepository) AddReference(reference *Reference) error {
+	return repo.db.Create(reference).Error
 }

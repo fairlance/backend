@@ -69,7 +69,7 @@ func (ac *ApplicationContext) CreateTables() {
 func (ac *ApplicationContext) FillTables() {
 	ac.FreelancerRepository.AddFreelancer(NewFreelancer("First", "Last", "Dev", "Pass", "first@mail.com", 3, 55, "UTC"))
 
-	ac.FreelancerRepository.AddReview(Review{
+	ac.FreelancerRepository.AddReview(&Review{
 		Title:        "text2",
 		Content:      "content",
 		Rating:       4.1,
@@ -77,7 +77,7 @@ func (ac *ApplicationContext) FillTables() {
 		FreelancerId: 1,
 	})
 
-	ac.ReferenceRepository.AddReference(Reference{
+	ac.ReferenceRepository.AddReference(&Reference{
 		Title:        "title",
 		Content:      "content",
 		Media:        Media{"image", "video"},
@@ -95,7 +95,7 @@ func (ac *ApplicationContext) FillTables() {
 		"CET",
 	))
 
-	ac.FreelancerRepository.AddReview(Review{
+	ac.FreelancerRepository.AddReview(&Review{
 		Title:        "text2",
 		Content:      "content",
 		Rating:       4.1,
@@ -104,7 +104,7 @@ func (ac *ApplicationContext) FillTables() {
 		FreelancerId: 2,
 	})
 
-	ac.FreelancerRepository.AddReview(Review{
+	ac.FreelancerRepository.AddReview(&Review{
 		Title:        "text2",
 		Content:      "content",
 		Rating:       2.4,
@@ -112,7 +112,7 @@ func (ac *ApplicationContext) FillTables() {
 		ClientId:     2,
 		FreelancerId: 2,
 	})
-	ac.ReferenceRepository.AddReference(Reference{
+	ac.ReferenceRepository.AddReference(&Reference{
 		Title:        "title",
 		Content:      "content",
 		Media:        Media{"image", "video"},

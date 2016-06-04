@@ -57,7 +57,7 @@ func DeleteFreelancer(w http.ResponseWriter, r *http.Request) {
 func AddFreelancerReference(w http.ResponseWriter, r *http.Request) {
 	var reference = context.Get(r, "reference").(*Reference)
 	var appContext = context.Get(r, "context").(*ApplicationContext)
-	if err := appContext.ReferenceRepository.AddReference(*reference); err != nil {
+	if err := appContext.ReferenceRepository.AddReference(reference); err != nil {
 		respond.With(w, r, http.StatusBadRequest, err)
 		return
 	}
@@ -68,7 +68,7 @@ func AddFreelancerReference(w http.ResponseWriter, r *http.Request) {
 func AddFreelancerReview(w http.ResponseWriter, r *http.Request) {
 	var review = context.Get(r, "review").(*Review)
 	var appContext = context.Get(r, "context").(*ApplicationContext)
-	if err := appContext.FreelancerRepository.AddReview(*review); err != nil {
+	if err := appContext.FreelancerRepository.AddReview(review); err != nil {
 		respond.With(w, r, http.StatusBadRequest, err)
 		return
 	}
@@ -78,12 +78,18 @@ func AddFreelancerReview(w http.ResponseWriter, r *http.Request) {
 
 func FreelancerReviewHandler(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var id = context.Get(r, "id").(uint)
 		decoder := json.NewDecoder(r.Body)
 		defer r.Body.Close()
 
 		var review Review
 		if err := decoder.Decode(&review); err != nil {
 			respond.With(w, r, http.StatusBadRequest, err)
+			return
+		}
+
+		if id != review.FreelancerId {
+			respond.With(w, r, http.StatusBadRequest, "Freelancer id must match the id in the body!")
 			return
 		}
 
@@ -100,12 +106,18 @@ func FreelancerReviewHandler(next http.Handler) http.Handler {
 
 func FreelancerReferenceHandler(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var id = context.Get(r, "id").(uint)
 		decoder := json.NewDecoder(r.Body)
 		defer r.Body.Close()
 
 		var reference Reference
 		if err := decoder.Decode(&reference); err != nil {
 			respond.With(w, r, http.StatusBadRequest, err)
+			return
+		}
+
+		if id != reference.FreelancerId {
+			respond.With(w, r, http.StatusBadRequest, "Freelancer id must match the id in the body!")
 			return
 		}
 

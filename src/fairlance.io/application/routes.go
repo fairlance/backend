@@ -68,8 +68,8 @@ var routes = Routes{
 	Route{
 		"AddFreelancerReview",
 		"POST",
-		"/freelancer/review",
-		FreelancerReviewHandler(http.HandlerFunc(AddFreelancerReview)),
+		"/freelancer/{id}/review",
+		IdHandler(FreelancerReviewHandler(http.HandlerFunc(AddFreelancerReview))),
 		[]string{"OPTIONS", "POST"},
 	},
 
