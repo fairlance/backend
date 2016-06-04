@@ -64,7 +64,7 @@ func Index(w http.ResponseWriter, r *http.Request) {
 
 func Info(w http.ResponseWriter, r *http.Request) {
 	var goPath = os.Getenv("GOPATH")
-	info, err := ioutil.ReadFile(goPath + "/info.txt")
+	info, err := ioutil.ReadFile(goPath + "/bin/info.txt")
 	if err != nil {
 		respond.With(w, r, http.StatusNotFound, "No info file found!")
 		return
