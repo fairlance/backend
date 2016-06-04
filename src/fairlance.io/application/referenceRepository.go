@@ -20,3 +20,7 @@ func (repo *ReferenceRepository) GetReferences(freelancerId int) ([]Reference, e
 	repo.db.Find(&references).Where("freelancerId = ?", freelancerId)
 	return references, nil
 }
+
+func (repo *ReferenceRepository) AddReference(reference Reference) error {
+	return repo.db.Create(&reference).Error
+}

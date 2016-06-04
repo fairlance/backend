@@ -11,6 +11,7 @@ type ApplicationContext struct {
 	ProjectRepository    *ProjectRepository
 	ClientRepository     *ClientRepository
 	ReferenceRepository  *ReferenceRepository
+	JobRepository        *JobRepository
 	JwtSecret            string
 }
 
@@ -24,6 +25,7 @@ func NewContext(dbName string) (*ApplicationContext, error) {
 	projectRepository, _ := NewProjectRepository(db)
 	clientRepository, _ := NewClientRepository(db)
 	referenceRepository, _ := NewReferenceRepository(db)
+	jobRepository, _ := NewJobRepository(db)
 
 	context := &ApplicationContext{
 		db:                   db,
@@ -31,6 +33,7 @@ func NewContext(dbName string) (*ApplicationContext, error) {
 		ProjectRepository:    projectRepository,
 		ClientRepository:     clientRepository,
 		ReferenceRepository:  referenceRepository,
+		JobRepository:        jobRepository,
 		JwtSecret:            "fairlance", //base64.StdEncoding.EncodeToString([]byte("fairlance")),
 	}
 
@@ -73,12 +76,14 @@ func (ac *ApplicationContext) FillTables() {
 		ClientId:     1,
 		FreelancerId: 1,
 	})
-	ac.FreelancerRepository.AddReference(Reference{
+
+	ac.ReferenceRepository.AddReference(Reference{
 		Title:        "title",
 		Content:      "content",
 		Media:        Media{"image", "video"},
 		FreelancerId: 1,
 	})
+
 	ac.FreelancerRepository.AddFreelancer(NewFreelancer(
 		"Pera",
 		"Peric",
@@ -94,6 +99,7 @@ func (ac *ApplicationContext) FillTables() {
 		Title:        "text2",
 		Content:      "content",
 		Rating:       4.1,
+		JobId:        1,
 		ClientId:     1,
 		FreelancerId: 2,
 	})
@@ -102,10 +108,11 @@ func (ac *ApplicationContext) FillTables() {
 		Title:        "text2",
 		Content:      "content",
 		Rating:       2.4,
+		JobId:        2,
 		ClientId:     2,
 		FreelancerId: 2,
 	})
-	ac.FreelancerRepository.AddReference(Reference{
+	ac.ReferenceRepository.AddReference(Reference{
 		Title:        "title",
 		Content:      "content",
 		Media:        Media{"image", "video"},
@@ -125,8 +132,8 @@ func (ac *ApplicationContext) FillTables() {
 	})
 
 	ac.db.Create(&Job{
-		Name:        "Client",
-		Description: "Desc Client",
+		Name:        "Job",
+		Description: "Desc Job",
 		ClientId:    1,
 	})
 

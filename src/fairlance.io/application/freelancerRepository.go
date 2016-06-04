@@ -75,10 +75,6 @@ func (repo *FreelancerRepository) DeleteFreelancer(id uint) error {
 	return repo.db.Delete(&freelancer).Error
 }
 
-func (repo *FreelancerRepository) AddReference(reference Reference) error {
-	return repo.db.Create(&reference).Error
-}
-
 func (repo *FreelancerRepository) AddReview(newReview Review) error {
 	freelancer := Freelancer{}
 	err := repo.db.Preload("Reviews").Find(&freelancer, newReview.FreelancerId).Error

@@ -57,7 +57,7 @@ func DeleteFreelancer(w http.ResponseWriter, r *http.Request) {
 func AddFreelancerReference(w http.ResponseWriter, r *http.Request) {
 	var reference = context.Get(r, "reference").(*Reference)
 	var appContext = context.Get(r, "context").(*ApplicationContext)
-	if err := appContext.FreelancerRepository.AddReference(*reference); err != nil {
+	if err := appContext.ReferenceRepository.AddReference(*reference); err != nil {
 		respond.With(w, r, http.StatusBadRequest, err)
 		return
 	}

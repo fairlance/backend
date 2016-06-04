@@ -112,6 +112,7 @@ type Review struct {
 	Title        string  `json:"title" valid:"required"`
 	Content      string  `json:"content"`
 	Rating       float64 `json:"rating" valid:"required"`
+	JobId        uint    `json:"jobId" valid:"required"`
 	ClientId     uint    `json:"clientId" valid:"required"`
 	FreelancerId uint    `json:"freelancerId" valid:"required"`
 }
