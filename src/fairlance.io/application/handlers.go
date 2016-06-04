@@ -8,6 +8,8 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gorilla/context"
 	"gopkg.in/matryer/respond.v1"
+	"io/ioutil"
+	"os"
 )
 
 func Login(w http.ResponseWriter, r *http.Request) {
@@ -58,4 +60,14 @@ func Login(w http.ResponseWriter, r *http.Request) {
 
 func Index(w http.ResponseWriter, r *http.Request) {
 	respond.With(w, r, http.StatusOK, "Hi")
+}
+
+func Info(w http.ResponseWriter, r *http.Request) {
+	var goPath = os.Getenv("GOPATH")
+	info, err := ioutil.ReadFile(goPath + "/info.txt")
+	if err != nil {
+		respond.With(w, r, http.StatusNotFound, "No info file found!")
+		return
+	}
+	respond.With(w, r, http.StatusOK, string(info))
 }

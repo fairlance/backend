@@ -96,4 +96,11 @@ var routes = Routes{
 		http.HandlerFunc(IndexJob),
 		[]string{"GET"},
 	},
+	Route{
+		"Info",
+		"GET",
+		"/info/",
+		http.HandlerFunc(Info),
+		[]string{"GET"},
+	},
 }
