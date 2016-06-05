@@ -14,4 +14,4 @@ test:
         - sudo cp * $CIRCLE_ARTIFACTS:
             pwd:
                 bin
-        - echo $CIRCLE_BUILD_NUM > $CIRCLE_ARTIFACTS/info.txt
+        - echo "Package version: $CIRCLE_BUILD_NUM" > $CIRCLE_ARTIFACTS/application_info.txt

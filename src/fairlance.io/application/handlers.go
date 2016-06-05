@@ -10,6 +10,7 @@ import (
 	"gopkg.in/matryer/respond.v1"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 )
 
 func Login(w http.ResponseWriter, r *http.Request) {
@@ -63,8 +64,11 @@ func Index(w http.ResponseWriter, r *http.Request) {
 }
 
 func Info(w http.ResponseWriter, r *http.Request) {
-	var goPath = os.Getenv("GOPATH")
-	info, err := ioutil.ReadFile(goPath + "/bin/info.txt")
+	dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
+	if err != nil {
+		respond.With(w, r, http.StatusNotFound, err)
+	}
+	info, err := ioutil.ReadFile(dir + "/application_info.txt")
 	if err != nil {
 		respond.With(w, r, http.StatusNotFound, "No info file found!")
 		return
