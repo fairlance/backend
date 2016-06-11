@@ -49,7 +49,7 @@ func TestPOSTIndexHandler(t *testing.T) {
 	setUp()
 	req := getPOSTRequest(nil)
 	w := httptest.NewRecorder()
-	reg.IndexHandler(buildTestContext("test"), w, req)
+	reg.IndexHandler(buildTestContext("registration_test"), w, req)
 
 	assertCode(t, w, http.StatusMethodNotAllowed)
 	body := getBodyMap(w)
@@ -62,7 +62,7 @@ func TestGETRegisterHandler(t *testing.T) {
 	setUp()
 	req := getGETRequest()
 	w := httptest.NewRecorder()
-	reg.RegisterHandler(buildTestContext("test"), w, req)
+	reg.RegisterHandler(buildTestContext("registration_test"), w, req)
 
 	assertCode(t, w, http.StatusMethodNotAllowed)
 	body := getBodyMap(w)
@@ -78,7 +78,7 @@ func TestRegisterHandlerForm(t *testing.T) {
 	req.PostForm.Set("email", "test@email.com")
 	req.Header.Del("Content-Type")
 	w := httptest.NewRecorder()
-	reg.RegisterHandler(buildTestContext("test"), w, req)
+	reg.RegisterHandler(buildTestContext("registration_test"), w, req)
 
 	assertCode(t, w, http.StatusCreated)
 	body := getBodyMap(w)
@@ -91,7 +91,7 @@ func TestRegisterHandlerJSON(t *testing.T) {
 	setUp()
 	req := getPOSTRequest(bytes.NewBuffer([]byte(`{"email":"test@email.com"}`)))
 	w := httptest.NewRecorder()
-	reg.RegisterHandler(buildTestContext("test"), w, req)
+	reg.RegisterHandler(buildTestContext("registration_test"), w, req)
 
 	assertCode(t, w, http.StatusCreated)
 	body := getBodyMap(w)
@@ -104,13 +104,13 @@ func TestAddingExistingUser(t *testing.T) {
 	setUp()
 	req := getPOSTRequest(bytes.NewBuffer([]byte(`{"email":"test@email.com"}`)))
 	w := httptest.NewRecorder()
-	reg.RegisterHandler(buildTestContext("test"), w, req)
+	reg.RegisterHandler(buildTestContext("registration_test"), w, req)
 
 	// body buffer gets emptied after RegisterHandler finishes
 	// so we create a new request, with new body
 	req = getPOSTRequest(bytes.NewBuffer([]byte(`{"email":"test@email.com"}`)))
 	w = httptest.NewRecorder()
-	reg.RegisterHandler(buildTestContext("test"), w, req)
+	reg.RegisterHandler(buildTestContext("registration_test"), w, req)
 
 	assertCode(t, w, http.StatusConflict)
 	body := getBodyMap(w)
@@ -124,7 +124,7 @@ func TestAddingEmptyUser(t *testing.T) {
 	body := bytes.NewBuffer([]byte(`{"email":""}`))
 	req := getPOSTRequest(body)
 	w := httptest.NewRecorder()
-	reg.RegisterHandler(buildTestContext("test"), w, req)
+	reg.RegisterHandler(buildTestContext("registration_test"), w, req)
 
 	assertCode(t, w, http.StatusBadRequest)
 
@@ -138,7 +138,7 @@ func TestAddingInvalidJSON(t *testing.T) {
 	setUp()
 	req := getPOSTRequest(bytes.NewBuffer([]byte(`{"email":"invalid json`)))
 	w := httptest.NewRecorder()
-	reg.RegisterHandler(buildTestContext("test"), w, req)
+	reg.RegisterHandler(buildTestContext("registration_test"), w, req)
 
 	assertCode(t, w, http.StatusBadRequest)
 	body := getBodyMap(w)
@@ -151,7 +151,7 @@ func TestAddingInvalidUser(t *testing.T) {
 	setUp()
 	req := getPOSTRequest(bytes.NewBuffer([]byte(`{"email":"notemail.com"}`)))
 	w := httptest.NewRecorder()
-	reg.RegisterHandler(buildTestContext("test"), w, req)
+	reg.RegisterHandler(buildTestContext("registration_test"), w, req)
 
 	assertCode(t, w, http.StatusBadRequest)
 	body := getBodyMap(w)
@@ -164,11 +164,11 @@ func TestAddingAndReadingRegisteredUser(t *testing.T) {
 	setUp()
 	req := getPOSTRequest(bytes.NewBuffer([]byte(`{"email":"test@email.com"}`)))
 	w := httptest.NewRecorder()
-	reg.RegisterHandler(buildTestContext("test"), w, req)
+	reg.RegisterHandler(buildTestContext("registration_test"), w, req)
 
 	req = getGETRequest()
 	w = httptest.NewRecorder()
-	reg.IndexHandler(buildTestContext("test"), w, req)
+	reg.IndexHandler(buildTestContext("registration_test"), w, req)
 
 	assertCode(t, w, http.StatusOK)
 	var body []map[string]interface{}
@@ -181,7 +181,7 @@ func TestAddingAndReadingRegisteredUser(t *testing.T) {
 }
 
 func setUp() {
-	buildTestContext("test").RegisteredUserRepository.RemoveAll()
+	buildTestContext("registration_test").RegisteredUserRepository.RemoveAll()
 }
 
 // helper functions
