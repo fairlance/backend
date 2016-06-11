@@ -2,7 +2,6 @@ package main_test
 
 import (
 	"bytes"
-	"encoding/json"
 	"log"
 	"testing"
 
@@ -21,19 +20,6 @@ var (
 	appContext   *app.ApplicationContext
 	emptyHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 )
-
-func TestIndex(t *testing.T) {
-	is := is.New(t)
-
-	w := httptest.NewRecorder()
-	r, _ := http.NewRequest("GET", "/", nil)
-	app.Index(w, r)
-
-	is.Equal(w.Code, http.StatusOK)
-	var data string
-	is.NoErr(json.Unmarshal(w.Body.Bytes(), &data))
-	is.Equal(data, "Hi")
-}
 
 func TestIdHandler(t *testing.T) {
 	is := is.New(t)

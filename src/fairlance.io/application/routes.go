@@ -22,13 +22,6 @@ var routes = Routes{
 		http.HandlerFunc(Login),
 		[]string{"OPTIONS", "POST"},
 	},
-	Route{
-		"Index",
-		"GET",
-		"/",
-		http.HandlerFunc(Index),
-		[]string{"GET"},
-	},
 
 	Route{
 		"IndexFreelancer",

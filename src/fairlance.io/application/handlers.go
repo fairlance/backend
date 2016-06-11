@@ -59,10 +59,6 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func Index(w http.ResponseWriter, r *http.Request) {
-	respond.With(w, r, http.StatusOK, "Hi")
-}
-
 func Info(w http.ResponseWriter, r *http.Request) {
 	dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
 	if err != nil {
