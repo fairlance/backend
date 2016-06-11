@@ -1,10 +1,12 @@
 package main
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"github.com/asaskevich/govalidator"
 	"gopkg.in/mgo.v2"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -100,4 +102,23 @@ func getEmailFromRequest(w http.ResponseWriter, r *http.Request) (string, error)
 	}
 
 	return r.FormValue("email"), nil
+}
+
+func authenticated(w http.ResponseWriter, r *http.Request, user string, pass string) bool {
+	authCredentials := strings.SplitN(r.Header.Get("Authorization"), " ", 2)
+	if len(authCredentials) != 2 {
+		return false
+	}
+
+	credentials, err := base64.StdEncoding.DecodeString(authCredentials[1])
+	if err != nil {
+		return false
+	}
+
+	userAndPass := strings.SplitN(string(credentials), ":", 2)
+	if len(userAndPass) != 2 {
+		return false
+	}
+
+	return userAndPass[0] == user && userAndPass[1] == pass
 }
