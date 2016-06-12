@@ -20,14 +20,10 @@ type Hits struct {
 	Total int
 }
 type Source struct {
-	Source Freelancer `json:"_source"`
+	Source map[string]interface{} `json:"_source"`
 }
-type Freelancer struct {
-	Id        int    `json:"id"`
-	FirstName string `json:"firstName"`
-	LastName  string `json:"lastName"`
-	Email     string `json:"email"`
-}
+
+type processFunc func(map[string]interface{}) interface{}
 
 func main() {
 	flag.IntVar(&port, "port", 3002, "Specify the port to listen to.")
@@ -38,42 +34,65 @@ func main() {
 
 	// Setup mux
 	mux := http.NewServeMux()
-	mux.Handle("/", opts.Handler(
-		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			resp, err := http.Get(elasticsearchUrl + "/fairlance/freelancer/_search")
-			if err != nil {
-				respond.With(w, r, http.StatusBadGateway, err)
-				return
-			}
-			defer resp.Body.Close()
-			body, err := ioutil.ReadAll(resp.Body)
-			if err != nil {
-				respond.With(w, r, http.StatusBadRequest, err)
-				return
-			}
-
-			var elasticSearchResponse ElasticSearchResponse
-			err = json.Unmarshal(body, &elasticSearchResponse)
-
-			respond.With(w, r, resp.StatusCode, getSearchResponse(elasticSearchResponse))
-		})),
-	)
+	mux.Handle("/freelancer", opts.Handler(http.HandlerFunc(freelancer)))
+	mux.Handle("/job", opts.Handler(http.HandlerFunc(job)))
 
 	panic(http.ListenAndServe(":"+strconv.Itoa(port), mux))
 }
 
-func getSearchResponse(eResp ElasticSearchResponse) interface{} {
-	var freelancers = make([]Freelancer, len(eResp.Hits.Hits))
+func job(w http.ResponseWriter, r *http.Request) {
+	elasticSearchResponse, err := getElasticSearchResponse("job")
+	if err != nil {
+		respond.With(w, r, http.StatusBadRequest, err)
+		return
+	}
+	respond.With(w, r, http.StatusOK, buildSearchResponse(elasticSearchResponse, nil))
+}
+
+func freelancer(w http.ResponseWriter, r *http.Request) {
+	elasticSearchResponse, err := getElasticSearchResponse("freelancer")
+	if err != nil {
+		respond.With(w, r, http.StatusBadRequest, err)
+		return
+	}
+	respond.With(w, r, http.StatusOK, buildSearchResponse(elasticSearchResponse, nil))
+}
+
+func getElasticSearchResponse(esType string) (ElasticSearchResponse, error) {
+	var elasticSearchResponse ElasticSearchResponse
+	resp, err := http.Get(elasticsearchUrl + "/fairlance/" + esType + "/_search")
+	if err != nil {
+		return elasticSearchResponse, err
+	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return elasticSearchResponse, err
+	}
+
+	err = json.Unmarshal(body, &elasticSearchResponse)
+	if err != nil {
+		return elasticSearchResponse, err
+	}
+	return elasticSearchResponse, nil
+}
+
+func buildSearchResponse(eResp ElasticSearchResponse, fn processFunc) interface{} {
+	var entities = make([]interface{}, len(eResp.Hits.Hits))
 	for key, hit := range eResp.Hits.Hits {
-		freelancers[key] = hit.Source
+		if fn != nil {
+			entities[key] = fn(hit.Source)
+		} else {
+			entities[key] = hit.Source
+		}
 	}
 
 	response := struct {
-		Total       int          `json:"total"`
-		Freelancers []Freelancer `json:"freelancers"`
+		Total      int           `json:"total"`
+		Collection []interface{} `json:"collection"`
 	}{
 		eResp.Hits.Total,
-		freelancers,
+		entities,
 	}
 
 	return response
