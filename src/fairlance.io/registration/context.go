@@ -23,7 +23,7 @@ func NewContext(dbName string) *RegistrationContext {
 
 	registeredUserRepository, err := NewRegisteredUserRepository(dbName)
 	if err != nil {
-		logger.Println("Failed to open user repository: %q", err.Error())
+		logger.Fatalf("Failed to open user repository: %q", err.Error())
 	}
 
 	// Setup context
