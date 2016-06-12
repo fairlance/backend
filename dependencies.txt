@@ -9,3 +9,4 @@ github.com/lib/pq
 github.com/jinzhu/gorm
 gopkg.in/matryer/respond.v1
 github.com/cheekybits/is
+gopkg.in/olivere/elastic.v3
