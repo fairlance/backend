@@ -109,6 +109,8 @@ func AuthHandler(next http.Handler) http.Handler {
 
 //func HTTPAuthHandler(next http.Handler) http.Handler {
 //	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+//		user := ...
+//		pass := ...
 //		if !authenticated(w, r, user, pass) {
 //			w.Header().Set("WWW-Authenticate", `Basic realm="FAIRLANCE"`)
 //			w.WriteHeader(http.StatusUnauthorized)

@@ -15,8 +15,15 @@ type ApplicationContext struct {
 	JwtSecret            string
 }
 
-func NewContext(dbName string) (*ApplicationContext, error) {
-	db, err := gorm.Open("postgres", "user=fairlance password=fairlance dbname="+dbName+" sslmode=disable")
+type ContextOptions struct {
+	DbName string
+	DbUser string
+	DbPass string
+	Secret string
+}
+
+func NewContext(options ContextOptions) (*ApplicationContext, error) {
+	db, err := gorm.Open("postgres", "user="+options.DbUser+" password="+options.DbPass+" dbname="+options.DbName+" sslmode=disable")
 	if err != nil {
 		return nil, err
 	}
@@ -34,7 +41,7 @@ func NewContext(dbName string) (*ApplicationContext, error) {
 		ClientRepository:     clientRepository,
 		ReferenceRepository:  referenceRepository,
 		JobRepository:        jobRepository,
-		JwtSecret:            "fairlance", //base64.StdEncoding.EncodeToString([]byte("fairlance")),
+		JwtSecret:            options.Secret, //base64.StdEncoding.EncodeToString([]byte(options.Secret)),
 	}
 
 	return context, nil

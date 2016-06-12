@@ -34,8 +34,9 @@ func TestIdHandler(t *testing.T) {
 	router.ServeHTTP(w, r)
 }
 
-func buildTestContext(db string) *app.ApplicationContext {
-	context, err := app.NewContext(db)
+func buildTestContext() *app.ApplicationContext {
+	options := app.ContextOptions{"application_test", "fairlance", "fairlance", "secret"}
+	context, err := app.NewContext(options)
 	if err != nil {
 		panic(err)
 	}
@@ -44,7 +45,7 @@ func buildTestContext(db string) *app.ApplicationContext {
 }
 
 func setUp() {
-	appContext = buildTestContext("application_test")
+	appContext = buildTestContext()
 	appContext.DropTables()
 	appContext.CreateTables()
 }

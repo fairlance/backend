@@ -17,7 +17,7 @@ type Freelancer struct {
 	FirstName      string      `json:"firstName" valid:"required"`
 	LastName       string      `json:"lastName" valid:"required"`
 	Password       string      `json:"-" valid:"required"`
-	Email          string      `json:"email" valid:"required,email"`
+	Email          string      `json:"email" valid:"required,email" sql:"index"`
 	TimeZone       string      `json:"timeZone"`
 	Rating         float64     `json:"rating"`
 	HourlyRateFrom float64     `json:"hourlyRateFrom"`
