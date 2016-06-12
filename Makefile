@@ -23,3 +23,4 @@ install:
 installARM:
 	env GOOS=linux GOARCH=arm GOARM=7 go build -o ./bin/registration_arm fairlance.io/registration
 	env GOOS=linux GOARCH=arm GOARM=7 go build -o ./bin/application_arm fairlance.io/application
+	env GOOS=linux GOARCH=arm GOARM=7 go build -o ./bin/search_arm fairlance.io/search
