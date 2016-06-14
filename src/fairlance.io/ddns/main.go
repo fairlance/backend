@@ -13,11 +13,12 @@ import (
 )
 
 var (
-	password  = flag.String("password", "", "Namecheap password.")
-	client    = &http.Client{}
-	ipURL     = "http://ipinfo.io/ip"
-	updateURL = "https://dynamicdns.park-your-domain.com/update?host=pi&domain=fairlance.io&password=" + *password + "&ip="
-	fileName  = "lastDNSUpdate"
+	password   = flag.String("password", "", "Namecheap password.")
+	dnsTimeout = flag.Int("timeout", 20, "Namecheap timeout.")
+	client     = &http.Client{}
+	ipURL      = "http://ipinfo.io/ip"
+	updateURL  = "https://dynamicdns.park-your-domain.com/update?host=pi&domain=fairlance.io&password="
+	fileName   = "lastDNSUpdate"
 )
 
 func get(url string) ([]byte, error) {
@@ -50,8 +51,8 @@ func get(url string) ([]byte, error) {
 // </interface-response>
 
 type NamecheapStatus struct {
-	XMLName xml.Name `xml:"interface-response"`
-	Content ErrCount
+	XMLName  xml.Name `xml:"interface-response"`
+	ErrCount ErrCount
 }
 
 type ErrCount struct {
@@ -67,7 +68,7 @@ func updateIP() string {
 
 	stringNewIP := strings.TrimSpace(string(newIP))
 
-	updateStatus, err := get(updateURL + stringNewIP)
+	updateStatus, err := get(updateURL + *password + "&ip=" + stringNewIP)
 	if err != nil {
 		return err.Error()
 	}
@@ -78,7 +79,7 @@ func updateIP() string {
 		return err.Error()
 	}
 
-	return "Update " + stringNewIP + ",  error count: " + namecheapStatus.Content.Count
+	return "Update " + stringNewIP + ",  error count: " + namecheapStatus.ErrCount.Count
 }
 
 func logLastDNSUpdate(data string) {
@@ -113,7 +114,7 @@ func logLastDNSUpdate(data string) {
 
 func main() {
 	flag.Parse()
-	ticker := time.NewTicker(time.Minute * 20)
+	ticker := time.NewTicker(time.Minute * time.Duration(*dnsTimeout))
 	for t := range ticker.C {
 		logLastDNSUpdate(fmt.Sprintf("Latest update", t, updateIP()))
 	}
