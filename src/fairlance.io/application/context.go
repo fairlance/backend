@@ -53,24 +53,12 @@ func (ac *ApplicationContext) DropCreateFillTables() {
 	ac.FillTables()
 }
 
-func (ac *ApplicationContext) dropTable(entity interface{}) {
-	if ac.db.HasTable(entity) {
-		ac.db.Delete(entity)
-	}
-}
-
 func (ac *ApplicationContext) DropTables() {
-	ac.dropTable(&Freelancer{})
-	ac.dropTable(&Project{})
-	ac.dropTable(&Client{})
-	ac.dropTable(&Job{})
-	ac.dropTable(&Review{})
-	ac.dropTable(&Reference{})
+	ac.db.DropTableIfExists(&Freelancer{}, &Project{}, &Client{}, &Job{}, &Review{}, &Reference{}, &Media{})
 }
 
 func (ac *ApplicationContext) CreateTables() {
-	ac.db.DropTableIfExists(&Freelancer{}, &Project{}, &Client{}, &Job{}, &Review{}, &Reference{})
-	ac.db.CreateTable(&Freelancer{}, &Project{}, &Client{}, &Job{}, &Review{}, &Reference{})
+	ac.db.CreateTable(&Freelancer{}, &Project{}, &Client{}, &Job{}, &Review{}, &Reference{}, &Media{})
 }
 
 func (ac *ApplicationContext) FillTables() {
