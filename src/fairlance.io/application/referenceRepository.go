@@ -17,7 +17,7 @@ func NewReferenceRepository(db *gorm.DB) (*ReferenceRepository, error) {
 
 func (repo *ReferenceRepository) GetReferences(freelancerId int) ([]Reference, error) {
 	references := []Reference{}
-	repo.db.Find(&references).Where("freelancerId = ?", freelancerId)
+	repo.db.Preload("Media").Find(&references).Where("freelancerId = ?", freelancerId)
 	return references, nil
 }
 
