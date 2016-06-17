@@ -126,6 +126,8 @@ type Reference struct {
 }
 
 type Media struct {
-	Image string `json:"image"`
-	Video string `json:"video"`
+	Model
+	Image       string `json:"image"`
+	Video       string `json:"video"`
+	ReferenceId uint   `json:"referenceId"`
 }

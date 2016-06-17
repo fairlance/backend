@@ -75,7 +75,7 @@ func (ac *ApplicationContext) FillTables() {
 	ac.ReferenceRepository.AddReference(&Reference{
 		Title:        "title",
 		Content:      "content",
-		Media:        Media{"image", "video"},
+		Media:        Media{Image: "image", Video: "video"},
 		FreelancerId: 1,
 	})
 
@@ -110,7 +110,7 @@ func (ac *ApplicationContext) FillTables() {
 	ac.ReferenceRepository.AddReference(&Reference{
 		Title:        "title",
 		Content:      "content",
-		Media:        Media{"image", "video"},
+		Media:        Media{Image: "image", Video: "video"},
 		FreelancerId: 2,
 	})
 

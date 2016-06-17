@@ -19,7 +19,7 @@ func NewFreelancerRepository(db *gorm.DB) (*FreelancerRepository, error) {
 }
 func (repo *FreelancerRepository) GetAllFreelancers() ([]Freelancer, error) {
 	freelancers := []Freelancer{}
-	if err := repo.db.Preload("Projects").Preload("References").Preload("Reviews").Find(&freelancers).Error; err != nil {
+	if err := repo.db.Preload("Projects").Preload("References").Preload("References.Media").Preload("Reviews").Find(&freelancers).Error; err != nil {
 		return freelancers, err
 	}
 	return freelancers, nil
@@ -35,7 +35,7 @@ func (repo *FreelancerRepository) GetFreelancerByEmail(email string) (Freelancer
 
 func (repo *FreelancerRepository) GetFreelancer(id uint) (Freelancer, error) {
 	freelancer := Freelancer{}
-	if err := repo.db.Preload("Projects").Preload("References").Preload("Reviews").Find(&freelancer, id).Error; err != nil {
+	if err := repo.db.Preload("Projects").Preload("References").Preload("References.Media").Preload("Reviews").Find(&freelancer, id).Error; err != nil {
 		return freelancer, err
 	}
 	return freelancer, nil
