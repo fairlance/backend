@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"time"
 
@@ -25,6 +26,11 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	email := body["email"]
 	password := body["password"]
 
+	if email == "" || password == "" {
+		respond.With(w, r, http.StatusUnauthorized, errors.New("Provide username and password."))
+		return
+	}
+
 	var appContext = context.Get(r, "context").(*ApplicationContext)
 	err := appContext.FreelancerRepository.CheckCredentials(email, password)
 	if err != nil {
@@ -40,9 +46,10 @@ func Login(w http.ResponseWriter, r *http.Request) {
 
 	// Create the token
 	token := jwt.New(jwt.SigningMethodHS256)
+	claims := token.Claims.(jwt.MapClaims)
 	// Set some claims
-	token.Claims["user"] = freelancer.getRepresentationMap()
-	token.Claims["exp"] = time.Now().Add(time.Minute * 5).Unix()
+	claims["user"] = freelancer.getRepresentationMap()
+	claims["exp"] = time.Now().Add(time.Minute * 5).Unix()
 	// Sign and get the complete encoded token as a string
 	tokenString, err := token.SignedString([]byte(appContext.JwtSecret))
 	if err != nil {

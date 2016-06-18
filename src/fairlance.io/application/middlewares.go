@@ -85,7 +85,12 @@ func AuthHandler(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		tokenString := r.Header.Get("Authorization")
 		if tokenString == "" {
-			respond.With(w, r, http.StatusBadRequest, jwt.ErrNoTokenInRequest)
+			respond.With(w, r, http.StatusBadRequest, errors.New("Authorization header missing."))
+			return
+		}
+
+		if tokenString[:7] != "Bearer " {
+			respond.With(w, r, http.StatusBadRequest, errors.New("Authorization header must start with 'Bearer '."))
 			return
 		}
 
@@ -99,10 +104,18 @@ func AuthHandler(next http.Handler) http.Handler {
 			return []byte(appContext.JwtSecret), nil
 		})
 
-		if err != nil || !token.Valid {
-			respond.With(w, r, http.StatusBadRequest, errors.New("Not logged in."))
+		if err != nil {
+			respond.With(w, r, http.StatusBadRequest, err)
 			return
 		}
+
+		if claims, ok := token.Claims.(jwt.MapClaims); !ok || !token.Valid {
+			respond.With(w, r, http.StatusBadRequest, errors.New("Not logged in."))
+			return
+		} else {
+			context.Set(r, "user", claims["user"])
+		}
+
 		next.ServeHTTP(w, r)
 	})
 }
