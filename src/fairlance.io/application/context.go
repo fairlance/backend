@@ -133,5 +133,19 @@ func (ac *ApplicationContext) FillTables() {
 	})
 
 	ac.FreelancerRepository.AddFreelancer(NewFreelancer("Third", "Last", "Dev", "Pass", "third@mail.com", 3, 55, "UTC"))
+	ac.FreelancerRepository.AddReview(&Review{
+		Title:        "deleted text2",
+		Content:      "deleted content",
+		Rating:       2.4,
+		JobId:        2,
+		ClientId:     2,
+		FreelancerId: 3,
+	})
+	ac.ReferenceRepository.AddReference(&Reference{
+		Title:        "deleted title",
+		Content:      "deleted content",
+		Media:        Media{Image: "deleted media image", Video: "deleted media video"},
+		FreelancerId: 3,
+	})
 	ac.FreelancerRepository.DeleteFreelancer(3)
 }

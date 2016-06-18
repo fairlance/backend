@@ -69,9 +69,25 @@ func (repo *FreelancerRepository) UpdateFreelancer(freelancer *Freelancer) error
 
 func (repo *FreelancerRepository) DeleteFreelancer(id uint) error {
 	freelancer := Freelancer{}
-	if repo.db.Find(&freelancer, id).RecordNotFound() {
+	if repo.db.Preload("References").Find(&freelancer, id).RecordNotFound() {
 		return errors.New("Freelancer not found")
 	}
+
+	for _, reference := range freelancer.References {
+		if err := repo.db.Delete(&Media{}, "reference_id = ?", reference.ID).Error; err != nil {
+			return err
+		}
+	}
+
+	// probably faster than deleting one by one in loop above
+	if err := repo.db.Delete(&Reference{}, "freelancer_id = ?", id).Error; err != nil {
+		return err
+	}
+
+	if err := repo.db.Delete(&Review{}, "freelancer_id = ?", id).Error; err != nil {
+		return err
+	}
+
 	return repo.db.Delete(&freelancer).Error
 }
 
