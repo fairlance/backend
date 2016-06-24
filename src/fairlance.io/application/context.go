@@ -12,6 +12,7 @@ type ApplicationContext struct {
 	ClientRepository     *ClientRepository
 	ReferenceRepository  *ReferenceRepository
 	JobRepository        *JobRepository
+	UserRepository       *UserRepository
 	JwtSecret            string
 }
 
@@ -28,19 +29,21 @@ func NewContext(options ContextOptions) (*ApplicationContext, error) {
 		return nil, err
 	}
 
+	userRepository, _ := NewUserRepository(db)
 	freelancerRepository, _ := NewFreelancerRepository(db)
-	projectRepository, _ := NewProjectRepository(db)
 	clientRepository, _ := NewClientRepository(db)
-	referenceRepository, _ := NewReferenceRepository(db)
 	jobRepository, _ := NewJobRepository(db)
+	projectRepository, _ := NewProjectRepository(db)
+	referenceRepository, _ := NewReferenceRepository(db)
 
 	context := &ApplicationContext{
 		db:                   db,
+		UserRepository:       userRepository,
 		FreelancerRepository: freelancerRepository,
-		ProjectRepository:    projectRepository,
 		ClientRepository:     clientRepository,
-		ReferenceRepository:  referenceRepository,
 		JobRepository:        jobRepository,
+		ProjectRepository:    projectRepository,
+		ReferenceRepository:  referenceRepository,
 		JwtSecret:            options.Secret, //base64.StdEncoding.EncodeToString([]byte(options.Secret)),
 	}
 
@@ -121,10 +124,12 @@ func (ac *ApplicationContext) FillTables() {
 		IsActive:    true,
 	})
 
-	ac.db.Create(&Client{
+	ac.ClientRepository.AddClient(&Client{
 		User: User{
 			FirstName: "ClientName",
 			LastName:  "ClientLast",
+			Password:  "123456",
+			Email:     "client@mail.com",
 		},
 	})
 

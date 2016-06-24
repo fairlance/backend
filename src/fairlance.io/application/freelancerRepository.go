@@ -17,6 +17,7 @@ func NewFreelancerRepository(db *gorm.DB) (*FreelancerRepository, error) {
 
 	return repo, nil
 }
+
 func (repo *FreelancerRepository) GetAllFreelancers() ([]Freelancer, error) {
 	freelancers := []Freelancer{}
 	if err := repo.db.Preload("Projects").Preload("References").Preload("References.Media").Preload("Reviews").Find(&freelancers).Error; err != nil {
@@ -25,33 +26,12 @@ func (repo *FreelancerRepository) GetAllFreelancers() ([]Freelancer, error) {
 	return freelancers, nil
 }
 
-func (repo *FreelancerRepository) GetFreelancerByEmail(email string) (Freelancer, error) {
-	freelancer := Freelancer{}
-	if err := repo.db.Where("email = ?", email).First(&freelancer).Error; err != nil {
-		return freelancer, err
-	}
-	return freelancer, nil
-}
-
 func (repo *FreelancerRepository) GetFreelancer(id uint) (Freelancer, error) {
 	freelancer := Freelancer{}
 	if err := repo.db.Preload("Projects").Preload("References").Preload("References.Media").Preload("Reviews").Find(&freelancer, id).Error; err != nil {
 		return freelancer, err
 	}
 	return freelancer, nil
-}
-
-func (repo *FreelancerRepository) CheckCredentials(email string, password string) error {
-	freelancer, err := repo.GetFreelancerByEmail(email)
-	if err != nil {
-		return err
-	}
-
-	if err := bcrypt.CompareHashAndPassword([]byte(freelancer.Password), []byte(password)); err != nil {
-		return errors.New("Freelancer not found (password is wrong)")
-	}
-
-	return nil
 }
 
 func (repo *FreelancerRepository) AddFreelancer(freelancer *Freelancer) error {

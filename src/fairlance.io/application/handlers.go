@@ -29,20 +29,14 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	password := body["password"]
 
 	if email == "" || password == "" {
-		respond.With(w, r, http.StatusUnauthorized, errors.New("Provide username and password."))
+		respond.With(w, r, http.StatusUnauthorized, errors.New("Provide email and password."))
 		return
 	}
 
 	var appContext = context.Get(r, "context").(*ApplicationContext)
-	err := appContext.FreelancerRepository.CheckCredentials(email, password)
+	user, err := appContext.UserRepository.CheckCredentials(email, password)
 	if err != nil {
 		respond.With(w, r, http.StatusUnauthorized, err)
-		return
-	}
-
-	freelancer, err := appContext.FreelancerRepository.GetFreelancerByEmail(email)
-	if err != nil {
-		respond.With(w, r, http.StatusBadRequest, err)
 		return
 	}
 
@@ -50,7 +44,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	token := jwt.New(jwt.SigningMethodHS256)
 	claims := token.Claims.(jwt.MapClaims)
 	// Set some claims
-	claims["user"] = freelancer.getRepresentationMap()
+	claims["user"] = user.getRepresentationMap()
 	claims["exp"] = time.Now().Add(time.Minute * 5).Unix()
 	// Sign and get the complete encoded token as a string
 	tokenString, err := token.SignedString([]byte(appContext.JwtSecret))
@@ -63,7 +57,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		UserId uint   `json:"id"`
 		Token  string `json:"token"`
 	}{
-		UserId: freelancer.ID,
+		UserId: user.Model.ID,
 		Token:  tokenString,
 	})
 }
@@ -105,10 +99,10 @@ func RegisterUserHandler(next http.Handler) http.Handler {
 		}
 
 		user := &User{
-			body.FirstName,
-			body.LastName,
-			body.Password,
-			body.Email,
+			FirstName: body.FirstName,
+			LastName:  body.LastName,
+			Password:  body.Password,
+			Email:     body.Email,
 		}
 
 		context.Set(r, "user", user)

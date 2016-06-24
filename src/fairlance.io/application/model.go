@@ -12,6 +12,7 @@ type Model struct {
 }
 
 type User struct {
+	Model
 	FirstName string `json:"firstName" valid:"required"`
 	LastName  string `json:"lastName" valid:"required"`
 	Password  string `json:"-" valid:"required"`
@@ -19,7 +20,6 @@ type User struct {
 }
 
 type Freelancer struct {
-	Model
 	User
 	Title          string      `json:"title" valid:"required"`
 	TimeZone       string      `json:"timeZone"`
@@ -58,20 +58,16 @@ func NewFreelancer(
 	}
 }
 
-func (freelancer *Freelancer) getRepresentationMap() map[string]interface{} {
+func (user *User) getRepresentationMap() map[string]interface{} {
 	return map[string]interface{}{
-		"id":         freelancer.ID,
-		"firstName":  freelancer.FirstName,
-		"lastName":   freelancer.LastName,
-		"email":      freelancer.Email,
-		"title":      freelancer.Title,
-		"timeZone":   freelancer.TimeZone,
-		"hourlyRate": []float64{freelancer.HourlyRateFrom, freelancer.HourlyRateTo},
+		"id":        user.Model.ID,
+		"firstName": user.FirstName,
+		"lastName":  user.LastName,
+		"email":     user.Email,
 	}
 }
 
 type Client struct {
-	Model
 	User
 	Jobs     []Job     `json:"jobs"`
 	Projects []Project `json:"projects"`
