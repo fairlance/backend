@@ -2,6 +2,7 @@ package main_test
 
 import (
 	"bytes"
+	"encoding/json"
 	"log"
 	"testing"
 
@@ -32,6 +33,64 @@ func TestIdHandler(t *testing.T) {
 		is.Equal(id, 1)
 	}))).Methods("GET")
 	router.ServeHTTP(w, r)
+}
+
+func TestUserHandler(t *testing.T) {
+	is := is.New(t)
+	requestBody := `
+	{
+	  "password": "123",
+	  "email": "pera@gmail.com",
+	  "firstName":"Pera",
+	  "lastName":"Peric"
+	}`
+
+	w := httptest.NewRecorder()
+	r := getRequest("GET", requestBody)
+	emptyHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+	app.RegisterUserHandler(emptyHandler).ServeHTTP(w, r)
+	user := context.Get(r, "user").(*app.User)
+	is.Equal(user.FirstName, "Pera")
+	is.Equal(user.LastName, "Peric")
+	is.Equal(user.Email, "pera@gmail.com")
+}
+
+func TestUserHandlerWithInvalidBody(t *testing.T) {
+	is := is.New(t)
+	requestBody := `
+	{
+		"empty": "invalid body"
+	}`
+
+	w := httptest.NewRecorder()
+	r := getRequest("GET", requestBody)
+	app.RegisterUserHandler(emptyHandler).ServeHTTP(w, r)
+	is.Equal(w.Code, http.StatusBadRequest)
+	var errorBody map[string]string
+	is.NoErr(json.Unmarshal(w.Body.Bytes(), &errorBody))
+	is.OK(errorBody["Email"])
+	is.OK(errorBody["FirstName"])
+	is.OK(errorBody["LastName"])
+	is.OK(errorBody["Password"])
+}
+
+func TestUserHandlerWithInvalidEmail(t *testing.T) {
+	is := is.New(t)
+	requestBody := `
+	{
+	  "email": "invalid email",
+	  "password": "123",
+	  "firstName":"Pera",
+	  "lastName":"Peric"
+	}`
+
+	w := httptest.NewRecorder()
+	r := getRequest("GET", requestBody)
+	app.RegisterUserHandler(emptyHandler).ServeHTTP(w, r)
+	is.Equal(w.Code, http.StatusBadRequest)
+	var body map[string]string
+	is.NoErr(json.Unmarshal(w.Body.Bytes(), &body))
+	is.OK(body["Email"])
 }
 
 func buildTestContext() *app.ApplicationContext {

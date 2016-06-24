@@ -34,7 +34,7 @@ var routes = Routes{
 		"RegisterFreelancer",
 		"POST",
 		"/freelancer/new",
-		RegisterFreelancerHandler(http.HandlerFunc(AddFreelancer)),
+		RegisterUserHandler(http.HandlerFunc(AddFreelancer)),
 		[]string{"OPTIONS", "POST"},
 	},
 	Route{
@@ -80,6 +80,13 @@ var routes = Routes{
 		"/client/",
 		http.HandlerFunc(IndexClient),
 		[]string{"GET"},
+	},
+	Route{
+		"RegisterClient",
+		"POST",
+		"/client/new",
+		RegisterUserHandler(http.HandlerFunc(AddClient)),
+		[]string{"OPTIONS", "POST"},
 	},
 
 	Route{

@@ -56,7 +56,7 @@ func TestAddFreelancer(t *testing.T) {
 
 	w := httptest.NewRecorder()
 	r := getRequest("POST", "")
-	context.Set(r, "freelancer", GetMockFreelancer())
+	context.Set(r, "user", GetMockUser())
 
 	app.AddFreelancer(w, r)
 
@@ -67,10 +67,6 @@ func TestAddFreelancer(t *testing.T) {
 	is.Equal(data["firstName"], "Pera")
 	is.Equal(data["lastName"], "Peric")
 	is.Equal(data["email"], "pera@gmail.com")
-	is.Equal(data["title"], "Dev")
-	is.Equal(data["hourlyRateFrom"], 12)
-	is.Equal(data["hourlyRateTo"], 22)
-	is.Equal(data["timeZone"], "CET")
 
 	freelancers := GetFreelancersFromDB()
 	is.Equal(len(freelancers), 1)
@@ -78,10 +74,6 @@ func TestAddFreelancer(t *testing.T) {
 	is.Equal(freelancers[0].FirstName, "Pera")
 	is.Equal(freelancers[0].LastName, "Peric")
 	is.Equal(freelancers[0].Email, "pera@gmail.com")
-	is.Equal(freelancers[0].Title, "Dev")
-	is.Equal(freelancers[0].HourlyRateFrom, 12)
-	is.Equal(freelancers[0].HourlyRateTo, 22)
-	is.Equal(freelancers[0].TimeZone, "CET")
 }
 
 func TestDeleteFreelancer(t *testing.T) {
@@ -105,21 +97,18 @@ func TestDeleteFreelancer(t *testing.T) {
 	is.Equal(len(GetFreelancersFromDB()), 0)
 }
 
-func GetMockFreelancer() *app.Freelancer {
-	return app.NewFreelancer(
-		"Pera",
-		"Peric",
-		"Dev",
-		"$2a$10$VJ8H9EYOIj9mnyW5mUm/nOWUrz/Rkak4/Ov3Lnw1GsAm4gmYU6sQu",
-		"pera@gmail.com",
-		12,
-		22,
-		"CET",
-	)
+func GetMockUser() *app.User {
+	return &app.User{
+		FirstName: "Pera",
+		LastName:  "Peric",
+		Password:  "$2a$10$VJ8H9EYOIj9mnyW5mUm/nOWUrz/Rkak4/Ov3Lnw1GsAm4gmYU6sQu",
+		Email:     "pera@gmail.com",
+	}
 }
 
 func AddFreelancerToDB() uint {
-	f := GetMockFreelancer()
+	u := GetMockUser()
+	f := &app.Freelancer{User: *u}
 	appContext.FreelancerRepository.AddFreelancer(f)
 	return f.ID
 }

@@ -21,7 +21,8 @@ func IndexFreelancer(w http.ResponseWriter, r *http.Request) {
 }
 
 func AddFreelancer(w http.ResponseWriter, r *http.Request) {
-	freelancer := context.Get(r, "freelancer").(*Freelancer)
+	user := context.Get(r, "user").(*User)
+	freelancer := &Freelancer{User: *user}
 	var appContext = context.Get(r, "context").(*ApplicationContext)
 	if err := appContext.FreelancerRepository.AddFreelancer(freelancer); err != nil {
 		respond.With(w, r, http.StatusBadRequest, err)
@@ -128,41 +129,6 @@ func FreelancerReferenceHandler(next http.Handler) http.Handler {
 		}
 
 		context.Set(r, "reference", &reference)
-		next.ServeHTTP(w, r)
-	})
-}
-
-func RegisterFreelancerHandler(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		decoder := json.NewDecoder(r.Body)
-		defer r.Body.Close()
-
-		var body struct {
-			FirstName string `json:"firstName" valid:"required"`
-			LastName  string `json:"lastName" valid:"required"`
-			Password  string `json:"password" valid:"required"`
-			Email     string `json:"email" valid:"required,email"`
-		}
-
-		if err := decoder.Decode(&body); err != nil {
-			respond.With(w, r, http.StatusBadRequest, err)
-			return
-		}
-
-		if ok, err := govalidator.ValidateStruct(body); ok == false || err != nil {
-			errs := govalidator.ErrorsByField(err)
-			respond.With(w, r, http.StatusBadRequest, errs)
-			return
-		}
-
-		freelancer := NewRegisterFreelancer(
-			body.FirstName,
-			body.LastName,
-			body.Password,
-			body.Email,
-		)
-
-		context.Set(r, "freelancer", freelancer)
 		next.ServeHTTP(w, r)
 	})
 }

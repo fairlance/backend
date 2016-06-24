@@ -11,13 +11,17 @@ type Model struct {
 	DeletedAt *time.Time `json:"deletedAt" sql:"index"`
 }
 
+type User struct {
+	FirstName string `json:"firstName" valid:"required"`
+	LastName  string `json:"lastName" valid:"required"`
+	Password  string `json:"-" valid:"required"`
+	Email     string `json:"email" valid:"required,email" sql:"index"`
+}
+
 type Freelancer struct {
 	Model
+	User
 	Title          string      `json:"title" valid:"required"`
-	FirstName      string      `json:"firstName" valid:"required"`
-	LastName       string      `json:"lastName" valid:"required"`
-	Password       string      `json:"-" valid:"required"`
-	Email          string      `json:"email" valid:"required,email" sql:"index"`
 	TimeZone       string      `json:"timeZone"`
 	Rating         float64     `json:"rating"`
 	HourlyRateFrom float64     `json:"hourlyRateFrom"`
@@ -38,34 +42,19 @@ func NewFreelancer(
 	timeZone string,
 ) *Freelancer {
 	return &Freelancer{
+		User: User{
+			FirstName: firstName,
+			LastName:  lastName,
+			Password:  password,
+			Email:     email,
+		},
 		Title:          title,
-		FirstName:      firstName,
-		LastName:       lastName,
-		Password:       password,
-		Email:          email,
 		HourlyRateFrom: hourlyRateFrom,
 		HourlyRateTo:   hourlyRateTo,
 		TimeZone:       timeZone,
-		Reviews:        []Review{},
-		Projects:       []Project{},
-		References:     []Reference{},
-	}
-}
-
-func NewRegisterFreelancer(
-	firstName string,
-	lastName string,
-	password string,
-	email string,
-) *Freelancer {
-	return &Freelancer{
-		FirstName:  firstName,
-		LastName:   lastName,
-		Password:   password,
-		Email:      email,
-		Reviews:    []Review{},
-		Projects:   []Project{},
-		References: []Reference{},
+		// Reviews:        []Review{},
+		// Projects:       []Project{},
+		// References:     []Reference{},
 	}
 }
 
@@ -83,11 +72,10 @@ func (freelancer *Freelancer) getRepresentationMap() map[string]interface{} {
 
 type Client struct {
 	Model
-	Name        string    `json:"name" valid:"required"`
-	Description string    `json:"description" valid:"required"`
-	Jobs        []Job     `json:"jobs"`
-	Projects    []Project `json:"projects"`
-	Reviews     []Review  `json:"reviews"`
+	User
+	Jobs     []Job     `json:"jobs"`
+	Projects []Project `json:"projects"`
+	Reviews  []Review  `json:"reviews"`
 }
 
 type Project struct {

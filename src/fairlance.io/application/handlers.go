@@ -6,12 +6,14 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/dgrijalva/jwt-go"
-	"github.com/gorilla/context"
-	"gopkg.in/matryer/respond.v1"
 	"io/ioutil"
 	"os"
 	"path/filepath"
+
+	"github.com/asaskevich/govalidator"
+	"github.com/dgrijalva/jwt-go"
+	"github.com/gorilla/context"
+	"gopkg.in/matryer/respond.v1"
 )
 
 func Login(w http.ResponseWriter, r *http.Request) {
@@ -77,4 +79,39 @@ func Info(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	respond.With(w, r, http.StatusOK, string(info))
+}
+
+func RegisterUserHandler(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		decoder := json.NewDecoder(r.Body)
+		defer r.Body.Close()
+
+		var body struct {
+			FirstName string `json:"firstName" valid:"required"`
+			LastName  string `json:"lastName" valid:"required"`
+			Password  string `json:"password" valid:"required"`
+			Email     string `json:"email" valid:"required,email"`
+		}
+
+		if err := decoder.Decode(&body); err != nil {
+			respond.With(w, r, http.StatusBadRequest, err)
+			return
+		}
+
+		if ok, err := govalidator.ValidateStruct(body); ok == false || err != nil {
+			errs := govalidator.ErrorsByField(err)
+			respond.With(w, r, http.StatusBadRequest, errs)
+			return
+		}
+
+		user := &User{
+			body.FirstName,
+			body.LastName,
+			body.Password,
+			body.Email,
+		}
+
+		context.Set(r, "user", user)
+		next.ServeHTTP(w, r)
+	})
 }

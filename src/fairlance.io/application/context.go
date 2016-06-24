@@ -104,7 +104,7 @@ func (ac *ApplicationContext) FillTables() {
 		Content:      "content",
 		Rating:       2.4,
 		JobId:        2,
-		ClientId:     2,
+		ClientId:     1,
 		FreelancerId: 2,
 	})
 	ac.ReferenceRepository.AddReference(&Reference{
@@ -122,8 +122,10 @@ func (ac *ApplicationContext) FillTables() {
 	})
 
 	ac.db.Create(&Client{
-		Name:        "Client",
-		Description: "Desc Client",
+		User: User{
+			FirstName: "ClientName",
+			LastName:  "ClientLast",
+		},
 	})
 
 	ac.db.Create(&Job{
@@ -138,7 +140,7 @@ func (ac *ApplicationContext) FillTables() {
 		Content:      "deleted content",
 		Rating:       2.4,
 		JobId:        2,
-		ClientId:     2,
+		ClientId:     1,
 		FreelancerId: 3,
 	})
 	ac.ReferenceRepository.AddReference(&Reference{
