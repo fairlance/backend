@@ -37,7 +37,7 @@ func GetFreelancer(w http.ResponseWriter, r *http.Request) {
 	var id = context.Get(r, "id").(uint)
 	freelancer, err := appContext.FreelancerRepository.GetFreelancer(id)
 	if err != nil {
-		respond.With(w, r, http.StatusBadRequest, err)
+		respond.With(w, r, http.StatusNotFound, err)
 		return
 	}
 

@@ -19,6 +19,18 @@ func IndexClient(w http.ResponseWriter, r *http.Request) {
 	respond.With(w, r, http.StatusOK, clients)
 }
 
+func GetClient(w http.ResponseWriter, r *http.Request) {
+	var appContext = context.Get(r, "context").(*ApplicationContext)
+	var id = context.Get(r, "id").(uint)
+	client, err := appContext.ClientRepository.GetClient(id)
+	if err != nil {
+		respond.With(w, r, http.StatusNotFound, err)
+		return
+	}
+
+	respond.With(w, r, http.StatusOK, client)
+}
+
 func AddClient(w http.ResponseWriter, r *http.Request) {
 	user := context.Get(r, "user").(*User)
 	client := &Client{User: *user}

@@ -88,6 +88,13 @@ var routes = Routes{
 		RegisterUserHandler(http.HandlerFunc(AddClient)),
 		[]string{"OPTIONS", "POST"},
 	},
+	Route{
+		"GetClient",
+		"GET",
+		"/client/{id}",
+		IdHandler(http.HandlerFunc(GetClient)),
+		[]string{"GET"},
+	},
 
 	Route{
 		"IndexJob",

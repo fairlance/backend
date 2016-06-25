@@ -34,7 +34,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var appContext = context.Get(r, "context").(*ApplicationContext)
-	user, err := appContext.UserRepository.CheckCredentials(email, password)
+	user, userType, err := appContext.UserRepository.CheckCredentials(email, password)
 	if err != nil {
 		respond.With(w, r, http.StatusUnauthorized, err)
 		return
@@ -56,9 +56,11 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	respond.With(w, r, http.StatusOK, struct {
 		UserId uint   `json:"id"`
 		Token  string `json:"token"`
+		Type   string `json:"type"`
 	}{
 		UserId: user.Model.ID,
 		Token:  tokenString,
+		Type:   userType,
 	})
 }
 
