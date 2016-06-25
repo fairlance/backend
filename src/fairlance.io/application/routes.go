@@ -5,11 +5,10 @@ import (
 )
 
 type Route struct {
-	Name           string
-	Method         string
-	Pattern        string
-	Handler        http.Handler
-	AllowedMethods []string
+	Name    string
+	Method  string
+	Pattern string
+	Handler http.Handler
 }
 
 type Routes []Route
@@ -20,7 +19,6 @@ var routes = Routes{
 		"POST",
 		"/login",
 		http.HandlerFunc(Login),
-		[]string{"OPTIONS", "POST"},
 	},
 
 	Route{
@@ -28,42 +26,36 @@ var routes = Routes{
 		"GET",
 		"/freelancer/",
 		http.HandlerFunc(IndexFreelancer),
-		[]string{"GET"},
 	},
 	Route{
 		"RegisterFreelancer",
 		"POST",
 		"/freelancer/new",
 		RegisterUserHandler(http.HandlerFunc(AddFreelancer)),
-		[]string{"OPTIONS", "POST"},
 	},
 	Route{
 		"GetFreelancer",
 		"GET",
 		"/freelancer/{id}",
 		IdHandler(http.HandlerFunc(GetFreelancer)),
-		[]string{"GET"},
 	},
 	Route{
 		"DeleteFreelancer",
 		"DELETE",
 		"/freelancer/{id}",
 		AuthHandler(IdHandler(http.HandlerFunc(DeleteFreelancer))),
-		[]string{"OPTIONS", "DELETE"},
 	},
 	Route{
 		"AddFreelancerReference",
 		"POST",
 		"/freelancer/{id}/reference",
 		IdHandler(FreelancerReferenceHandler(http.HandlerFunc(AddFreelancerReference))),
-		[]string{"OPTIONS", "POST"},
 	},
 	Route{
 		"AddFreelancerReview",
 		"POST",
 		"/freelancer/{id}/review",
 		IdHandler(FreelancerReviewHandler(http.HandlerFunc(AddFreelancerReview))),
-		[]string{"OPTIONS", "POST"},
 	},
 
 	Route{
@@ -71,7 +63,6 @@ var routes = Routes{
 		"GET",
 		"/project/",
 		http.HandlerFunc(IndexProject),
-		[]string{"GET"},
 	},
 
 	Route{
@@ -79,21 +70,18 @@ var routes = Routes{
 		"GET",
 		"/client/",
 		http.HandlerFunc(IndexClient),
-		[]string{"GET"},
 	},
 	Route{
 		"RegisterClient",
 		"POST",
 		"/client/new",
 		RegisterUserHandler(http.HandlerFunc(AddClient)),
-		[]string{"OPTIONS", "POST"},
 	},
 	Route{
 		"GetClient",
 		"GET",
 		"/client/{id}",
 		IdHandler(http.HandlerFunc(GetClient)),
-		[]string{"GET"},
 	},
 
 	Route{
@@ -101,13 +89,11 @@ var routes = Routes{
 		"GET",
 		"/job/",
 		http.HandlerFunc(IndexJob),
-		[]string{"GET"},
 	},
 	Route{
 		"Info",
 		"GET",
 		"/info/",
 		http.HandlerFunc(Info),
-		[]string{"GET"},
 	},
 }

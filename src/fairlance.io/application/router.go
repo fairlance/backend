@@ -32,7 +32,7 @@ func NewRouter(appContext *ApplicationContext) *mux.Router {
 		handler = context.ClearHandler(handler)
 
 		router.
-			Methods(route.AllowedMethods...).
+			Methods([]string{route.Method, "OPTIONS"}...).
 			Path(route.Pattern).
 			Name(route.Name).
 			Handler(handler)

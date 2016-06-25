@@ -6,7 +6,6 @@ import (
 	"log"
 	"net/http"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
@@ -54,7 +53,7 @@ func CORSHandler(next http.Handler, route Route) http.Handler {
 		if origin := r.Header.Get("Origin"); origin != "" {
 			// todo: make configurable
 			w.Header().Set("Access-Control-Allow-Origin", "*")
-			w.Header().Set("Access-Control-Allow-Methods", strings.Join(route.AllowedMethods, ","))
+			w.Header().Set("Access-Control-Allow-Methods", route.Method+",OPTIONS")
 			w.Header().Set("Access-Control-Allow-Headers",
 				"Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
 		}
