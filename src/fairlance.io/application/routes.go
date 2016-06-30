@@ -91,6 +91,19 @@ var routes = Routes{
 		http.HandlerFunc(IndexJob),
 	},
 	Route{
+		"NewJob",
+		"POST",
+		"/job/new",
+		NewJobHandler(http.HandlerFunc(AddJob)),
+	},
+	Route{
+		"GetJob",
+		"GET",
+		"/job/{id}",
+		IdHandler(http.HandlerFunc(GetJob)),
+	},
+
+	Route{
 		"Info",
 		"GET",
 		"/info/",
