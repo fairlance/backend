@@ -29,7 +29,7 @@ var routes = Routes{
 	},
 	Route{
 		"RegisterFreelancer",
-		"POST",
+		"PUT",
 		"/freelancer/new",
 		RegisterUserHandler(http.HandlerFunc(AddFreelancer)),
 	},
@@ -47,13 +47,13 @@ var routes = Routes{
 	},
 	Route{
 		"AddFreelancerReference",
-		"POST",
+		"PUT",
 		"/freelancer/{id}/reference",
 		IdHandler(FreelancerReferenceHandler(http.HandlerFunc(AddFreelancerReference))),
 	},
 	Route{
 		"AddFreelancerReview",
-		"POST",
+		"PUT",
 		"/freelancer/{id}/review",
 		IdHandler(FreelancerReviewHandler(http.HandlerFunc(AddFreelancerReview))),
 	},
@@ -73,7 +73,7 @@ var routes = Routes{
 	},
 	Route{
 		"RegisterClient",
-		"POST",
+		"PUT",
 		"/client/new",
 		RegisterUserHandler(http.HandlerFunc(AddClient)),
 	},
@@ -92,7 +92,7 @@ var routes = Routes{
 	},
 	Route{
 		"NewJob",
-		"POST",
+		"PUT",
 		"/job/new",
 		NewJobHandler(http.HandlerFunc(AddJob)),
 	},
