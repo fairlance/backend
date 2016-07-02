@@ -55,7 +55,7 @@ func TestAddFreelancer(t *testing.T) {
 	is := is.New(t)
 
 	w := httptest.NewRecorder()
-	r := getRequest("POST", "")
+	r := getRequest("PUT", "")
 	context.Set(r, "user", GetMockUser())
 
 	app.AddFreelancer(w, r)
@@ -63,10 +63,13 @@ func TestAddFreelancer(t *testing.T) {
 	is.Equal(w.Code, http.StatusOK)
 	var data map[string]interface{}
 	is.NoErr(json.Unmarshal(w.Body.Bytes(), &data))
-	is.NotEqual(data["id"], 0)
-	is.Equal(data["firstName"], "Pera")
-	is.Equal(data["lastName"], "Peric")
-	is.Equal(data["email"], "pera@gmail.com")
+
+	user := data["user"].(map[string]interface{})
+	is.Equal(data["type"], "freelancer")
+	is.NotEqual(user["id"], 0)
+	is.Equal(user["firstName"], "Pera")
+	is.Equal(user["lastName"], "Peric")
+	is.Equal(user["email"], "pera@gmail.com")
 
 	freelancers := GetFreelancersFromDB()
 	is.Equal(len(freelancers), 1)

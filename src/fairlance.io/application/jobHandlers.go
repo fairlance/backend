@@ -54,6 +54,7 @@ func NewJobHandler(next http.Handler) http.Handler {
 			Description string `json:"description" valid:"required"`
 			ClientId    uint   `json:"clientId" valid:"required"`
 			IsActive    bool   `json:"isActive"`
+			Tags        []Tag  `json:"tags"`
 		}
 
 		if err := decoder.Decode(&body); err != nil {
@@ -72,6 +73,7 @@ func NewJobHandler(next http.Handler) http.Handler {
 			Description: body.Description,
 			ClientId:    body.ClientId,
 			IsActive:    body.IsActive,
+			Tags:        body.Tags,
 		}
 
 		context.Set(r, "job", job)

@@ -21,11 +21,12 @@ type User struct {
 
 type Freelancer struct {
 	User
-	Title          string      `json:"title" valid:"required"`
-	TimeZone       string      `json:"timeZone"`
 	Rating         float64     `json:"rating"`
-	HourlyRateFrom float64     `json:"hourlyRateFrom"`
-	HourlyRateTo   float64     `json:"hourlyRateTo"`
+	Timezone       string      `json:"timezone"`
+	Skills         []Tag       `json:"skills" gorm:"polymorphic:Owner;"`
+	IsAvailable    bool        `json:"isAvailable"`
+	HourlyRateFrom uint        `json:"hourlyRateFrom"`
+	HourlyRateTo   uint        `json:"hourlyRateTo"`
 	Projects       []Project   `json:"projects" gorm:"many2many:project_freelancers;"`
 	Reviews        []Review    `json:"reviews"`
 	References     []Reference `json:"references"`
@@ -34,12 +35,11 @@ type Freelancer struct {
 func NewFreelancer(
 	firstName string,
 	lastName string,
-	title string,
 	password string,
 	email string,
-	hourlyRateFrom float64,
-	hourlyRateTo float64,
-	timeZone string,
+	hourlyRateFrom uint,
+	hourlyRateTo uint,
+	timezone string,
 ) *Freelancer {
 	return &Freelancer{
 		User: User{
@@ -48,10 +48,9 @@ func NewFreelancer(
 			Password:  password,
 			Email:     email,
 		},
-		Title:          title,
 		HourlyRateFrom: hourlyRateFrom,
 		HourlyRateTo:   hourlyRateTo,
-		TimeZone:       timeZone,
+		Timezone:       timezone,
 		// Reviews:        []Review{},
 		// Projects:       []Project{},
 		// References:     []Reference{},
@@ -89,6 +88,7 @@ type Job struct {
 	Description string `json:"description" valid:"required"`
 	ClientId    uint   `json:"clientId" valid:"required"`
 	IsActive    bool   `json:"isActive"`
+	Tags        []Tag  `json:"tags" gorm:"polymorphic:Owner;"`
 }
 
 type Review struct {
@@ -114,4 +114,11 @@ type Media struct {
 	Image       string `json:"image"`
 	Video       string `json:"video"`
 	ReferenceId uint   `json:"referenceId"`
+}
+
+type Tag struct {
+	ID        uint   `json:"-" gorm:"primary_key"`
+	Name      string `json:"name" valid:"required"`
+	OwnerId   uint   `json:"-"`
+	OwnerType string `json:"-"`
 }

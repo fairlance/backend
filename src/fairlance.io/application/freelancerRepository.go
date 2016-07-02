@@ -20,7 +20,7 @@ func NewFreelancerRepository(db *gorm.DB) (*FreelancerRepository, error) {
 
 func (repo *FreelancerRepository) GetAllFreelancers() ([]Freelancer, error) {
 	freelancers := []Freelancer{}
-	if err := repo.db.Preload("Projects").Preload("References").Preload("References.Media").Preload("Reviews").Find(&freelancers).Error; err != nil {
+	if err := repo.db.Preload("Skills", "owner_type = ?", "freelancers").Preload("Projects").Preload("References").Preload("References.Media").Preload("Reviews").Find(&freelancers).Error; err != nil {
 		return freelancers, err
 	}
 	return freelancers, nil
@@ -28,7 +28,7 @@ func (repo *FreelancerRepository) GetAllFreelancers() ([]Freelancer, error) {
 
 func (repo *FreelancerRepository) GetFreelancer(id uint) (Freelancer, error) {
 	freelancer := Freelancer{}
-	if err := repo.db.Preload("Projects").Preload("References").Preload("References.Media").Preload("Reviews").Find(&freelancer, id).Error; err != nil {
+	if err := repo.db.Preload("Skills", "owner_type = ?", "freelancers").Preload("Projects").Preload("References").Preload("References.Media").Preload("Reviews").Find(&freelancer, id).Error; err != nil {
 		return freelancer, err
 	}
 	return freelancer, nil
@@ -41,6 +41,10 @@ func (repo *FreelancerRepository) AddFreelancer(freelancer *Freelancer) error {
 	}
 	freelancer.Password = string(hashedPassword)
 	return repo.db.Create(freelancer).Error
+}
+
+func (repo *FreelancerRepository) ClearSkills(freelancer *Freelancer) error {
+	return repo.db.Delete(&Tag{}, "owner_id = ? AND owner_type = ?", freelancer.ID, "freelancers").Error
 }
 
 func (repo *FreelancerRepository) UpdateFreelancer(freelancer *Freelancer) error {

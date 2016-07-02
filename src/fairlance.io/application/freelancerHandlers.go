@@ -138,3 +138,47 @@ func FreelancerReferenceHandler(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r)
 	})
 }
+
+func FreelancerUpdateHandler(w http.ResponseWriter, r *http.Request) {
+	decoder := json.NewDecoder(r.Body)
+	defer r.Body.Close()
+
+	var body struct {
+		Skills         []Tag  `json:"skills"`
+		Timezone       string `json:"timezone"`
+		IsAvailable    bool   `json:"isAvailable"`
+		HourlyRateFrom uint   `json:"hourlyRateFrom"`
+		HourlyRateTo   uint   `json:"hourlyRateTo"`
+	}
+
+	if err := decoder.Decode(&body); err != nil {
+		respond.With(w, r, http.StatusBadRequest, err)
+		return
+	}
+
+	var id = context.Get(r, "id").(uint)
+	var appContext = context.Get(r, "context").(*ApplicationContext)
+	freelancer, err := appContext.FreelancerRepository.GetFreelancer(id)
+	if err != nil {
+		respond.With(w, r, http.StatusNotFound, err)
+		return
+	}
+
+	if err := appContext.FreelancerRepository.ClearSkills(&freelancer); err != nil {
+		respond.With(w, r, http.StatusBadRequest, err)
+		return
+	}
+
+	freelancer.Skills = body.Skills
+	freelancer.Timezone = body.Timezone
+	freelancer.IsAvailable = body.IsAvailable
+	freelancer.HourlyRateFrom = body.HourlyRateFrom
+	freelancer.HourlyRateTo = body.HourlyRateTo
+
+	if err := appContext.FreelancerRepository.UpdateFreelancer(&freelancer); err != nil {
+		respond.With(w, r, http.StatusBadRequest, err)
+		return
+	}
+
+	respond.With(w, r, http.StatusOK, nil)
+}

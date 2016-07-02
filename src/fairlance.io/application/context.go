@@ -57,15 +57,15 @@ func (ac *ApplicationContext) DropCreateFillTables() {
 }
 
 func (ac *ApplicationContext) DropTables() {
-	ac.db.DropTableIfExists(&Freelancer{}, &Project{}, &Client{}, &Job{}, &Review{}, &Reference{}, &Media{})
+	ac.db.DropTableIfExists(&Freelancer{}, &Project{}, &Client{}, &Job{}, &Review{}, &Reference{}, &Media{}, &Tag{})
 }
 
 func (ac *ApplicationContext) CreateTables() {
-	ac.db.CreateTable(&Freelancer{}, &Project{}, &Client{}, &Job{}, &Review{}, &Reference{}, &Media{})
+	ac.db.CreateTable(&Freelancer{}, &Project{}, &Client{}, &Job{}, &Review{}, &Reference{}, &Media{}, &Tag{})
 }
 
 func (ac *ApplicationContext) FillTables() {
-	ac.FreelancerRepository.AddFreelancer(NewFreelancer("First", "Last", "Dev", "Pass", "first@mail.com", 3, 55, "UTC"))
+	ac.FreelancerRepository.AddFreelancer(NewFreelancer("First", "Last", "Pass", "first@mail.com", 3, 55, "UTC"))
 
 	ac.FreelancerRepository.AddReview(&Review{
 		Title:        "text2",
@@ -85,7 +85,6 @@ func (ac *ApplicationContext) FillTables() {
 	ac.FreelancerRepository.AddFreelancer(NewFreelancer(
 		"Pera",
 		"Peric",
-		"Dev",
 		"123456",
 		"second@mail.com",
 		12,
@@ -139,7 +138,7 @@ func (ac *ApplicationContext) FillTables() {
 		ClientId:    1,
 	})
 
-	ac.FreelancerRepository.AddFreelancer(NewFreelancer("Third", "Last", "Dev", "Pass", "third@mail.com", 3, 55, "UTC"))
+	ac.FreelancerRepository.AddFreelancer(NewFreelancer("Third", "Last", "Pass", "third@mail.com", 3, 55, "UTC"))
 	ac.FreelancerRepository.AddReview(&Review{
 		Title:        "deleted text2",
 		Content:      "deleted content",
