@@ -40,5 +40,11 @@ func AddClient(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	respond.With(w, r, http.StatusOK, client)
+	respond.With(w, r, http.StatusOK, struct {
+		User User   `json:"user"`
+		Type string `json:"type"`
+	}{
+		User: client.User,
+		Type: "client",
+	})
 }

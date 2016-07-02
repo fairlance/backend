@@ -29,7 +29,13 @@ func AddFreelancer(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	respond.With(w, r, http.StatusOK, freelancer)
+	respond.With(w, r, http.StatusOK, struct {
+		User User   `json:"user"`
+		Type string `json:"type"`
+	}{
+		User: freelancer.User,
+		Type: "freelancer",
+	})
 }
 
 func GetFreelancer(w http.ResponseWriter, r *http.Request) {
