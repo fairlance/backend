@@ -139,7 +139,7 @@ func FreelancerReferenceHandler(next http.Handler) http.Handler {
 	})
 }
 
-func FreelancerUpdateHandler(w http.ResponseWriter, r *http.Request) {
+func UpdateFreelancer(w http.ResponseWriter, r *http.Request) {
 	decoder := json.NewDecoder(r.Body)
 	defer r.Body.Close()
 

@@ -43,7 +43,7 @@ var routes = Routes{
 		"UpdateFreelancer",
 		"POST",
 		"/freelancer/{id}",
-		IdHandler(http.HandlerFunc(FreelancerUpdateHandler)),
+		IdHandler(http.HandlerFunc(UpdateFreelancer)),
 	},
 	Route{
 		"DeleteFreelancer",
@@ -88,6 +88,12 @@ var routes = Routes{
 		"GET",
 		"/client/{id}",
 		IdHandler(http.HandlerFunc(GetClient)),
+	},
+	Route{
+		"UpdateClient",
+		"POST",
+		"/client/{id}",
+		IdHandler(http.HandlerFunc(UpdateClient)),
 	},
 
 	Route{

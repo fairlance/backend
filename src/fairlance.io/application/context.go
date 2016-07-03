@@ -142,6 +142,9 @@ func (ac *ApplicationContext) FillTables() {
 			Password:  "123456",
 			Email:     "client@mail.com",
 		},
+		Timezone: "UTC",
+		Payment:  "PayPal",
+		Industry: "Dildos",
 	})
 
 	ac.db.Create(&Job{

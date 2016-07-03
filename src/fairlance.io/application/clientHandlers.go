@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"net/http"
 
 	"github.com/gorilla/context"
@@ -47,4 +48,39 @@ func AddClient(w http.ResponseWriter, r *http.Request) {
 		User: client.User,
 		Type: "client",
 	})
+}
+
+func UpdateClient(w http.ResponseWriter, r *http.Request) {
+	decoder := json.NewDecoder(r.Body)
+	defer r.Body.Close()
+
+	var body struct {
+		Timezone string `json:"timezone"`
+		Payment  string `json:"payment"`
+		Industry string `json:"industry"`
+	}
+
+	if err := decoder.Decode(&body); err != nil {
+		respond.With(w, r, http.StatusBadRequest, err)
+		return
+	}
+
+	var id = context.Get(r, "id").(uint)
+	var appContext = context.Get(r, "context").(*ApplicationContext)
+	client, err := appContext.ClientRepository.GetClient(id)
+	if err != nil {
+		respond.With(w, r, http.StatusNotFound, err)
+		return
+	}
+
+	client.Timezone = body.Timezone
+	client.Payment = body.Payment
+	client.Industry = body.Industry
+
+	if err := appContext.ClientRepository.UpdateClient(&client); err != nil {
+		respond.With(w, r, http.StatusBadRequest, err)
+		return
+	}
+
+	respond.With(w, r, http.StatusOK, nil)
 }

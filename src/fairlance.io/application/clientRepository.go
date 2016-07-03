@@ -31,6 +31,10 @@ func (repo *ClientRepository) AddClient(client *Client) error {
 	return repo.db.Create(client).Error
 }
 
+func (repo *ClientRepository) UpdateClient(client *Client) error {
+	return repo.db.Save(client).Error
+}
+
 func (repo *ClientRepository) GetClient(id uint) (Client, error) {
 	client := Client{}
 	if err := repo.db.Preload("Projects").Preload("Jobs").Preload("Reviews").Find(&client, id).Error; err != nil {

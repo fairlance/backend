@@ -34,6 +34,9 @@ type Freelancer struct {
 
 type Client struct {
 	User
+	Timezone string    `json:"timezone"`
+	Payment  string    `json:"payment"`
+	Industry string    `json:"industry"`
 	Jobs     []Job     `json:"jobs"`
 	Projects []Project `json:"projects"`
 	Reviews  []Review  `json:"reviews"`
