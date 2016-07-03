@@ -16,7 +16,7 @@ type User struct {
 	FirstName string `json:"firstName" valid:"required"`
 	LastName  string `json:"lastName" valid:"required"`
 	Password  string `json:"-" valid:"required"`
-	Email     string `json:"email" valid:"required,email" sql:"index"`
+	Email     string `json:"email" valid:"required,email" sql:"index" gorm:"unique"`
 }
 
 type Freelancer struct {
