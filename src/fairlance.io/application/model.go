@@ -32,40 +32,6 @@ type Freelancer struct {
 	References     []Reference `json:"references"`
 }
 
-func NewFreelancer(
-	firstName string,
-	lastName string,
-	password string,
-	email string,
-	hourlyRateFrom uint,
-	hourlyRateTo uint,
-	timezone string,
-) *Freelancer {
-	return &Freelancer{
-		User: User{
-			FirstName: firstName,
-			LastName:  lastName,
-			Password:  password,
-			Email:     email,
-		},
-		HourlyRateFrom: hourlyRateFrom,
-		HourlyRateTo:   hourlyRateTo,
-		Timezone:       timezone,
-		// Reviews:        []Review{},
-		// Projects:       []Project{},
-		// References:     []Reference{},
-	}
-}
-
-func (user *User) getRepresentationMap() map[string]interface{} {
-	return map[string]interface{}{
-		"id":        user.Model.ID,
-		"firstName": user.FirstName,
-		"lastName":  user.LastName,
-		"email":     user.Email,
-	}
-}
-
 type Client struct {
 	User
 	Jobs     []Job     `json:"jobs"`

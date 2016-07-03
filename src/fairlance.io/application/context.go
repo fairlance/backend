@@ -65,7 +65,17 @@ func (ac *ApplicationContext) CreateTables() {
 }
 
 func (ac *ApplicationContext) FillTables() {
-	ac.FreelancerRepository.AddFreelancer(NewFreelancer("First", "Last", "Pass", "first@mail.com", 3, 55, "UTC"))
+	ac.FreelancerRepository.AddFreelancer(&Freelancer{
+		User: User{
+			FirstName: "First",
+			LastName:  "Last",
+			Password:  "Pass",
+			Email:     "first@mail.com",
+		},
+		HourlyRateFrom: 3,
+		HourlyRateTo:   55,
+		Timezone:       "UTC",
+	})
 
 	ac.FreelancerRepository.AddReview(&Review{
 		Title:        "text2",
@@ -82,15 +92,17 @@ func (ac *ApplicationContext) FillTables() {
 		FreelancerId: 1,
 	})
 
-	ac.FreelancerRepository.AddFreelancer(NewFreelancer(
-		"Pera",
-		"Peric",
-		"123456",
-		"second@mail.com",
-		12,
-		22,
-		"CET",
-	))
+	ac.FreelancerRepository.AddFreelancer(&Freelancer{
+		User: User{
+			FirstName: "Pera",
+			LastName:  "Peric",
+			Password:  "123456",
+			Email:     "second@mail.com",
+		},
+		HourlyRateFrom: 12,
+		HourlyRateTo:   22,
+		Timezone:       "CET",
+	})
 
 	ac.FreelancerRepository.AddReview(&Review{
 		Title:        "text2",
@@ -138,7 +150,18 @@ func (ac *ApplicationContext) FillTables() {
 		ClientId:    1,
 	})
 
-	ac.FreelancerRepository.AddFreelancer(NewFreelancer("Third", "Last", "Pass", "third@mail.com", 3, 55, "UTC"))
+	ac.FreelancerRepository.AddFreelancer(&Freelancer{
+		User: User{
+			FirstName: "Third",
+			LastName:  "Last",
+			Password:  "Pass",
+			Email:     "third@mail.com",
+		},
+		HourlyRateFrom: 3,
+		HourlyRateTo:   55,
+		Timezone:       "UTC",
+	})
+
 	ac.FreelancerRepository.AddReview(&Review{
 		Title:        "deleted text2",
 		Content:      "deleted content",

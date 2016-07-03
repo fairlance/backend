@@ -44,7 +44,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	token := jwt.New(jwt.SigningMethodHS256)
 	claims := token.Claims.(jwt.MapClaims)
 	// Set some claims
-	claims["user"] = user.getRepresentationMap()
+	claims["user"] = user
 	claims["exp"] = time.Now().Add(time.Minute * 5).Unix()
 	// Sign and get the complete encoded token as a string
 	tokenString, err := token.SignedString([]byte(appContext.JwtSecret))
