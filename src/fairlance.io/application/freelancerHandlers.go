@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 
 	"github.com/asaskevich/govalidator"
@@ -153,6 +154,13 @@ func UpdateFreelancer(w http.ResponseWriter, r *http.Request) {
 
 	if err := decoder.Decode(&body); err != nil {
 		respond.With(w, r, http.StatusBadRequest, err)
+		return
+	}
+
+	// https://github.com/asaskevich/govalidator/issues/133
+	// https://github.com/asaskevich/govalidator/issues/112
+	if len(body.Skills) > 20 {
+		respond.With(w, r, http.StatusBadRequest, errors.New("Max of 20 skills are allowed."))
 		return
 	}
 

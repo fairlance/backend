@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 
 	"github.com/asaskevich/govalidator"
@@ -59,6 +60,13 @@ func NewJobHandler(next http.Handler) http.Handler {
 
 		if err := decoder.Decode(&body); err != nil {
 			respond.With(w, r, http.StatusBadRequest, err)
+			return
+		}
+
+		// https://github.com/asaskevich/govalidator/issues/133
+		// https://github.com/asaskevich/govalidator/issues/112
+		if len(body.Tags) > 10 {
+			respond.With(w, r, http.StatusBadRequest, errors.New("Max of 10 tags are allowed."))
 			return
 		}
 
