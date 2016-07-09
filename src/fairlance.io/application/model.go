@@ -37,6 +37,7 @@ type Client struct {
 	Timezone string    `json:"timezone"`
 	Payment  string    `json:"payment"`
 	Industry string    `json:"industry"`
+	Rating   float64   `json:"rating"`
 	Jobs     []Job     `json:"jobs"`
 	Projects []Project `json:"projects"`
 	Reviews  []Review  `json:"reviews"`
@@ -47,7 +48,8 @@ type Project struct {
 	Name        string       `json:"name" valid:"required"`
 	Description string       `json:"description" valid:"required"`
 	Freelancers []Freelancer `json:"freelancers" gorm:"many2many:project_freelancers;"`
-	ClientId    uint         `json:"clientId" valid:"required"`
+	ClientId    uint         `json:"-" valid:"required"`
+	Client      Client       `json:"client"`
 	IsActive    bool         `json:"isActive"`
 }
 
@@ -55,7 +57,8 @@ type Job struct {
 	Model
 	Name        string `json:"name" valid:"required"`
 	Description string `json:"description" valid:"required"`
-	ClientId    uint   `json:"clientId" valid:"required"`
+	ClientId    uint   `json:"-" valid:"required"`
+	Client      Client `json:"client"`
 	IsActive    bool   `json:"isActive"`
 	Tags        []Tag  `json:"tags" gorm:"polymorphic:Owner;"`
 }
