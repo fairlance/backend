@@ -10,7 +10,7 @@ test:
         - make testShort
     post:
         - make install
-        - make installARM
+        # - make installARM
         - sudo cp * $CIRCLE_ARTIFACTS:
             pwd:
                 bin
