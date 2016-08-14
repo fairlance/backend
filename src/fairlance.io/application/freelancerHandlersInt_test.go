@@ -2,9 +2,13 @@ package application_test
 
 import (
 	"encoding/json"
+	"math/rand"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
+	"strings"
 	"testing"
+	"time"
 
 	app "fairlance.io/application"
 	"github.com/cheekybits/is"
@@ -69,14 +73,14 @@ func TestAddFreelancer(t *testing.T) {
 	is.NotEqual(user["id"], 0)
 	is.Equal(user["firstName"], "Pera")
 	is.Equal(user["lastName"], "Peric")
-	is.Equal(user["email"], "pera@gmail.com")
+	is.True(strings.HasSuffix(user["email"].(string), "pera@gmail.com"))
 
 	freelancers := GetFreelancersFromDB()
 	is.Equal(len(freelancers), 1)
 	is.NotEqual(freelancers[0].ID, 0)
 	is.Equal(freelancers[0].FirstName, "Pera")
 	is.Equal(freelancers[0].LastName, "Peric")
-	is.Equal(freelancers[0].Email, "pera@gmail.com")
+	is.True(strings.HasSuffix(freelancers[0].Email, "pera@gmail.com"))
 }
 
 func TestDeleteFreelancer(t *testing.T) {
@@ -101,11 +105,14 @@ func TestDeleteFreelancer(t *testing.T) {
 }
 
 func GetMockUser() *app.User {
+	var email string
+	rand.Seed(time.Now().UTC().UnixNano())
+	email = strconv.Itoa(rand.Intn(100)) + "pera@gmail.com"
 	return &app.User{
 		FirstName: "Pera",
 		LastName:  "Peric",
 		Password:  "$2a$10$VJ8H9EYOIj9mnyW5mUm/nOWUrz/Rkak4/Ov3Lnw1GsAm4gmYU6sQu",
-		Email:     "pera@gmail.com",
+		Email:     email,
 	}
 }
 
