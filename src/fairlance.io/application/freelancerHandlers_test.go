@@ -58,10 +58,6 @@ func TestFreelancerReferenceHandler(t *testing.T) {
 }
 
 func TestFreelancerUpdateHandler(t *testing.T) {
-	if testing.Short() {
-		t.Skip("Skipping TestUpdateFreelancer in short mode")
-	}
-	setUp()
 	is := is.New(t)
 	id := AddFreelancerToDB()
 
