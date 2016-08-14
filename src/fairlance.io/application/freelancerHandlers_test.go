@@ -56,3 +56,43 @@ func TestFreelancerReferenceHandler(t *testing.T) {
 	is.Equal(reference.Media.Image, "i")
 	is.Equal(reference.Media.Video, "v")
 }
+
+func TestFreelancerUpdateHandler(t *testing.T) {
+	if testing.Short() {
+		t.Skip("Skipping TestUpdateFreelancer in short mode")
+	}
+	setUp()
+	is := is.New(t)
+	id := AddFreelancerToDB()
+
+	requestBody := `
+	{
+		"skills":        	[
+			{
+				"name": "coolcat"
+			},
+			{
+				"name": "pimp"
+			}
+		],
+		"timezone":      	"UTC",
+		"isAvailable":      true,
+		"hourlyRateFrom":   2,
+		"hourlyRateTo":     20
+	}`
+
+	w := httptest.NewRecorder()
+	r := getRequest("POST", requestBody)
+	context.Set(r, "id", id)
+
+	app.FreelancerUpdateHandler(emptyHandler).ServeHTTP(w, r)
+
+	data := context.Get(r, "updates").(*app.FreelancerUpdate)
+
+	is.Equal(data.Skills[0], app.Tag{Name: "coolcat"})
+	is.Equal(data.Skills[1], app.Tag{Name: "pimp"})
+	is.Equal(data.Timezone, "UTC")
+	is.Equal(data.IsAvailable, true)
+	is.Equal(data.HourlyRateFrom, 2)
+	is.Equal(data.HourlyRateTo, 20)
+}

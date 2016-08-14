@@ -32,6 +32,14 @@ type Freelancer struct {
 	References     []Reference `json:"references"`
 }
 
+type FreelancerUpdate struct {
+	Skills         []Tag  `json:"skills"`
+	Timezone       string `json:"timezone"`
+	IsAvailable    bool   `json:"isAvailable"`
+	HourlyRateFrom uint   `json:"hourlyRateFrom"`
+	HourlyRateTo   uint   `json:"hourlyRateTo"`
+}
+
 type Client struct {
 	User
 	Timezone string    `json:"timezone"`

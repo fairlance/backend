@@ -140,29 +140,32 @@ func FreelancerReferenceHandler(next http.Handler) http.Handler {
 	})
 }
 
-func UpdateFreelancer(w http.ResponseWriter, r *http.Request) {
-	decoder := json.NewDecoder(r.Body)
-	defer r.Body.Close()
+func FreelancerUpdateHandler(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		decoder := json.NewDecoder(r.Body)
+		defer r.Body.Close()
 
-	var body struct {
-		Skills         []Tag  `json:"skills"`
-		Timezone       string `json:"timezone"`
-		IsAvailable    bool   `json:"isAvailable"`
-		HourlyRateFrom uint   `json:"hourlyRateFrom"`
-		HourlyRateTo   uint   `json:"hourlyRateTo"`
-	}
+		var body FreelancerUpdate
 
-	if err := decoder.Decode(&body); err != nil {
-		respond.With(w, r, http.StatusBadRequest, err)
-		return
-	}
+		if err := decoder.Decode(&body); err != nil {
+			respond.With(w, r, http.StatusBadRequest, err)
+			return
+		}
 
-	// https://github.com/asaskevich/govalidator/issues/133
-	// https://github.com/asaskevich/govalidator/issues/112
-	if len(body.Skills) > 20 {
-		respond.With(w, r, http.StatusBadRequest, errors.New("Max of 20 skills are allowed."))
-		return
-	}
+		// https://github.com/asaskevich/govalidator/issues/133
+		// https://github.com/asaskevich/govalidator/issues/112
+		if len(body.Skills) > 20 {
+			respond.With(w, r, http.StatusBadRequest, errors.New("Max of 20 skills are allowed."))
+			return
+		}
+
+		context.Set(r, "updates", &body)
+		next.ServeHTTP(w, r)
+	})
+}
+
+func AddFreelancerUpdates(w http.ResponseWriter, r *http.Request) {
+	var body = context.Get(r, "updates").(*FreelancerUpdate)
 
 	var id = context.Get(r, "id").(uint)
 	var appContext = context.Get(r, "context").(*ApplicationContext)

@@ -104,6 +104,43 @@ func TestDeleteFreelancer(t *testing.T) {
 	is.Equal(len(GetFreelancersFromDB()), 0)
 }
 
+func TestAddFreelancerUpdates(t *testing.T) {
+	if testing.Short() {
+		t.Skip("Skipping TestAddFreelancerUpdates in short mode")
+	}
+	setUp()
+	is := is.New(t)
+	id := AddFreelancerToDB()
+
+	rBody := app.FreelancerUpdate{
+		Skills: []app.Tag{
+			app.Tag{Name: "coolcat"},
+			app.Tag{Name: "pimp"},
+		},
+		Timezone:       "UTC",
+		IsAvailable:    true,
+		HourlyRateFrom: 2,
+		HourlyRateTo:   20,
+	}
+
+	w := httptest.NewRecorder()
+	r := getRequest("POST", "")
+	context.Set(r, "id", id)
+	context.Set(r, "updates", &rBody)
+
+	app.AddFreelancerUpdates(w, r)
+
+	freelancers := GetFreelancersFromDB()
+	data := freelancers[0]
+
+	is.Equal(data.Skills[0].Name, "coolcat")
+	is.Equal(data.Skills[1].Name, "pimp")
+	is.Equal(data.Timezone, "UTC")
+	is.Equal(data.IsAvailable, true)
+	is.Equal(data.HourlyRateFrom, 2)
+	is.Equal(data.HourlyRateTo, 20)
+}
+
 func GetMockUser() *app.User {
 	var email string
 	rand.Seed(time.Now().UTC().UnixNano())
