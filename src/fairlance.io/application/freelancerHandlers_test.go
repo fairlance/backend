@@ -59,7 +59,6 @@ func TestFreelancerReferenceHandler(t *testing.T) {
 
 func TestFreelancerUpdateHandler(t *testing.T) {
 	is := is.New(t)
-	id := AddFreelancerToDB()
 
 	requestBody := `
 	{
@@ -79,7 +78,6 @@ func TestFreelancerUpdateHandler(t *testing.T) {
 
 	w := httptest.NewRecorder()
 	r := getRequest("POST", requestBody)
-	context.Set(r, "id", id)
 
 	app.FreelancerUpdateHandler(emptyHandler).ServeHTTP(w, r)
 

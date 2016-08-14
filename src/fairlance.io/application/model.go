@@ -34,10 +34,10 @@ type Freelancer struct {
 
 type FreelancerUpdate struct {
 	Skills         []Tag  `json:"skills"`
-	Timezone       string `json:"timezone"`
+	Timezone       string `json:"timezone" valid:"required"`
 	IsAvailable    bool   `json:"isAvailable"`
-	HourlyRateFrom uint   `json:"hourlyRateFrom"`
-	HourlyRateTo   uint   `json:"hourlyRateTo"`
+	HourlyRateFrom uint   `json:"hourlyRateFrom" valid:"required"`
+	HourlyRateTo   uint   `json:"hourlyRateTo" valid:"required"`
 }
 
 type Client struct {
