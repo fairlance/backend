@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+
+	"fairlance.io/registration"
 )
 
 var port int
@@ -22,16 +24,16 @@ func main() {
 		return
 	}
 
-	context := NewContext("registration")
+	context := registration.NewContext("registration")
 
 	// Instantiate handler
-	indexHandler := &AppHandler{context, IndexHandler}
-	registerHandler := &AppHandler{context, RegisterHandler}
+	indexHandler := &registration.AppHandler{context, registration.IndexHandler}
+	registerHandler := &registration.AppHandler{context, registration.RegisterHandler}
 
 	// Setup mux
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		if authenticated(w, r, user, pass) {
+		if registration.Authenticated(w, r, user, pass) {
 			indexHandler.ServeHTTP(w, r)
 			return
 		}

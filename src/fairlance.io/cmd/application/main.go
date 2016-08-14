@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+
+	"fairlance.io/application"
 )
 
 var port int
@@ -26,15 +28,15 @@ func main() {
 		return
 	}
 
-	options := ContextOptions{dbName, dbUser, dbPass, secret}
+	options := application.ContextOptions{dbName, dbUser, dbPass, secret}
 
-	var appContext, err = NewContext(options)
-	appContext.DropCreateFillTables()
+	var appContext, err = application.NewContext(options)
 	if err != nil {
 		panic(err)
 	}
+	appContext.DropCreateFillTables()
 
-	router := NewRouter(appContext)
+	router := application.NewRouter(appContext)
 	http.Handle("/", router)
 
 	panic(http.ListenAndServe(":"+strconv.Itoa(port), nil))

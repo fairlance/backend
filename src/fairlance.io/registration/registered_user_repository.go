@@ -1,4 +1,4 @@
-package main
+package registration
 
 import (
 	"gopkg.in/mgo.v2"

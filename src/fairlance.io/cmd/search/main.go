@@ -3,10 +3,11 @@ package main
 import (
 	"encoding/json"
 	"flag"
-	"gopkg.in/matryer/respond.v1"
 	"io/ioutil"
 	"net/http"
 	"strconv"
+
+	"gopkg.in/matryer/respond.v1"
 )
 
 var port int

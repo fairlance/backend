@@ -1,13 +1,14 @@
-package main
+package registration
 
 import (
 	"encoding/base64"
 	"encoding/json"
-	"github.com/asaskevich/govalidator"
-	"gopkg.in/mgo.v2"
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/asaskevich/govalidator"
+	"gopkg.in/mgo.v2"
 )
 
 type AppHandler struct {
@@ -104,7 +105,7 @@ func getEmailFromRequest(w http.ResponseWriter, r *http.Request) (string, error)
 	return r.FormValue("email"), nil
 }
 
-func authenticated(w http.ResponseWriter, r *http.Request, user string, pass string) bool {
+func Authenticated(w http.ResponseWriter, r *http.Request, user string, pass string) bool {
 	authCredentials := strings.SplitN(r.Header.Get("Authorization"), " ", 2)
 	if len(authCredentials) != 2 {
 		return false
