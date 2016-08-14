@@ -10,7 +10,7 @@ test:
         - make testShort
     post:
         - make install
-        # - make installARM
+        # - make installARM - https://github.com/go-mgo/mgo/issues/310
         - sudo cp * $CIRCLE_ARTIFACTS:
             pwd:
                 bin
