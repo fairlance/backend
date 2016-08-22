@@ -1,12 +1,15 @@
 package main
 
 import (
-	"encoding/json"
 	"flag"
 	"fmt"
 
+	"fairlance.io/application"
+
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
+
+	"github.com/blevesearch/bleve"
 )
 
 var (
@@ -15,159 +18,108 @@ var (
 	dbPass string
 )
 
-type Freelancer struct {
-	Id        int    `json:"id"`
-	FirstName string `json:"firstName"`
-	LastName  string `json:"lastName"`
-	Email     string `json:"email"`
-}
-
 func main() {
 	flag.StringVar(&dbName, "dbName", "application", "DB name.")
 	flag.StringVar(&dbUser, "dbUser", "fairlance", "DB user.")
 	flag.StringVar(&dbPass, "dbPass", "fairlance", "Db user's password.")
 	flag.Parse()
 
+	// open a new index
+	jobsIndex, err := getIndex("jobs")
+	if err != nil {
+		panic(err)
+	}
+
+	freelancersIndex, err := getIndex("freelancers")
+	if err != nil {
+		panic(err)
+	}
+
+	db, err := getDB()
+	if err != nil {
+		panic(err)
+	}
+
+	jobsFromDB, err := jobs(db)
+	if err != nil {
+		panic(err)
+	}
+	for _, job := range jobsFromDB {
+		fmt.Printf("Adding job %d ...\n", job.ID)
+		jobsIndex.Index(string(job.ID), job)
+	}
+
+	freelancersFromDB, err := freelancers(db)
+	if err != nil {
+		panic(err)
+	}
+	for _, freelancer := range freelancersFromDB {
+		fmt.Printf("Adding freelancer %d ...\n", freelancer.ID)
+		freelancersIndex.Index(string(freelancer.ID), freelancer)
+	}
+
+	fmt.Println("Done.")
+}
+
+func jobs(db *gorm.DB) ([]application.Job, error) {
+
+	db.DropTableIfExists(&application.Job{}, &application.Tag{})
+	db.CreateTable(&application.Job{}, &application.Tag{})
+
+	for i := 0; i < 100; i++ {
+		db.Create(&application.Job{
+			Name:        fmt.Sprintf("Job %d", i),
+			Description: fmt.Sprintf("Job Description %d", i),
+			ClientId:    1,
+			Tags: []application.Tag{
+				application.Tag{Name: fmt.Sprintf("tag_%d", i)},
+				application.Tag{Name: fmt.Sprintf("tag_%d", i+i)},
+			},
+		})
+	}
+
+	jobs := []application.Job{}
+	if err := db.Preload("Tags").Preload("Client").Find(&jobs).Error; err != nil {
+		return jobs, err
+	}
+
+	fmt.Printf("Found %d jobs ...\n", len(jobs))
+	return jobs, nil
+}
+
+func freelancers(db *gorm.DB) ([]application.Freelancer, error) {
+	freelancers := []application.Freelancer{}
+	if err := db.Preload("Skills", "owner_type = ?", "freelancers").Find(&freelancers).Error; err != nil {
+		return freelancers, err
+	}
+
+	fmt.Printf("Found %d freelancers ...\n", len(freelancers))
+	return freelancers, nil
+}
+
+func getIndex(dbName string) (bleve.Index, error) {
+	fmt.Printf("Opening %sIndex ...\n", dbName)
+	index, err := bleve.Open("/tmp/" + dbName)
+	if err != nil {
+		fmt.Printf("%sIndex not found. Creating ...\n", dbName)
+		mapping := bleve.NewIndexMapping()
+		index, err = bleve.New("/tmp/"+dbName, mapping)
+		if err != nil {
+			return index, err
+		}
+	}
+
+	fmt.Printf("Opened %sIndex\n", dbName)
+	return index, nil
+}
+
+func getDB() (*gorm.DB, error) {
 	db, err := gorm.Open("postgres", fmt.Sprintf("dbname=%s user=%s password=%s sslmode=disable", dbName, dbUser, dbPass))
 	if err != nil {
 		fmt.Println(err.Error())
-		return
-	}
-	freelancers(db)
-
-	fmt.Println("done.")
-}
-
-func freelancers(db *gorm.DB) {
-	// statement := "SELECT row_to_json((SELECT d FROM (SELECT id, first_name, last_name, email) d)) FROM freelancers as t"
-	statement := `
-		SELECT row_to_json(
-			(SELECT d FROM (
-				SELECT
-					t.id AS "id",
-					t.first_name AS "firstName",
-					t.last_name AS "lastName",
-					t.email AS "email"
-				) d
-			)
-		)
-		FROM freelancers as t
-	`
-
-	rows, err := db.Raw(statement).Rows()
-	if err != nil {
-		panic(err)
-	}
-	defer rows.Close()
-
-	var freelancers = []Freelancer{}
-	for rows.Next() {
-		var data []byte
-		if err := rows.Scan(&data); err != nil {
-			fmt.Println(err)
-		}
-		var freelancer = Freelancer{}
-		if err := json.Unmarshal(data, &freelancer); err != nil {
-			fmt.Println(err)
-		}
-
-		freelancers = append(freelancers, freelancer)
-	}
-	if err := rows.Err(); err != nil {
-		panic(err)
+		return db, err
 	}
 
-	fmt.Printf("Found %d freelancers.\n", len(freelancers))
-
-	// opts := MappingOptions{
-	// 	Index: "fairlance",
-	// 	Type:  "freelancer",
-	// }
-
-	// client, err := elastic.NewClient()
-	// if err != nil {
-	// 	panic(err)
-	// }
-
-	// exs := client.IndexExists(opts.Index)
-	// if ok, err := exs.Do(); !ok {
-	// 	if err != nil {
-	// 		panic(err)
-	// 	}
-
-	// 	fmt.Println("Creating...")
-	// 	if _, err := client.CreateIndex(opts.Index).Do(); err != nil {
-	// 		panic(err)
-	// 	}
-
-	// 	fmt.Println("done.")
-	// } else {
-	// 	fmt.Println("Deleting...")
-	// 	if _, err := client.DeleteIndex(opts.Index).Do(); err != nil {
-	// 		panic(err)
-	// 	}
-	// 	fmt.Println("done. Creating...")
-	// 	if _, err := client.CreateIndex(opts.Index).Do(); err != nil {
-	// 		panic(err)
-	// 	}
-	// 	fmt.Println("done.")
-	// }
-
-	// fmt.Println("Putting mappings...")
-
-	// _, err = client.PutMapping().Index(opts.Index).Type(opts.Type).BodyString(string(mappings[opts.Type])).Do()
-	// if err != nil {
-	// 	panic(err)
-	// }
-
-	// fmt.Println("done mapping.")
-
-	// fmt.Println("Adding freelancers...")
-	// for _, freelancer := range freelancers {
-	// 	f, err := json.Marshal(freelancer)
-	// 	fmt.Println("Adding " + string(f) + " ...")
-	// 	if err != nil {
-	// 		panic(err)
-	// 	}
-	// 	_, err = client.Index().
-	// 		Index(opts.Index).
-	// 		Type(opts.Type).
-	// 		BodyJson(string(f)).
-	// 		Refresh(true).
-	// 		Do()
-	// 	if err != nil {
-	// 		panic(err)
-	// 	}
-	// }
-}
-
-type MappingOptions struct {
-	Index string
-	Type  string
-}
-
-var mappings = map[string]string{
-	"freelancer": `{
-		    "freelancer" : {
-		        "dynamic": "strict",
-		        "properties" : {
-	                "id" : {
-	                        "type" : "integer",
-	                        "index" : "not_analyzed"
-	                },
-	                "firstName" : {
-	                        "type" : "string",
-	                        "index" : "not_analyzed"
-	                },
-	                "lastName" : {
-	                        "type" : "string",
-	                        "index" : "not_analyzed"
-	                },
-	                "email" : {
-	                        "type" : "string",
-	                        "index" : "not_analyzed"
-	                }
-		        }
-		    }
-		  }`,
+	fmt.Printf("Opened DB\n")
+	return db, nil
 }

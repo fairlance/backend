@@ -1,116 +1,114 @@
 package main
 
 import (
-	"encoding/json"
-	"flag"
-	"io/ioutil"
+	"fmt"
 	"net/http"
-	"strconv"
 
-	"gopkg.in/matryer/respond.v1"
+	respond "gopkg.in/matryer/respond.v1"
+
+	_ "github.com/jinzhu/gorm/dialects/postgres"
+
+	"github.com/blevesearch/bleve"
 )
 
-var port int
-var elasticsearchUrl string
+var (
+	jobsIndex        bleve.Index
+	freelancersIndex bleve.Index
+)
 
-type ElasticSearchResponse struct {
-	Hits Hits
-}
-type Hits struct {
-	Hits  []Source
-	Total int
-}
-type Source struct {
-	Source map[string]interface{} `json:"_source"`
-}
+func init() {
+	var err error
+	jobsIndex, err = getIndex("jobs")
+	if err != nil {
+		panic(err)
+	}
 
-type processFunc func(map[string]interface{}) interface{}
+	freelancersIndex, err = getIndex("freelancers")
+	if err != nil {
+		panic(err)
+	}
+}
 
 func main() {
-	flag.IntVar(&port, "port", 3002, "Specify the port to listen to.")
-	flag.StringVar(&elasticsearchUrl, "elasticsearchUrl", "http://127.0.0.1:9200", "Specify elasticsearch host and port.")
-	flag.Parse()
+	http.HandleFunc("/jobs", Jobs)
+	http.HandleFunc("/freelancers", Freelancers)
 
-	opts := getOpts()
-
-	// Setup mux
-	mux := http.NewServeMux()
-	mux.Handle("/freelancer", opts.Handler(http.HandlerFunc(freelancer)))
-	mux.Handle("/job", opts.Handler(http.HandlerFunc(job)))
-
-	panic(http.ListenAndServe(":"+strconv.Itoa(port), mux))
+	fmt.Println("Listening on port 3002")
+	panic(http.ListenAndServe(":3002", nil))
 }
 
-func job(w http.ResponseWriter, r *http.Request) {
-	elasticSearchResponse, err := getElasticSearchResponse("job")
+func Jobs(w http.ResponseWriter, r *http.Request) {
+	searchRequest := getSearchRequest()
+
+	tagsFacet := bleve.NewFacetRequest("tags.name", 100)
+	searchRequest.AddFacet("tags", tagsFacet)
+
+	jobsSearchResults, err := jobsIndex.Search(searchRequest)
 	if err != nil {
-		respond.With(w, r, http.StatusBadRequest, err)
+		respond.With(w, r, http.StatusInternalServerError, err)
 		return
 	}
-	respond.With(w, r, http.StatusOK, buildSearchResponse(elasticSearchResponse, nil))
-}
 
-func freelancer(w http.ResponseWriter, r *http.Request) {
-	elasticSearchResponse, err := getElasticSearchResponse("freelancer")
-	if err != nil {
-		respond.With(w, r, http.StatusBadRequest, err)
-		return
-	}
-	respond.With(w, r, http.StatusOK, buildSearchResponse(elasticSearchResponse, nil))
-}
-
-func getElasticSearchResponse(esType string) (ElasticSearchResponse, error) {
-	var elasticSearchResponse ElasticSearchResponse
-	resp, err := http.Get(elasticsearchUrl + "/fairlance/" + esType + "/_search")
-	if err != nil {
-		return elasticSearchResponse, err
-	}
-	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return elasticSearchResponse, err
+	jobs := []interface{}{}
+	for _, hit := range jobsSearchResults.Hits {
+		jobs = append(jobs, hit.Fields)
 	}
 
-	err = json.Unmarshal(body, &elasticSearchResponse)
-	if err != nil {
-		return elasticSearchResponse, err
-	}
-	return elasticSearchResponse, nil
-}
-
-func buildSearchResponse(eResp ElasticSearchResponse, fn processFunc) interface{} {
-	var entities = make([]interface{}, len(eResp.Hits.Hits))
-	for key, hit := range eResp.Hits.Hits {
-		if fn != nil {
-			entities[key] = fn(hit.Source)
-		} else {
-			entities[key] = hit.Source
-		}
+	tags := []string{}
+	for _, t := range jobsSearchResults.Facets["tags"].Terms {
+		tags = append(tags, fmt.Sprintf("%s (%d)", t.Term, t.Count))
 	}
 
-	response := struct {
-		Total      int           `json:"total"`
-		Collection []interface{} `json:"collection"`
+	respond.With(w, r, http.StatusOK, struct {
+		Total int           `json:"total"`
+		Items []interface{} `json:"items"`
+		Tags  []string      `json:"tags"`
 	}{
-		eResp.Hits.Total,
-		entities,
-	}
-
-	return response
+		Total: len(jobs),
+		Items: jobs,
+		Tags:  tags,
+	})
 }
 
-func getOpts() *respond.Options {
-	return &respond.Options{
-		Before: func(w http.ResponseWriter, r *http.Request, status int, data interface{}) (int, interface{}) {
-			dataEnvelope := map[string]interface{}{"code": status}
-			if err, ok := data.(error); ok {
-				dataEnvelope["error"] = err.Error()
-				dataEnvelope["success"] = false
-			} else {
-				dataEnvelope["data"] = data
-				dataEnvelope["success"] = true
-			}
-			return status, dataEnvelope
-		},
+func Freelancers(w http.ResponseWriter, r *http.Request) {
+	searchRequest := getSearchRequest()
+
+	freelnacersSearchResults, err := freelancersIndex.Search(searchRequest)
+	if err != nil {
+		respond.With(w, r, http.StatusInternalServerError, err)
+		return
 	}
+
+	freelancers := []interface{}{}
+	for _, hit := range freelnacersSearchResults.Hits {
+		freelancers = append(freelancers, hit.Fields)
+	}
+	respond.With(w, r, http.StatusOK, struct {
+		Total int           `json:"total"`
+		Items []interface{} `json:"items"`
+	}{
+		Total: len(freelancers),
+		Items: freelancers,
+	})
+}
+
+func getIndex(dbName string) (bleve.Index, error) {
+	fmt.Printf("Opening %sIndex ...\n", dbName)
+	index, err := bleve.Open("/tmp/" + dbName)
+	if err != nil {
+		return index, err
+	}
+
+	fmt.Printf("Opened %sIndex\n", dbName)
+	return index, nil
+}
+
+func getSearchRequest() *bleve.SearchRequest {
+	// search for some text
+	query := bleve.NewMatchAllQuery()
+	searchRequest := bleve.NewSearchRequest(query)
+	searchRequest.Fields = []string{"*"}
+	// searchRequest.Highlight = bleve.NewHighlight()
+
+	return searchRequest
 }
