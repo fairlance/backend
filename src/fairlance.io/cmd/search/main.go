@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"net/http"
 
@@ -14,9 +15,13 @@ import (
 var (
 	jobsIndex        bleve.Index
 	freelancersIndex bleve.Index
+	indicesDir       = flag.String("indicesDir", "/tmp", "Location where the indices are located.")
+	port             = flag.String("port", "3002", "Port.")
 )
 
 func init() {
+	flag.Parse()
+
 	var err error
 	jobsIndex, err = getIndex("jobs")
 	if err != nil {
@@ -30,15 +35,14 @@ func init() {
 }
 
 func main() {
-	http.HandleFunc("/jobs", Jobs)
-	http.HandleFunc("/freelancers", Freelancers)
+	http.HandleFunc("/jobs", jobs)
+	http.HandleFunc("/freelancers", freelancers)
 
-	fmt.Println("Listening on port 3002")
-	panic(http.ListenAndServe(":3002", nil))
+	panic(http.ListenAndServe(":"+*port, nil))
 }
 
-func Jobs(w http.ResponseWriter, r *http.Request) {
-	searchRequest := getSearchRequest()
+func jobs(w http.ResponseWriter, r *http.Request) {
+	searchRequest := getSearchRequest(r)
 
 	tagsFacet := bleve.NewFacetRequest("tags.name", 100)
 	searchRequest.AddFacet("tags", tagsFacet)
@@ -70,8 +74,8 @@ func Jobs(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func Freelancers(w http.ResponseWriter, r *http.Request) {
-	searchRequest := getSearchRequest()
+func freelancers(w http.ResponseWriter, r *http.Request) {
+	searchRequest := getSearchRequest(r)
 
 	freelnacersSearchResults, err := freelancersIndex.Search(searchRequest)
 	if err != nil {
@@ -93,22 +97,27 @@ func Freelancers(w http.ResponseWriter, r *http.Request) {
 }
 
 func getIndex(dbName string) (bleve.Index, error) {
-	fmt.Printf("Opening %sIndex ...\n", dbName)
-	index, err := bleve.Open("/tmp/" + dbName)
+	index, err := bleve.Open(*indicesDir + "/" + dbName)
 	if err != nil {
 		return index, err
 	}
 
-	fmt.Printf("Opened %sIndex\n", dbName)
 	return index, nil
 }
 
-func getSearchRequest() *bleve.SearchRequest {
-	// search for some text
-	query := bleve.NewMatchAllQuery()
+func getSearchRequest(r *http.Request) *bleve.SearchRequest {
+	musts := []bleve.Query{}
+	mustNots := []bleve.Query{}
+	shoulds := []bleve.Query{}
+
+	for _, tag := range r.URL.Query()["tags"] {
+		shoulds = append(shoulds, bleve.NewMatchQuery(tag))
+	}
+
+	query := bleve.NewBooleanQuery(musts, shoulds, mustNots)
+
 	searchRequest := bleve.NewSearchRequest(query)
 	searchRequest.Fields = []string{"*"}
-	// searchRequest.Highlight = bleve.NewHighlight()
 
 	return searchRequest
 }
