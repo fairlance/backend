@@ -15,8 +15,8 @@ import (
 var (
 	jobsIndex        bleve.Index
 	freelancersIndex bleve.Index
-	indicesDir       = flag.String("indicesDir", "/tmp", "Location where the indices are located.")
-	port             = flag.String("port", "3002", "Port.")
+	indicesDir       = *flag.String("indicesDir", "/tmp", "Location where the indices are located.")
+	port             = *flag.String("port", "3002", "Port.")
 )
 
 func init() {
@@ -38,7 +38,7 @@ func main() {
 	http.HandleFunc("/jobs", jobs)
 	http.HandleFunc("/freelancers", freelancers)
 
-	panic(http.ListenAndServe(":"+*port, nil))
+	panic(http.ListenAndServe(":"+port, nil))
 }
 
 func jobs(w http.ResponseWriter, r *http.Request) {
@@ -97,7 +97,7 @@ func freelancers(w http.ResponseWriter, r *http.Request) {
 }
 
 func getIndex(dbName string) (bleve.Index, error) {
-	index, err := bleve.Open(*indicesDir + "/" + dbName)
+	index, err := bleve.Open(indicesDir + "/" + dbName)
 	if err != nil {
 		return index, err
 	}
