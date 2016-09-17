@@ -36,6 +36,7 @@ func init() {
 
 func main() {
 	http.HandleFunc("/jobs", jobs)
+	http.HandleFunc("/jobs/tags", jobTags)
 	http.HandleFunc("/freelancers", freelancers)
 
 	panic(http.ListenAndServe(":"+port, nil))
@@ -70,6 +71,36 @@ func jobs(w http.ResponseWriter, r *http.Request) {
 	}{
 		Total: len(jobs),
 		Items: jobs,
+		Tags:  tags,
+	})
+}
+
+func jobTags(w http.ResponseWriter, r *http.Request) {
+
+	query := bleve.NewMatchAllQuery()
+
+	searchRequest := bleve.NewSearchRequest(query)
+	searchRequest.Fields = []string{"tags.name"}
+
+	tagsFacet := bleve.NewFacetRequest("tags.name", 99999)
+	searchRequest.AddFacet("tags", tagsFacet)
+
+	jobsSearchResults, err := jobsIndex.Search(searchRequest)
+	if err != nil {
+		respond.With(w, r, http.StatusInternalServerError, err)
+		return
+	}
+
+	tags := []string{}
+	for _, t := range jobsSearchResults.Facets["tags"].Terms {
+		tags = append(tags, fmt.Sprintf("%s", t.Term))
+	}
+
+	respond.With(w, r, http.StatusOK, struct {
+		Total int      `json:"total"`
+		Tags  []string `json:"tags"`
+	}{
+		Total: len(tags),
 		Tags:  tags,
 	})
 }
