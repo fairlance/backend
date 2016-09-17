@@ -35,9 +35,9 @@ func init() {
 }
 
 func main() {
-	http.HandleFunc("/jobs", jobs)
-	http.HandleFunc("/jobs/tags", jobTags)
-	http.HandleFunc("/freelancers", freelancers)
+	http.Handle("/jobs", CORSHandler(http.HandlerFunc(jobs)))
+	http.Handle("/jobs/tags", CORSHandler(http.HandlerFunc(jobTags)))
+	http.Handle("/freelancers", CORSHandler(http.HandlerFunc(freelancers)))
 
 	panic(http.ListenAndServe(":"+port, nil))
 }
@@ -151,4 +151,24 @@ func getSearchRequest(r *http.Request) *bleve.SearchRequest {
 	searchRequest.Fields = []string{"*"}
 
 	return searchRequest
+}
+
+// CORSHandler handler
+func CORSHandler(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if origin := r.Header.Get("Origin"); origin != "" {
+			// todo: make configurable
+			w.Header().Set("Access-Control-Allow-Origin", "*")
+			w.Header().Set("Access-Control-Allow-Methods", "GET,POST,PUT,OPTIONS")
+			w.Header().Set("Access-Control-Allow-Headers",
+				"Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
+		}
+
+		// Stop here for a Preflighted OPTIONS request.
+		if r.Method == "OPTIONS" {
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
 }
