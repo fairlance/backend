@@ -63,12 +63,14 @@ type Project struct {
 
 type Job struct {
 	Model
-	Name        string `json:"name" valid:"required"`
-	Description string `json:"description" valid:"required"`
-	ClientId    uint   `json:"-" valid:"required"`
-	Client      Client `json:"client"`
-	IsActive    bool   `json:"isActive"`
-	Tags        []Tag  `json:"tags" gorm:"polymorphic:Owner;"`
+	Name        string    `json:"name" valid:"required"`
+	Description string    `json:"description" valid:"required"`
+	ClientId    uint      `json:"-" valid:"required"`
+	Client      Client    `json:"client"`
+	IsActive    bool      `json:"isActive"`
+	Price       int       `json:"price"`
+	StartDate   time.Time `json:"startDate"`
+	Tags        []Tag     `json:"tags" gorm:"polymorphic:Owner;"`
 }
 
 type Review struct {
