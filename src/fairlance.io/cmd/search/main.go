@@ -3,7 +3,10 @@ package main
 import (
 	"flag"
 	"fmt"
+	"math"
 	"net/http"
+	"strconv"
+	"time"
 
 	respond "gopkg.in/matryer/respond.v1"
 
@@ -45,9 +48,6 @@ func main() {
 func jobs(w http.ResponseWriter, r *http.Request) {
 	searchRequest := getSearchRequest(r)
 
-	tagsFacet := bleve.NewFacetRequest("tags.name", 100)
-	searchRequest.AddFacet("tags", tagsFacet)
-
 	jobsSearchResults, err := jobsIndex.Search(searchRequest)
 	if err != nil {
 		respond.With(w, r, http.StatusInternalServerError, err)
@@ -59,19 +59,12 @@ func jobs(w http.ResponseWriter, r *http.Request) {
 		jobs = append(jobs, hit.Fields)
 	}
 
-	tags := []string{}
-	for _, t := range jobsSearchResults.Facets["tags"].Terms {
-		tags = append(tags, fmt.Sprintf("%s (%d)", t.Term, t.Count))
-	}
-
 	respond.With(w, r, http.StatusOK, struct {
 		Total int           `json:"total"`
 		Items []interface{} `json:"items"`
-		Tags  []string      `json:"tags"`
 	}{
 		Total: len(jobs),
 		Items: jobs,
-		Tags:  tags,
 	})
 }
 
@@ -106,7 +99,9 @@ func jobTags(w http.ResponseWriter, r *http.Request) {
 }
 
 func freelancers(w http.ResponseWriter, r *http.Request) {
-	searchRequest := getSearchRequest(r)
+
+	searchRequest := bleve.NewSearchRequest(bleve.NewMatchAllQuery())
+	searchRequest.Fields = []string{"*"}
 
 	freelnacersSearchResults, err := freelancersIndex.Search(searchRequest)
 	if err != nil {
@@ -141,9 +136,49 @@ func getSearchRequest(r *http.Request) *bleve.SearchRequest {
 	mustNots := []bleve.Query{}
 	shoulds := []bleve.Query{}
 
+	tagShoulds := []bleve.Query{}
 	for _, tag := range r.URL.Query()["tags"] {
-		shoulds = append(shoulds, bleve.NewMatchQuery(tag))
+		tagShoulds = append(tagShoulds, bleve.NewMatchQuery(tag))
 	}
+	if len(tagShoulds) > 0 {
+		musts = append(musts, bleve.NewBooleanQuery(nil, tagShoulds, nil))
+	}
+
+	value1 := 0.0
+	if len(r.URL.Query().Get("price_from")) != 0 {
+		intValue1, err := strconv.ParseInt(r.URL.Query().Get("price_from"), 10, 64)
+		if err != nil {
+			panic(err)
+		}
+		value1 = float64(intValue1)
+	}
+	value2 := math.MaxFloat64
+	if len(r.URL.Query().Get("price_to")) != 0 {
+		intValue2, err := strconv.ParseInt(r.URL.Query().Get("price_to"), 10, 64)
+		if err != nil {
+			panic(err)
+		}
+		value2 = float64(intValue2)
+	}
+
+	inclusiveValue1 := true
+	inclusiveValue2 := false
+	musts = append(musts, bleve.NewNumericRangeInclusiveQuery(&value1, &value2, &inclusiveValue1, &inclusiveValue2).SetField("price"))
+
+	period := int64(30)
+	if len(r.URL.Query().Get("period")) != 0 {
+		periodTemp, err := strconv.ParseInt(r.URL.Query().Get("period"), 10, 64)
+		if err != nil {
+			panic(err)
+		}
+		if periodTemp > 0 && periodTemp <= 365 {
+			period = periodTemp
+		}
+	}
+
+	now := time.Now().Format(time.RFC3339)
+	dateTo := time.Now().Add(time.Duration(24*period) * time.Hour).Format(time.RFC3339)
+	musts = append(musts, bleve.NewDateRangeQuery(&now, &dateTo).SetField("startDate"))
 
 	query := bleve.NewBooleanQuery(musts, shoulds, mustNots)
 
