@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"time"
 
 	"fairlance.io/application"
 
@@ -71,6 +72,8 @@ func jobs(db *gorm.DB) ([]application.Job, error) {
 			Name:        fmt.Sprintf("Job %d", i),
 			Description: fmt.Sprintf("Job Description %d", i),
 			ClientId:    1,
+			Price:       123*i%200 + 200,
+			StartDate:   time.Now().Add(time.Duration(i*24+1) * time.Hour),
 			Tags: []application.Tag{
 				application.Tag{Name: fmt.Sprintf("tag_%d", i)},
 				application.Tag{Name: fmt.Sprintf("tag_%d", i+i)},
