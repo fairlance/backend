@@ -74,14 +74,15 @@ func jobs(db *gorm.DB) (map[string]interface{}, error) {
 	// PostgreSQL only supports 65535 parameters
 	for i := 0; i < 100; i++ {
 		db.Create(&application.Job{
-			Name:        fmt.Sprintf("Job %d", i),
-			Description: fmt.Sprintf("Job Description %d", i),
-			ClientId:    1,
-			Price:       123*i%200 + 200,
-			StartDate:   time.Now().Add(time.Duration(i*24+1) * time.Hour),
+			Name:      fmt.Sprintf("Job %d", i),
+			Summary:   fmt.Sprintf("Job Summary %d", i),
+			Details:   fmt.Sprintf("Job Description %d", i),
+			ClientID:  1,
+			Price:     123*i%200 + 200,
+			StartDate: time.Now().Add(time.Duration(i*24+1) * time.Hour),
 			Tags: []application.Tag{
-				application.Tag{Name: fmt.Sprintf("tag_%d", i)},
-				application.Tag{Name: fmt.Sprintf("tag_%d", i+i)},
+				application.Tag{Tag: fmt.Sprintf("tag_%d", i)},
+				application.Tag{Tag: fmt.Sprintf("tag_%d", i+i)},
 			},
 		})
 	}
@@ -156,8 +157,7 @@ func batchIndex(i bleve.Index, docs map[string]interface{}) error {
 	startTime := time.Now()
 	batch := i.NewBatch()
 	batchCount := 0
-	for _, doc := range docs {
-		id := "some unique id " + id
+	for id, doc := range docs {
 		batch.Index(id, doc)
 		batchCount++
 

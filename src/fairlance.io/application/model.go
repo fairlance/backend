@@ -1,8 +1,6 @@
 package application
 
-import (
-	"time"
-)
+import "time"
 
 type Model struct {
 	ID        uint       `json:"id" gorm:"primary_key"`
@@ -56,21 +54,23 @@ type Project struct {
 	Name        string       `json:"name" valid:"required"`
 	Description string       `json:"description" valid:"required"`
 	Freelancers []Freelancer `json:"freelancers" gorm:"many2many:project_freelancers;"`
-	ClientId    uint         `json:"-" valid:"required"`
+	ClientID    uint         `json:"-" valid:"required"`
 	Client      Client       `json:"client"`
 	IsActive    bool         `json:"isActive"`
 }
 
 type Job struct {
 	Model
-	Name        string    `json:"name" valid:"required"`
-	Description string    `json:"description" valid:"required"`
-	ClientId    uint      `json:"-" valid:"required"`
-	Client      Client    `json:"client"`
-	IsActive    bool      `json:"isActive"`
-	Price       int       `json:"price"`
-	StartDate   time.Time `json:"startDate"`
-	Tags        []Tag     `json:"tags" gorm:"polymorphic:Owner;"`
+	Name      string    `json:"name" valid:"required"`
+	Summary   string    `json:"summary" valid:"required"`
+	Details   string    `json:"details" valid:"required"`
+	ClientID  uint      `json:"-" valid:"required"`
+	Client    Client    `json:"client"`
+	IsActive  bool      `json:"isActive"`
+	Price     int       `json:"price"`
+	StartDate time.Time `json:"startDate"`
+	Links     []Link    `json:"links" gorm:"polymorphic:Owner;"`
+	Tags      []Tag     `json:"tags" gorm:"polymorphic:Owner;"`
 }
 
 type Review struct {
@@ -78,9 +78,9 @@ type Review struct {
 	Title        string  `json:"title" valid:"required"`
 	Content      string  `json:"content"`
 	Rating       float64 `json:"rating" valid:"required"`
-	JobId        uint    `json:"jobId" valid:"required"`
-	ClientId     uint    `json:"clientId" valid:"required"`
-	FreelancerId uint    `json:"freelancerId" valid:"required"`
+	JobID        uint    `json:"jobId" valid:"required"`
+	ClientID     uint    `json:"clientId" valid:"required"`
+	FreelancerID uint    `json:"freelancerId" valid:"required"`
 }
 
 type Reference struct {
@@ -88,19 +88,26 @@ type Reference struct {
 	Title        string `json:"title" valid:"required"`
 	Content      string `json:"content"`
 	Media        Media  `json:"media"`
-	FreelancerId uint   `json:"freelancerId" valid:"required"`
+	FreelancerID uint   `json:"freelancerId" valid:"required"`
 }
 
 type Media struct {
 	Model
 	Image       string `json:"image"`
 	Video       string `json:"video"`
-	ReferenceId uint   `json:"referenceId"`
+	ReferenceID uint   `json:"referenceId"`
 }
 
 type Tag struct {
 	ID        uint   `json:"-" gorm:"primary_key"`
-	Name      string `json:"name" valid:"required"`
-	OwnerId   uint   `json:"-"`
+	Tag       string `json:"tag" valid:"required"`
+	OwnerID   uint   `json:"-"`
+	OwnerType string `json:"-"`
+}
+
+type Link struct {
+	ID        uint   `json:"-" gorm:"primary_key"`
+	Link      string `json:"link" valid:"required"`
+	OwnerID   uint   `json:"-"`
 	OwnerType string `json:"-"`
 }

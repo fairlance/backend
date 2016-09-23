@@ -114,8 +114,8 @@ func TestAddFreelancerUpdates(t *testing.T) {
 
 	rBody := app.FreelancerUpdate{
 		Skills: []app.Tag{
-			app.Tag{Name: "coolcat"},
-			app.Tag{Name: "pimp"},
+			app.Tag{Tag: "coolcat"},
+			app.Tag{Tag: "pimp"},
 		},
 		Timezone:       "UTC",
 		IsAvailable:    true,
@@ -133,8 +133,8 @@ func TestAddFreelancerUpdates(t *testing.T) {
 	freelancers := GetFreelancersFromDB()
 	data := freelancers[0]
 
-	is.Equal(data.Skills[0].Name, "coolcat")
-	is.Equal(data.Skills[1].Name, "pimp")
+	is.Equal(data.Skills[0].Tag, "coolcat")
+	is.Equal(data.Skills[1].Tag, "pimp")
 	is.Equal(data.Timezone, "UTC")
 	is.Equal(data.IsAvailable, true)
 	is.Equal(data.HourlyRateFrom, 2)
