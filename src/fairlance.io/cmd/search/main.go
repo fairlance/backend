@@ -18,8 +18,9 @@ import (
 var (
 	jobsIndex        bleve.Index
 	freelancersIndex bleve.Index
-	indicesDir       = *flag.String("indicesDir", "/tmp", "Location where the indices are located.")
+	indicesDir       = *flag.String("indicesDir", "/tmp/indices", "Location where the indices are located.")
 	port             = *flag.String("port", "3002", "Port.")
+	respondOptions   *respond.Options
 )
 
 func init() {
@@ -35,12 +36,26 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
+
+	respondOptions = &respond.Options{
+		Before: func(w http.ResponseWriter, r *http.Request, status int, data interface{}) (int, interface{}) {
+			dataEnvelope := map[string]interface{}{"code": status}
+			if err, ok := data.(error); ok {
+				dataEnvelope["error"] = err.Error()
+				dataEnvelope["success"] = false
+			} else {
+				dataEnvelope["data"] = data
+				dataEnvelope["success"] = true
+			}
+			return status, dataEnvelope
+		},
+	}
 }
 
 func main() {
-	http.Handle("/jobs", CORSHandler(http.HandlerFunc(jobs)))
-	http.Handle("/jobs/tags", CORSHandler(http.HandlerFunc(jobTags)))
-	http.Handle("/freelancers", CORSHandler(http.HandlerFunc(freelancers)))
+	http.Handle("/jobs", corsHandler(respondOptions.Handler(http.HandlerFunc(jobs))))
+	http.Handle("/jobs/tags", corsHandler(respondOptions.Handler(http.HandlerFunc(jobTags))))
+	http.Handle("/freelancers", corsHandler(respondOptions.Handler(http.HandlerFunc(freelancers))))
 
 	panic(http.ListenAndServe(":"+port, nil))
 }
@@ -188,8 +203,7 @@ func getSearchRequest(r *http.Request) *bleve.SearchRequest {
 	return searchRequest
 }
 
-// CORSHandler handler
-func CORSHandler(next http.Handler) http.Handler {
+func corsHandler(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if origin := r.Header.Get("Origin"); origin != "" {
 			// todo: make configurable
