@@ -37,31 +37,31 @@ var routes = Routes{
 		"GetFreelancer",
 		"GET",
 		"/freelancer/{id}",
-		IdHandler(http.HandlerFunc(GetFreelancer)),
+		WithID{GetFreelancerByID},
 	},
 	Route{
 		"UpdateFreelancer",
 		"POST",
 		"/freelancer/{id}",
-		IdHandler(FreelancerUpdateHandler(http.HandlerFunc(AddFreelancerUpdates))),
+		WithID{AddFreelancerUpdatesByID},
 	},
 	Route{
 		"DeleteFreelancer",
 		"DELETE",
 		"/freelancer/{id}",
-		AuthHandler(IdHandler(http.HandlerFunc(DeleteFreelancer))),
+		AuthHandler(WithID{DeleteFreelancerByID}),
 	},
 	Route{
 		"AddFreelancerReference",
 		"PUT",
 		"/freelancer/{id}/reference",
-		IdHandler(FreelancerReferenceHandler(http.HandlerFunc(AddFreelancerReference))),
+		WithID{AddFreelancerReferenceByID},
 	},
 	Route{
 		"AddFreelancerReview",
 		"PUT",
 		"/freelancer/{id}/review",
-		IdHandler(FreelancerReviewHandler(http.HandlerFunc(AddFreelancerReview))),
+		WithID{AddFreelancerReviewByID},
 	},
 
 	Route{
@@ -87,13 +87,13 @@ var routes = Routes{
 		"GetClient",
 		"GET",
 		"/client/{id}",
-		IdHandler(http.HandlerFunc(GetClient)),
+		WithID{GetClientByID},
 	},
 	Route{
 		"UpdateClient",
 		"POST",
 		"/client/{id}",
-		IdHandler(http.HandlerFunc(UpdateClient)),
+		WithID{UpdateClientByID},
 	},
 
 	Route{
@@ -112,7 +112,7 @@ var routes = Routes{
 		"GetJob",
 		"GET",
 		"/job/{id}",
-		IdHandler(http.HandlerFunc(GetJob)),
+		WithID{GetJobByID},
 	},
 
 	Route{

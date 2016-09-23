@@ -33,16 +33,18 @@ func AddJob(w http.ResponseWriter, r *http.Request) {
 	respond.With(w, r, http.StatusOK, job)
 }
 
-func GetJob(w http.ResponseWriter, r *http.Request) {
-	var appContext = context.Get(r, "context").(*ApplicationContext)
-	var id = context.Get(r, "id").(uint)
-	client, err := appContext.JobRepository.GetJob(id)
-	if err != nil {
-		respond.With(w, r, http.StatusNotFound, err)
-		return
-	}
+// GetJobByID handler
+func GetJobByID(id uint) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var appContext = context.Get(r, "context").(*ApplicationContext)
+		client, err := appContext.JobRepository.GetJob(id)
+		if err != nil {
+			respond.With(w, r, http.StatusNotFound, err)
+			return
+		}
 
-	respond.With(w, r, http.StatusOK, client)
+		respond.With(w, r, http.StatusOK, client)
+	})
 }
 
 func NewJobHandler(next http.Handler) http.Handler {
