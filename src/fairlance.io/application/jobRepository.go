@@ -17,7 +17,7 @@ func NewJobRepository(db *gorm.DB) (*JobRepository, error) {
 
 func (repo *JobRepository) GetAllJobs() ([]Job, error) {
 	jobs := []Job{}
-	repo.db.Preload("Client").Find(&jobs)
+	repo.db.Preload("Tags").Preload("Links").Preload("Client").Find(&jobs)
 	return jobs, nil
 }
 
@@ -27,7 +27,7 @@ func (repo *JobRepository) AddJob(job *Job) error {
 
 func (repo *JobRepository) GetJob(id uint) (Job, error) {
 	job := Job{}
-	if err := repo.db.Preload("Client").Find(&job, id).Error; err != nil {
+	if err := repo.db.Preload("Tags").Preload("Links").Preload("Client").Find(&job, id).Error; err != nil {
 		return job, err
 	}
 	return job, nil

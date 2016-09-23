@@ -77,7 +77,7 @@ func (repo *FreelancerRepository) DeleteFreelancer(id uint) error {
 
 func (repo *FreelancerRepository) AddReview(newReview *Review) error {
 	freelancer := Freelancer{}
-	err := repo.db.Preload("Reviews").Find(&freelancer, newReview.FreelancerId).Error
+	err := repo.db.Preload("Reviews").Find(&freelancer, newReview.FreelancerID).Error
 	if err != nil {
 		return err
 	}

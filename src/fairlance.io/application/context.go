@@ -57,11 +57,11 @@ func (ac *ApplicationContext) DropCreateFillTables() {
 }
 
 func (ac *ApplicationContext) DropTables() {
-	ac.db.DropTableIfExists(&Freelancer{}, &Project{}, &Client{}, &Job{}, &Review{}, &Reference{}, &Media{}, &Tag{})
+	ac.db.DropTableIfExists(&Freelancer{}, &Project{}, &Client{}, &Job{}, &Review{}, &Reference{}, &Media{}, &Tag{}, &Link{})
 }
 
 func (ac *ApplicationContext) CreateTables() {
-	ac.db.CreateTable(&Freelancer{}, &Project{}, &Client{}, &Job{}, &Review{}, &Reference{}, &Media{}, &Tag{})
+	ac.db.CreateTable(&Freelancer{}, &Project{}, &Client{}, &Job{}, &Review{}, &Reference{}, &Media{}, &Tag{}, &Link{})
 }
 
 func (ac *ApplicationContext) FillTables() {
@@ -81,15 +81,15 @@ func (ac *ApplicationContext) FillTables() {
 		Title:        "text2",
 		Content:      "content",
 		Rating:       4.1,
-		ClientId:     1,
-		FreelancerId: 1,
+		ClientID:     1,
+		FreelancerID: 1,
 	})
 
 	ac.ReferenceRepository.AddReference(&Reference{
 		Title:        "title",
 		Content:      "content",
 		Media:        Media{Image: "image", Video: "video"},
-		FreelancerId: 1,
+		FreelancerID: 1,
 	})
 
 	ac.FreelancerRepository.AddFreelancer(&Freelancer{
@@ -108,30 +108,30 @@ func (ac *ApplicationContext) FillTables() {
 		Title:        "text2",
 		Content:      "content",
 		Rating:       4.1,
-		JobId:        1,
-		ClientId:     1,
-		FreelancerId: 2,
+		JobID:        1,
+		ClientID:     1,
+		FreelancerID: 2,
 	})
 
 	ac.FreelancerRepository.AddReview(&Review{
 		Title:        "text2",
 		Content:      "content",
 		Rating:       2.4,
-		JobId:        2,
-		ClientId:     1,
-		FreelancerId: 2,
+		JobID:        2,
+		ClientID:     1,
+		FreelancerID: 2,
 	})
 	ac.ReferenceRepository.AddReference(&Reference{
 		Title:        "title",
 		Content:      "content",
 		Media:        Media{Image: "image", Video: "video"},
-		FreelancerId: 2,
+		FreelancerID: 2,
 	})
 
 	ac.db.Create(&Project{
 		Name:        "Project",
 		Description: "Description",
-		ClientId:    1,
+		ClientID:    1,
 		IsActive:    true,
 	})
 
@@ -149,9 +149,24 @@ func (ac *ApplicationContext) FillTables() {
 	})
 
 	ac.db.Create(&Job{
-		Name:        "Job",
-		Description: "Desc Job",
-		ClientId:    1,
+		Name:     "Job",
+		Summary:  "Summary Job",
+		Details:  "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.",
+		ClientID: 1,
+		Tags: []Tag{
+			Tag{
+				Tag:       "tag",
+				OwnerID:   1,
+				OwnerType: "client",
+			},
+		},
+		Links: []Link{
+			Link{
+				Link:      "http://www.google.com/",
+				OwnerID:   1,
+				OwnerType: "job",
+			},
+		},
 	})
 
 	ac.FreelancerRepository.AddFreelancer(&Freelancer{
@@ -170,15 +185,15 @@ func (ac *ApplicationContext) FillTables() {
 		Title:        "deleted text2",
 		Content:      "deleted content",
 		Rating:       2.4,
-		JobId:        2,
-		ClientId:     1,
-		FreelancerId: 3,
+		JobID:        2,
+		ClientID:     1,
+		FreelancerID: 3,
 	})
 	ac.ReferenceRepository.AddReference(&Reference{
 		Title:        "deleted title",
 		Content:      "deleted content",
 		Media:        Media{Image: "deleted media image", Video: "deleted media video"},
-		FreelancerId: 3,
+		FreelancerID: 3,
 	})
 	ac.FreelancerRepository.DeleteFreelancer(3)
 }

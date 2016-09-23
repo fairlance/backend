@@ -26,11 +26,11 @@ func TestFreelancerReviewHandler(t *testing.T) {
 	context.Set(r, "id", uint(12))
 	app.FreelancerReviewHandler(emptyHandler).ServeHTTP(w, r)
 	review := context.Get(r, "review").(*app.Review)
-	is.Equal(review.ClientId, 2)
+	is.Equal(review.ClientID, 2)
 	is.Equal(review.Content, "content")
 	is.Equal(review.Rating, 2.4)
 	is.Equal(review.Title, "tetetetetet")
-	is.Equal(review.FreelancerId, 12)
+	is.Equal(review.FreelancerID, 12)
 }
 
 func TestFreelancerReferenceHandler(t *testing.T) {
@@ -64,10 +64,10 @@ func TestFreelancerUpdateHandler(t *testing.T) {
 	{
 		"skills":        	[
 			{
-				"name": "coolcat"
+				"tag": "coolcat"
 			},
 			{
-				"name": "pimp"
+				"tag": "pimp"
 			}
 		],
 		"timezone":      	"UTC",
@@ -83,8 +83,8 @@ func TestFreelancerUpdateHandler(t *testing.T) {
 
 	data := context.Get(r, "updates").(*app.FreelancerUpdate)
 
-	is.Equal(data.Skills[0], app.Tag{Name: "coolcat"})
-	is.Equal(data.Skills[1], app.Tag{Name: "pimp"})
+	is.Equal(data.Skills[0], app.Tag{Tag: "coolcat"})
+	is.Equal(data.Skills[1], app.Tag{Tag: "pimp"})
 	is.Equal(data.Timezone, "UTC")
 	is.Equal(data.IsAvailable, true)
 	is.Equal(data.HourlyRateFrom, 2)

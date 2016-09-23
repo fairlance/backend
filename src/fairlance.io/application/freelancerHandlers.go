@@ -78,7 +78,7 @@ func AddFreelancerReferenceByID(id uint) http.Handler {
 			return
 		}
 
-		if id != reference.FreelancerId {
+		if id != reference.FreelancerID {
 			respond.With(w, r, http.StatusBadRequest, "Freelancer id must match the id in the body!")
 			return
 		}
@@ -110,7 +110,7 @@ func AddFreelancerReviewByID(id uint) http.Handler {
 			return
 		}
 
-		if id != review.FreelancerId {
+		if id != review.FreelancerID {
 			respond.With(w, r, http.StatusBadRequest, "Freelancer id must match the id in the body!")
 			return
 		}
