@@ -20,6 +20,13 @@ Available targets:
 make test
 ```
 
+#### Import test data to DB and index in Bleve
+```bash
+/opt/fairlance/backend/importer
+```
+Note: search app must nit be running for the importer to work
+(only one app can use the index at the same time)
+
 #### Structure:
 ```
 ├── bin
