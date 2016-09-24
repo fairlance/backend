@@ -90,7 +90,7 @@ func jobTags(w http.ResponseWriter, r *http.Request) {
 	searchRequest := bleve.NewSearchRequest(query)
 	searchRequest.Fields = []string{"tags.name"}
 
-	tagsFacet := bleve.NewFacetRequest("tags.name", 99999)
+	tagsFacet := bleve.NewFacetRequest("tags.tag", 99999)
 	searchRequest.AddFacet("tags", tagsFacet)
 
 	jobsSearchResults, err := jobsIndex.Search(searchRequest)
