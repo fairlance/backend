@@ -1,6 +1,7 @@
 help:
 	@echo "Available targets:"
 	@echo "- install: install all services"
+	@echo "- installARM: install all services with GOARCH=arm GOARM=7"
 	@echo "- test: run tests"
 	@echo "- testShort: run short tests, without using the db"
 	@echo "- installDependenciesAndTest: install dependencies declared in dependencies.txt and run tests"

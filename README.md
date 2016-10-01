@@ -12,7 +12,7 @@ Available targets:
 - testShort: run short tests, without using the db
 - installDependenciesAndTest: install dependencies declared in dependencies.txt and run tests
 - installDependencies: installs dependencies declared in dependencies.txt
-
+- installARM: install all services with GOARCH=arm GOARM=7
 ```
 
 #### Run tests with:
@@ -24,7 +24,7 @@ make test
 ```bash
 /opt/fairlance/backend/importer
 ```
-Note: search app must nit be running for the importer to work
+Note: search app must not be running for the importer to work
 (only one app can use the index at the same time)
 
 #### Structure:
@@ -58,7 +58,7 @@ Note: search app must nit be running for the importer to work
         │   ├── model.go
         │   └── user_repository.go
         │
-        └── application             <---- Another package; package registration
+        └── application             <---- Another package; package application
             ├── context.go
             ├── handlers.go
             ├── handlers_test.go
