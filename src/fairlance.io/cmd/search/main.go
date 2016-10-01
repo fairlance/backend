@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log"
 	"math"
 	"net/http"
 	"strconv"
@@ -29,12 +30,27 @@ func init() {
 	var err error
 	jobsIndex, err = getIndex("jobs")
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 
 	freelancersIndex, err = getIndex("freelancers")
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
+	}
+
+	respondOptions = &respond.Options{
+		Before: func(w http.ResponseWriter, r *http.Request, status int, data interface{}) (int, interface{}) {
+			dataEnvelope := map[string]interface{}{"code": status}
+			if err, ok := data.(error); ok {
+				dataEnvelope["error"] = err.Error()
+				dataEnvelope["success"] = false
+			} else {
+				// dataEnvelope["data"] = data
+				// dataEnvelope["success"] = true
+				return status, data
+			}
+			return status, dataEnvelope
+		},
 	}
 
 	respondOptions = &respond.Options{
@@ -57,11 +73,15 @@ func main() {
 	http.Handle("/jobs/tags", corsHandler(respondOptions.Handler(http.HandlerFunc(jobTags))))
 	http.Handle("/freelancers", corsHandler(respondOptions.Handler(http.HandlerFunc(freelancers))))
 
-	panic(http.ListenAndServe(":"+port, nil))
+	log.Fatal(http.ListenAndServe(":"+port, nil))
 }
 
 func jobs(w http.ResponseWriter, r *http.Request) {
-	searchRequest := getSearchRequest(r)
+	searchRequest, err := getSearchRequest(r)
+	if err != nil {
+		respond.With(w, r, http.StatusInternalServerError, err)
+		return
+	}
 
 	jobsSearchResults, err := jobsIndex.Search(searchRequest)
 	if err != nil {
@@ -146,7 +166,7 @@ func getIndex(dbName string) (bleve.Index, error) {
 	return index, nil
 }
 
-func getSearchRequest(r *http.Request) *bleve.SearchRequest {
+func getSearchRequest(r *http.Request) (*bleve.SearchRequest, error) {
 	musts := []bleve.Query{}
 	mustNots := []bleve.Query{}
 	shoulds := []bleve.Query{}
@@ -163,7 +183,7 @@ func getSearchRequest(r *http.Request) *bleve.SearchRequest {
 	if len(r.URL.Query().Get("price_from")) != 0 {
 		intValue1, err := strconv.ParseInt(r.URL.Query().Get("price_from"), 10, 64)
 		if err != nil {
-			panic(err)
+			return nil, err
 		}
 		value1 = float64(intValue1)
 	}
@@ -171,20 +191,25 @@ func getSearchRequest(r *http.Request) *bleve.SearchRequest {
 	if len(r.URL.Query().Get("price_to")) != 0 {
 		intValue2, err := strconv.ParseInt(r.URL.Query().Get("price_to"), 10, 64)
 		if err != nil {
-			panic(err)
+			return nil, err
 		}
 		value2 = float64(intValue2)
 	}
 
 	inclusiveValue1 := true
 	inclusiveValue2 := false
-	musts = append(musts, bleve.NewNumericRangeInclusiveQuery(&value1, &value2, &inclusiveValue1, &inclusiveValue2).SetField("price"))
+	musts = append(musts, bleve.NewNumericRangeInclusiveQuery(
+		&value1,
+		&value2,
+		&inclusiveValue1,
+		&inclusiveValue2,
+	).SetField("price"))
 
 	period := int64(30)
 	if len(r.URL.Query().Get("period")) != 0 {
 		periodTemp, err := strconv.ParseInt(r.URL.Query().Get("period"), 10, 64)
 		if err != nil {
-			panic(err)
+			return nil, err
 		}
 		if periodTemp > 0 && periodTemp <= 365 {
 			period = periodTemp
@@ -200,7 +225,7 @@ func getSearchRequest(r *http.Request) *bleve.SearchRequest {
 	searchRequest := bleve.NewSearchRequest(query)
 	searchRequest.Fields = []string{"*"}
 
-	return searchRequest
+	return searchRequest, nil
 }
 
 func corsHandler(next http.Handler) http.Handler {

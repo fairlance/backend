@@ -20,16 +20,18 @@ func IndexClient(w http.ResponseWriter, r *http.Request) {
 	respond.With(w, r, http.StatusOK, clients)
 }
 
-func GetClient(w http.ResponseWriter, r *http.Request) {
-	var appContext = context.Get(r, "context").(*ApplicationContext)
-	var id = context.Get(r, "id").(uint)
-	client, err := appContext.ClientRepository.GetClient(id)
-	if err != nil {
-		respond.With(w, r, http.StatusNotFound, err)
-		return
-	}
+// GetClientByID handler
+func GetClientByID(id uint) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var appContext = context.Get(r, "context").(*ApplicationContext)
+		client, err := appContext.ClientRepository.GetClient(id)
+		if err != nil {
+			respond.With(w, r, http.StatusNotFound, err)
+			return
+		}
 
-	respond.With(w, r, http.StatusOK, client)
+		respond.With(w, r, http.StatusOK, client)
+	})
 }
 
 func AddClient(w http.ResponseWriter, r *http.Request) {
@@ -50,37 +52,39 @@ func AddClient(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func UpdateClient(w http.ResponseWriter, r *http.Request) {
-	decoder := json.NewDecoder(r.Body)
-	defer r.Body.Close()
+// UpdateClientByID handler
+func UpdateClientByID(id uint) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		decoder := json.NewDecoder(r.Body)
+		defer r.Body.Close()
 
-	var body struct {
-		Timezone string `json:"timezone"`
-		Payment  string `json:"payment"`
-		Industry string `json:"industry"`
-	}
+		var body struct {
+			Timezone string `json:"timezone"`
+			Payment  string `json:"payment"`
+			Industry string `json:"industry"`
+		}
 
-	if err := decoder.Decode(&body); err != nil {
-		respond.With(w, r, http.StatusBadRequest, err)
-		return
-	}
+		if err := decoder.Decode(&body); err != nil {
+			respond.With(w, r, http.StatusBadRequest, err)
+			return
+		}
 
-	var id = context.Get(r, "id").(uint)
-	var appContext = context.Get(r, "context").(*ApplicationContext)
-	client, err := appContext.ClientRepository.GetClient(id)
-	if err != nil {
-		respond.With(w, r, http.StatusNotFound, err)
-		return
-	}
+		var appContext = context.Get(r, "context").(*ApplicationContext)
+		client, err := appContext.ClientRepository.GetClient(id)
+		if err != nil {
+			respond.With(w, r, http.StatusNotFound, err)
+			return
+		}
 
-	client.Timezone = body.Timezone
-	client.Payment = body.Payment
-	client.Industry = body.Industry
+		client.Timezone = body.Timezone
+		client.Payment = body.Payment
+		client.Industry = body.Industry
 
-	if err := appContext.ClientRepository.UpdateClient(&client); err != nil {
-		respond.With(w, r, http.StatusBadRequest, err)
-		return
-	}
+		if err := appContext.ClientRepository.UpdateClient(&client); err != nil {
+			respond.With(w, r, http.StatusBadRequest, err)
+			return
+		}
 
-	respond.With(w, r, http.StatusOK, nil)
+		respond.With(w, r, http.StatusOK, nil)
+	})
 }
