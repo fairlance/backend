@@ -157,11 +157,6 @@ func AddFreelancerUpdatesByID(id uint) http.Handler {
 			return
 		}
 
-		if err := appContext.FreelancerRepository.ClearSkills(&freelancer); err != nil {
-			respond.With(w, r, http.StatusBadRequest, err)
-			return
-		}
-
 		freelancer.Skills = body.Skills
 		freelancer.Timezone = body.Timezone
 		freelancer.IsAvailable = body.IsAvailable

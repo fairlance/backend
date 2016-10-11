@@ -22,75 +22,136 @@ func IndexJob(w http.ResponseWriter, r *http.Request) {
 	respond.With(w, r, http.StatusOK, jobs)
 }
 
-func AddJob(w http.ResponseWriter, r *http.Request) {
-	job := context.Get(r, "job").(*Job)
-	var appContext = context.Get(r, "context").(*ApplicationContext)
-	if err := appContext.JobRepository.AddJob(job); err != nil {
-		respond.With(w, r, http.StatusBadRequest, err)
-		return
-	}
+func AddJob(job *Job) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var appContext = context.Get(r, "context").(*ApplicationContext)
+		if err := appContext.JobRepository.AddJob(job); err != nil {
+			respond.With(w, r, http.StatusBadRequest, err)
+			return
+		}
 
-	respond.With(w, r, http.StatusOK, job)
+		respond.With(w, r, http.StatusOK, job)
+	})
 }
 
 // GetJobByID handler
 func GetJobByID(id uint) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var appContext = context.Get(r, "context").(*ApplicationContext)
-		client, err := appContext.JobRepository.GetJob(id)
+		job, err := appContext.JobRepository.GetJob(id)
 		if err != nil {
 			respond.With(w, r, http.StatusNotFound, err)
 			return
 		}
 
-		respond.With(w, r, http.StatusOK, client)
+		respond.With(w, r, http.StatusOK, job)
 	})
 }
 
-func NewJobHandler(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		decoder := json.NewDecoder(r.Body)
-		defer r.Body.Close()
+type WithJob struct {
+	Next func(job *Job) http.Handler
+}
 
-		var body struct {
-			Name     string `json:"name" valid:"required"`
-			Summary  string `json:"summary" valid:"required"`
-			Details  string `json:"details" valid:"required"`
-			ClientID uint   `json:"clientId" valid:"required"`
-			IsActive bool   `json:"isActive"`
-			Tags     []Tag  `json:"tags"`
-			Links    []Link `json:"links"`
-		}
+func (withJob WithJob) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	decoder := json.NewDecoder(r.Body)
+	defer r.Body.Close()
 
-		if err := decoder.Decode(&body); err != nil {
-			respond.With(w, r, http.StatusBadRequest, err)
-			return
-		}
+	var body struct {
+		Name     string  `json:"name" valid:"required"`
+		Summary  string  `json:"summary" valid:"required"`
+		Details  string  `json:"details" valid:"required"`
+		ClientID uint    `json:"clientId" valid:"required"`
+		IsActive bool    `json:"isActive"`
+		Tags     strings `json:"tags"`
+		Links    strings `json:"links"`
+	}
 
-		// https://github.com/asaskevich/govalidator/issues/133
-		// https://github.com/asaskevich/govalidator/issues/112
-		if len(body.Tags) > 10 {
-			respond.With(w, r, http.StatusBadRequest, errors.New("Max of 10 tags are allowed."))
-			return
-		}
+	if err := decoder.Decode(&body); err != nil {
+		respond.With(w, r, http.StatusBadRequest, err)
+		return
+	}
 
-		if ok, err := govalidator.ValidateStruct(body); ok == false || err != nil {
-			errs := govalidator.ErrorsByField(err)
-			respond.With(w, r, http.StatusBadRequest, errs)
-			return
-		}
+	// https://github.com/asaskevich/govalidator/issues/133
+	// https://github.com/asaskevich/govalidator/issues/112
+	if len(body.Tags) > 10 {
+		respond.With(w, r, http.StatusBadRequest, errors.New("Max of 10 tags are allowed."))
+		return
+	}
 
-		job := &Job{
-			Name:     body.Name,
-			Summary:  body.Summary,
-			Details:  body.Details,
-			ClientID: body.ClientID,
-			IsActive: body.IsActive,
-			Tags:     body.Tags,
-			Links:    body.Links,
-		}
+	if ok, err := govalidator.ValidateStruct(body); ok == false || err != nil {
+		errs := govalidator.ErrorsByField(err)
+		respond.With(w, r, http.StatusBadRequest, errs)
+		return
+	}
 
-		context.Set(r, "job", job)
-		next.ServeHTTP(w, r)
-	})
+	job := &Job{
+		Name:     body.Name,
+		Summary:  body.Summary,
+		Details:  body.Details,
+		ClientID: body.ClientID,
+		IsActive: body.IsActive,
+		Tags:     body.Tags,
+		Links:    body.Links,
+	}
+
+	withJob.Next(job).ServeHTTP(w, r)
+}
+
+type ApplyForJob struct {
+	JobApplication *JobApplication
+}
+
+func (afj ApplyForJob) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	var appContext = context.Get(r, "context").(*ApplicationContext)
+	if err := appContext.JobRepository.AddJobApplication(afj.JobApplication); err != nil {
+		respond.With(w, r, http.StatusBadRequest, err)
+		return
+	}
+
+	respond.With(w, r, http.StatusOK, afj.JobApplication)
+}
+
+type WithJobApplication struct {
+	JobID uint
+	Next  func(jobApplication *JobApplication) http.Handler
+}
+
+func (withJobApplication WithJobApplication) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	var jobApplication JobApplication
+	decoder := json.NewDecoder(r.Body)
+	defer r.Body.Close()
+
+	var body struct {
+		Message          string  `json:"message" valid:"required"`
+		Samples          uints   `json:"samples" valid:"required"`
+		DeliveryEstimate int     `json:"deliveryEstimate" valid:"required"`
+		Milestones       strings `json:"milestones" valid:"required"`
+		HourPrice        float64 `json:"hourPrice" valid:"required"`
+		Hours            int     `json:"hours" valid:"required"`
+		FreelancerID     uint    `json:"freelancerId" valid:"required"`
+	}
+
+	if err := decoder.Decode(&body); err != nil {
+		respond.With(w, r, http.StatusBadRequest, errors.New("Invalid JSON"))
+		return
+	}
+
+	if ok, err := govalidator.ValidateStruct(body); ok == false || err != nil {
+		errs := govalidator.ErrorsByField(err)
+		respond.With(w, r, http.StatusBadRequest, errs)
+		return
+	}
+
+	jobApplication = JobApplication{
+		Message:          body.Message,
+		Milestones:       body.Milestones,
+		Samples:          body.Samples,
+		DeliveryEstimate: body.DeliveryEstimate,
+		Hours:            body.Hours,
+		HourPrice:        body.HourPrice,
+		JobID:            withJobApplication.JobID,
+		FreelancerID:     body.FreelancerID,
+	}
+
+	withJobApplication.Next(&jobApplication).ServeHTTP(w, r)
 }

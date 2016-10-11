@@ -45,21 +45,6 @@ func init() {
 				dataEnvelope["error"] = err.Error()
 				dataEnvelope["success"] = false
 			} else {
-				// dataEnvelope["data"] = data
-				// dataEnvelope["success"] = true
-				return status, data
-			}
-			return status, dataEnvelope
-		},
-	}
-
-	respondOptions = &respond.Options{
-		Before: func(w http.ResponseWriter, r *http.Request, status int, data interface{}) (int, interface{}) {
-			dataEnvelope := map[string]interface{}{"code": status}
-			if err, ok := data.(error); ok {
-				dataEnvelope["error"] = err.Error()
-				dataEnvelope["success"] = false
-			} else {
 				dataEnvelope["data"] = data
 				dataEnvelope["success"] = true
 			}
@@ -69,9 +54,9 @@ func init() {
 }
 
 func main() {
-	http.Handle("/jobs", corsHandler(respondOptions.Handler(http.HandlerFunc(jobs))))
-	http.Handle("/jobs/tags", corsHandler(respondOptions.Handler(http.HandlerFunc(jobTags))))
-	http.Handle("/freelancers", corsHandler(respondOptions.Handler(http.HandlerFunc(freelancers))))
+	http.Handle("/job", corsHandler(respondOptions.Handler(http.HandlerFunc(jobs))))
+	http.Handle("/job/tags", corsHandler(respondOptions.Handler(http.HandlerFunc(jobTags))))
+	http.Handle("/freelancer", corsHandler(respondOptions.Handler(http.HandlerFunc(freelancers))))
 
 	log.Fatal(http.ListenAndServe(":"+port, nil))
 }
@@ -108,9 +93,9 @@ func jobTags(w http.ResponseWriter, r *http.Request) {
 	query := bleve.NewMatchAllQuery()
 
 	searchRequest := bleve.NewSearchRequest(query)
-	searchRequest.Fields = []string{"tags.name"}
+	searchRequest.Fields = []string{"tags"}
 
-	tagsFacet := bleve.NewFacetRequest("tags.tag", 99999)
+	tagsFacet := bleve.NewFacetRequest("tags", 99999)
 	searchRequest.AddFacet("tags", tagsFacet)
 
 	jobsSearchResults, err := jobsIndex.Search(searchRequest)

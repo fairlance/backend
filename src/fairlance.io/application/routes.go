@@ -24,7 +24,7 @@ var routes = Routes{
 	Route{
 		"IndexFreelancer",
 		"GET",
-		"/freelancer/",
+		"/freelancer",
 		http.HandlerFunc(IndexFreelancer),
 	},
 	Route{
@@ -67,14 +67,14 @@ var routes = Routes{
 	Route{
 		"IndexProject",
 		"GET",
-		"/project/",
+		"/project",
 		http.HandlerFunc(IndexProject),
 	},
 
 	Route{
 		"IndexClient",
 		"GET",
-		"/client/",
+		"/client",
 		http.HandlerFunc(IndexClient),
 	},
 	Route{
@@ -99,14 +99,14 @@ var routes = Routes{
 	Route{
 		"IndexJob",
 		"GET",
-		"/job/",
+		"/job",
 		http.HandlerFunc(IndexJob),
 	},
 	Route{
 		"NewJob",
 		"PUT",
 		"/job/new",
-		NewJobHandler(http.HandlerFunc(AddJob)),
+		WithJob{AddJob},
 	},
 	Route{
 		"GetJob",
@@ -114,11 +114,21 @@ var routes = Routes{
 		"/job/{id}",
 		WithID{GetJobByID},
 	},
+	Route{
+		"ApplyForJob",
+		"PUT",
+		"/job/{id}/apply",
+		WithID{func(jobID uint) http.Handler {
+			return WithJobApplication{jobID, func(jobApplication *JobApplication) http.Handler {
+				return ApplyForJob{jobApplication}
+			}}
+		}},
+	},
 
 	Route{
 		"Info",
 		"GET",
-		"/info/",
+		"/info",
 		http.HandlerFunc(Info),
 	},
 }

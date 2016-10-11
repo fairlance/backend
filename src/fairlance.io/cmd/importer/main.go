@@ -68,8 +68,8 @@ func main() {
 
 func jobs(db *gorm.DB) (map[string]interface{}, error) {
 
-	db.DropTableIfExists(&application.Job{}, &application.Tag{})
-	db.CreateTable(&application.Job{}, &application.Tag{})
+	db.DropTableIfExists(&application.Job{})
+	db.CreateTable(&application.Job{})
 
 	// PostgreSQL only supports 65535 parameters
 	for i := 0; i < 100; i++ {
@@ -80,17 +80,14 @@ func jobs(db *gorm.DB) (map[string]interface{}, error) {
 			ClientID:  1,
 			Price:     123*i%200 + 200,
 			StartDate: time.Now().Add(time.Duration(i*24+1) * time.Hour),
-			Tags: []application.Tag{
-				application.Tag{Tag: fmt.Sprintf("tag_%d", i)},
-				application.Tag{Tag: fmt.Sprintf("tag_%d", i+i)},
-			},
+			Tags:      []string{fmt.Sprintf("tag_%d", i), fmt.Sprintf("tag_%d", i+i)},
 		})
 	}
 	fmt.Println("Done Faking.")
 
 	jobs := []application.Job{}
 	jobsMap := make(map[string]interface{})
-	if err := db.Preload("Tags").Preload("Client").Find(&jobs).Error; err != nil {
+	if err := db.Preload("Client").Find(&jobs).Error; err != nil {
 		return jobsMap, err
 	}
 
@@ -106,7 +103,7 @@ func jobs(db *gorm.DB) (map[string]interface{}, error) {
 func freelancers(db *gorm.DB) (map[string]interface{}, error) {
 	freelancersMap := make(map[string]interface{})
 	freelancers := []application.Freelancer{}
-	if err := db.Preload("Skills", "owner_type = ?", "freelancers").Find(&freelancers).Error; err != nil {
+	if err := db.Find(&freelancers).Error; err != nil {
 		return freelancersMap, err
 	}
 

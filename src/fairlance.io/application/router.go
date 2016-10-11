@@ -24,7 +24,7 @@ func NewRouter(appContext *ApplicationContext) *mux.Router {
 		},
 	}
 
-	router := mux.NewRouter().StrictSlash(true)
+	router := mux.NewRouter()
 	for _, route := range routes {
 		var handler http.Handler
 		handler = opts.Handler(route.Handler)

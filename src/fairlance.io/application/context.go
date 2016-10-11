@@ -11,7 +11,7 @@ type ApplicationContext struct {
 	ProjectRepository    *ProjectRepository
 	ClientRepository     *ClientRepository
 	ReferenceRepository  *ReferenceRepository
-	JobRepository        *JobRepository
+	JobRepository        IJobRepository // todo: think of a better name
 	UserRepository       *UserRepository
 	JwtSecret            string
 }
@@ -57,11 +57,11 @@ func (ac *ApplicationContext) DropCreateFillTables() {
 }
 
 func (ac *ApplicationContext) DropTables() {
-	ac.db.DropTableIfExists(&Freelancer{}, &Project{}, &Client{}, &Job{}, &Review{}, &Reference{}, &Media{}, &Tag{}, &Link{})
+	ac.db.DropTableIfExists(&Freelancer{}, &Project{}, &Client{}, &Job{}, &Review{}, &Reference{}, &Media{}, &JobApplication{})
 }
 
 func (ac *ApplicationContext) CreateTables() {
-	ac.db.CreateTable(&Freelancer{}, &Project{}, &Client{}, &Job{}, &Review{}, &Reference{}, &Media{}, &Tag{}, &Link{})
+	ac.db.CreateTable(&Freelancer{}, &Project{}, &Client{}, &Job{}, &Review{}, &Reference{}, &Media{}, &JobApplication{})
 }
 
 func (ac *ApplicationContext) FillTables() {
@@ -102,6 +102,7 @@ func (ac *ApplicationContext) FillTables() {
 		HourlyRateFrom: 12,
 		HourlyRateTo:   22,
 		Timezone:       "CET",
+		Skills:         strings{"good", "bad", "ugly"},
 	})
 
 	ac.FreelancerRepository.AddReview(&Review{
@@ -135,6 +136,15 @@ func (ac *ApplicationContext) FillTables() {
 		IsActive:    true,
 	})
 
+	ac.db.Create(&JobApplication{
+		Message:          "I apply",
+		JobID:            1,
+		FreelancerID:     1,
+		Milestones:       strings{"Milestone1", "Milestone2"},
+		Samples:          uints{1, 2},
+		DeliveryEstimate: 15,
+	})
+
 	ac.ClientRepository.AddClient(&Client{
 		User: User{
 			FirstName: "ClientName",
@@ -153,20 +163,8 @@ func (ac *ApplicationContext) FillTables() {
 		Summary:  "Summary Job",
 		Details:  "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.",
 		ClientID: 1,
-		Tags: []Tag{
-			Tag{
-				Tag:       "tag",
-				OwnerID:   1,
-				OwnerType: "client",
-			},
-		},
-		Links: []Link{
-			Link{
-				Link:      "http://www.google.com/",
-				OwnerID:   1,
-				OwnerType: "job",
-			},
-		},
+		Tags:     strings{"tag"},
+		Links:    strings{"http://www.google.com/"},
 	})
 
 	ac.FreelancerRepository.AddFreelancer(&Freelancer{
