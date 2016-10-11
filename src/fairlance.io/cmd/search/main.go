@@ -14,6 +14,7 @@ import (
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 
 	"github.com/blevesearch/bleve"
+	"github.com/blevesearch/bleve/search/query"
 )
 
 var (
@@ -152,16 +153,18 @@ func getIndex(dbName string) (bleve.Index, error) {
 }
 
 func getSearchRequest(r *http.Request) (*bleve.SearchRequest, error) {
-	musts := []bleve.Query{}
-	mustNots := []bleve.Query{}
-	shoulds := []bleve.Query{}
+	musts := []query.Query{}
+	// mustNots := []query.Query{}
+	// shoulds := []query.Query{}
 
-	tagShoulds := []bleve.Query{}
+	tagShoulds := []query.Query{}
 	for _, tag := range r.URL.Query()["tags"] {
 		tagShoulds = append(tagShoulds, bleve.NewMatchQuery(tag))
 	}
 	if len(tagShoulds) > 0 {
-		musts = append(musts, bleve.NewBooleanQuery(nil, tagShoulds, nil))
+		booleanQuery := bleve.NewBooleanQuery()
+		booleanQuery.AddShould(tagShoulds...)
+		musts = append(musts, booleanQuery)
 	}
 
 	value1 := 0.0
@@ -183,12 +186,14 @@ func getSearchRequest(r *http.Request) (*bleve.SearchRequest, error) {
 
 	inclusiveValue1 := true
 	inclusiveValue2 := false
-	musts = append(musts, bleve.NewNumericRangeInclusiveQuery(
+	numericRangeIncludiveQuery := bleve.NewNumericRangeInclusiveQuery(
 		&value1,
 		&value2,
 		&inclusiveValue1,
 		&inclusiveValue2,
-	).SetField("price"))
+	)
+	numericRangeIncludiveQuery.SetField("price")
+	musts = append(musts, numericRangeIncludiveQuery)
 
 	period := int64(30)
 	if len(r.URL.Query().Get("period")) != 0 {
@@ -201,11 +206,16 @@ func getSearchRequest(r *http.Request) (*bleve.SearchRequest, error) {
 		}
 	}
 
-	now := time.Now().Format(time.RFC3339)
-	dateTo := time.Now().Add(time.Duration(24*period) * time.Hour).Format(time.RFC3339)
-	musts = append(musts, bleve.NewDateRangeQuery(&now, &dateTo).SetField("startDate"))
+	now := time.Now()
+	dateTo := time.Now().Add(time.Duration(24*period) * time.Hour)
+	dateRangeQuery := bleve.NewDateRangeQuery(now, dateTo)
+	dateRangeQuery.SetField("startDate")
+	musts = append(musts, dateRangeQuery)
 
-	query := bleve.NewBooleanQuery(musts, shoulds, mustNots)
+	query := bleve.NewBooleanQuery()
+	query.AddMust(musts...)
+	// query.AddMustNot(mustNots...)
+	// query.AddShould(shoulds...)
 
 	searchRequest := bleve.NewSearchRequest(query)
 	searchRequest.Fields = []string{"*"}
