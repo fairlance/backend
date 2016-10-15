@@ -119,8 +119,8 @@ var routes = Routes{
 		"PUT",
 		"/job/{id}/apply",
 		WithID{func(jobID uint) http.Handler {
-			return WithJobApplication{jobID, func(jobApplication *JobApplication) http.Handler {
-				return ApplyForJob{jobApplication}
+			return WithJobApplication{func(jobApplication *JobApplication) http.Handler {
+				return ApplyForJobHandler{jobID, jobApplication}
 			}}
 		}},
 	},

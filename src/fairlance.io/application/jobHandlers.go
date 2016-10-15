@@ -11,7 +11,6 @@ import (
 )
 
 func IndexJob(w http.ResponseWriter, r *http.Request) {
-
 	var appContext = context.Get(r, "context").(*ApplicationContext)
 	jobs, err := appContext.JobRepository.GetAllJobs()
 	if err != nil {
@@ -49,7 +48,7 @@ func GetJobByID(id uint) http.Handler {
 }
 
 type WithJob struct {
-	Next func(job *Job) http.Handler
+	next func(job *Job) http.Handler
 }
 
 func (withJob WithJob) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -94,26 +93,27 @@ func (withJob WithJob) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		Links:    body.Links,
 	}
 
-	withJob.Next(job).ServeHTTP(w, r)
+	withJob.next(job).ServeHTTP(w, r)
 }
 
-type ApplyForJob struct {
-	JobApplication *JobApplication
+type ApplyForJobHandler struct {
+	jobID          uint
+	jobApplication *JobApplication
 }
 
-func (afj ApplyForJob) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (afjh ApplyForJobHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	var appContext = context.Get(r, "context").(*ApplicationContext)
-	if err := appContext.JobRepository.AddJobApplication(afj.JobApplication); err != nil {
+	afjh.jobApplication.JobID = afjh.jobID
+	if err := appContext.JobRepository.AddJobApplication(afjh.jobApplication); err != nil {
 		respond.With(w, r, http.StatusBadRequest, err)
 		return
 	}
 
-	respond.With(w, r, http.StatusOK, afj.JobApplication)
+	respond.With(w, r, http.StatusOK, afjh.jobApplication)
 }
 
 type WithJobApplication struct {
-	JobID uint
-	Next  func(jobApplication *JobApplication) http.Handler
+	next func(jobApplication *JobApplication) http.Handler
 }
 
 func (withJobApplication WithJobApplication) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -149,9 +149,8 @@ func (withJobApplication WithJobApplication) ServeHTTP(w http.ResponseWriter, r 
 		DeliveryEstimate: body.DeliveryEstimate,
 		Hours:            body.Hours,
 		HourPrice:        body.HourPrice,
-		JobID:            withJobApplication.JobID,
 		FreelancerID:     body.FreelancerID,
 	}
 
-	withJobApplication.Next(&jobApplication).ServeHTTP(w, r)
+	withJobApplication.next(&jobApplication).ServeHTTP(w, r)
 }

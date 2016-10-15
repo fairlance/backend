@@ -1,17 +1,15 @@
-package mocks
+package application
 
-import "fairlance.io/application"
-
-type JobRepository struct {
+type JobRepositoryMock struct {
 	GettAllJobsCall struct {
 		Returns struct {
-			Jobs  []application.Job
+			Jobs  []Job
 			Error error
 		}
 	}
 	AddJobCall struct {
 		Receives struct {
-			Job *application.Job
+			Job *Job
 		}
 		Returns struct {
 			Error error
@@ -22,13 +20,13 @@ type JobRepository struct {
 			ID uint
 		}
 		Returns struct {
-			Job   application.Job
+			Job   Job
 			Error error
 		}
 	}
 	AddJobApplicationCall struct {
 		Receives struct {
-			JobApplication *application.JobApplication
+			JobApplication *JobApplication
 		}
 		Returns struct {
 			Error error
@@ -36,23 +34,23 @@ type JobRepository struct {
 	}
 }
 
-func (repo *JobRepository) GetAllJobs() ([]application.Job, error) {
+func (repo *JobRepositoryMock) GetAllJobs() ([]Job, error) {
 	return repo.GettAllJobsCall.Returns.Jobs,
 		repo.GettAllJobsCall.Returns.Error
 }
 
-func (repo *JobRepository) AddJob(job *application.Job) error {
+func (repo *JobRepositoryMock) AddJob(job *Job) error {
 	repo.AddJobCall.Receives.Job = job
 	return repo.AddJobCall.Returns.Error
 }
 
-func (repo *JobRepository) GetJob(id uint) (application.Job, error) {
+func (repo *JobRepositoryMock) GetJob(id uint) (Job, error) {
 	repo.GetJobCall.Receives.ID = id
 	return repo.GetJobCall.Returns.Job,
 		repo.GetJobCall.Returns.Error
 }
 
-func (repo *JobRepository) AddJobApplication(jobApplication *application.JobApplication) error {
+func (repo *JobRepositoryMock) AddJobApplication(jobApplication *JobApplication) error {
 	repo.AddJobApplicationCall.Receives.JobApplication = jobApplication
 	return repo.AddJobApplicationCall.Returns.Error
 }
