@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"net/http/httptest"
@@ -28,7 +27,6 @@ func buildTestContext(db string) *reg.RegistrationContext {
 
 	// override
 	context.Mailer = TestMailer{}
-	context.Logger = log.New(ioutil.Discard, "", 0)
 
 	return context
 }
