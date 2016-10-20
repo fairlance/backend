@@ -3,6 +3,7 @@ package registration
 import (
 	"encoding/base64"
 	"encoding/json"
+	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -23,7 +24,7 @@ func (ah AppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	err := ah.Handle(ah.Context, w, r)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		ah.Context.Logger.Println(err)
+		log.Println(err)
 	}
 }
 

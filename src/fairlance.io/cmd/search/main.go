@@ -1,11 +1,16 @@
 package main
 
 import (
+	"bytes"
+	"encoding/json"
+	"errors"
 	"flag"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"math"
 	"net/http"
+	"os"
 	"strconv"
 	"time"
 
@@ -18,26 +23,19 @@ import (
 )
 
 var (
-	jobsIndex        bleve.Index
-	freelancersIndex bleve.Index
-	indicesDir       = *flag.String("indicesDir", "/tmp/indices", "Location where the indices are located.")
-	port             = *flag.String("port", "3002", "Port.")
-	respondOptions   *respond.Options
+	port           = *flag.String("port", "3002", "Port.")
+	searcherURL    = *flag.String("searcherURL", "http://localhost:3003", "Url of the searcher.")
+	respondOptions *respond.Options
 )
 
 func init() {
 	flag.Parse()
 
-	var err error
-	jobsIndex, err = getIndex("jobs")
+	f, err := os.OpenFile("/var/log/fairlance/search.log", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("error opening file: %v", err)
 	}
-
-	freelancersIndex, err = getIndex("freelancers")
-	if err != nil {
-		log.Fatal(err)
-	}
+	log.SetOutput(f)
 
 	respondOptions = &respond.Options{
 		Before: func(w http.ResponseWriter, r *http.Request, status int, data interface{}) (int, interface{}) {
@@ -63,15 +61,15 @@ func main() {
 }
 
 func jobs(w http.ResponseWriter, r *http.Request) {
-	searchRequest, err := getSearchRequest(r)
+	searchRequest, err := getJobSearchRequest(r)
 	if err != nil {
-		respond.With(w, r, http.StatusInternalServerError, err)
+		respond.With(w, r, http.StatusBadRequest, err)
 		return
 	}
 
-	jobsSearchResults, err := jobsIndex.Search(searchRequest)
+	jobsSearchResults, err := doRequest("jobs", searchRequest)
 	if err != nil {
-		respond.With(w, r, http.StatusInternalServerError, err)
+		respond.With(w, r, http.StatusBadGateway, err)
 		return
 	}
 
@@ -99,7 +97,7 @@ func jobTags(w http.ResponseWriter, r *http.Request) {
 	tagsFacet := bleve.NewFacetRequest("tags", 99999)
 	searchRequest.AddFacet("tags", tagsFacet)
 
-	jobsSearchResults, err := jobsIndex.Search(searchRequest)
+	jobsSearchResults, err := doRequest("jobs", searchRequest)
 	if err != nil {
 		respond.With(w, r, http.StatusInternalServerError, err)
 		return
@@ -124,7 +122,7 @@ func freelancers(w http.ResponseWriter, r *http.Request) {
 	searchRequest := bleve.NewSearchRequest(bleve.NewMatchAllQuery())
 	searchRequest.Fields = []string{"*"}
 
-	freelnacersSearchResults, err := freelancersIndex.Search(searchRequest)
+	freelnacersSearchResults, err := doRequest("freelancers", searchRequest)
 	if err != nil {
 		respond.With(w, r, http.StatusInternalServerError, err)
 		return
@@ -143,16 +141,7 @@ func freelancers(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func getIndex(dbName string) (bleve.Index, error) {
-	index, err := bleve.Open(indicesDir + "/" + dbName)
-	if err != nil {
-		return index, err
-	}
-
-	return index, nil
-}
-
-func getSearchRequest(r *http.Request) (*bleve.SearchRequest, error) {
+func getJobSearchRequest(r *http.Request) (*bleve.SearchRequest, error) {
 	musts := []query.Query{}
 	// mustNots := []query.Query{}
 	// shoulds := []query.Query{}
@@ -221,6 +210,44 @@ func getSearchRequest(r *http.Request) (*bleve.SearchRequest, error) {
 	searchRequest.Fields = []string{"*"}
 
 	return searchRequest, nil
+}
+
+func doRequest(index string, searchRequest *bleve.SearchRequest) (bleve.SearchResult, error) {
+	var jobsSearchResults bleve.SearchResult
+	jsonBytes, err := json.Marshal(searchRequest)
+	if err != nil {
+		return jobsSearchResults, err
+	}
+
+	url := searcherURL + "/api/" + index + "/_search"
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonBytes))
+	if err != nil {
+		return jobsSearchResults, err
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	defer resp.Body.Close()
+	if err != nil {
+		return jobsSearchResults, err
+	}
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return jobsSearchResults, err
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return jobsSearchResults, errors.New(string(body))
+	}
+
+	err = json.Unmarshal(body, &jobsSearchResults)
+	if err != nil {
+		return jobsSearchResults, err
+	}
+
+	return jobsSearchResults, nil
 }
 
 func corsHandler(next http.Handler) http.Handler {

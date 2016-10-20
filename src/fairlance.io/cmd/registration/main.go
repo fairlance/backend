@@ -3,7 +3,9 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log"
 	"net/http"
+	"os"
 	"strconv"
 
 	"fairlance.io/registration"
@@ -12,6 +14,14 @@ import (
 var port int
 var user string
 var pass string
+
+func init() {
+	f, err := os.OpenFile("/var/log/fairlance/registration.log", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
+	if err != nil {
+		log.Fatalf("error opening file: %v", err)
+	}
+	log.SetOutput(f)
+}
 
 func main() {
 	flag.IntVar(&port, "port", 3000, "Specify the port to listen to.")

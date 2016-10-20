@@ -3,7 +3,9 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log"
 	"net/http"
+	"os"
 	"strconv"
 
 	"fairlance.io/application"
@@ -15,7 +17,13 @@ var dbUser string
 var dbPass string
 var secret string
 
-func main() {
+func init() {
+	f, err := os.OpenFile("/var/log/fairlance/application.log", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
+	if err != nil {
+		log.Fatalf("error opening file: %v", err)
+	}
+	log.SetOutput(f)
+
 	flag.IntVar(&port, "port", 3001, "Specify the port to listen to.")
 	flag.StringVar(&dbName, "dbName", "application", "DB name.")
 	flag.StringVar(&dbUser, "dbUser", "", "DB user.")
@@ -27,7 +35,9 @@ func main() {
 		fmt.Println("dbUser or dbPass empty!")
 		return
 	}
+}
 
+func main() {
 	options := application.ContextOptions{dbName, dbUser, dbPass, secret}
 
 	var appContext, err = application.NewContext(options)
