@@ -1,6 +1,8 @@
 package importer
 
 import (
+	"fmt"
+	"net/http"
 	"strconv"
 	"time"
 
@@ -16,6 +18,39 @@ type page struct {
 	TotalInDB           int
 	TotalInSearchEngine int
 	Type                string
+	Timestamps          map[string]time.Time
+	ImporterStarted     string
+}
+
+func newPage(r *http.Request) page {
+	pageState := page{Message: "ok"}
+	query := r.URL.Query()
+	offset := 0
+	if query.Get("offset") != "" {
+		o, err := strconv.ParseInt(query.Get("offset"), 10, 64)
+		if err != nil {
+			pageState.Message = err.Error()
+		}
+		offset = int(o)
+	}
+	pageState.Offset = offset
+
+	limit := 10
+	if query.Get("limit") != "" {
+		l, err := strconv.ParseInt(query.Get("limit"), 10, 64)
+		if err != nil {
+			pageState.Message = err.Error()
+		}
+		limit = int(l)
+	}
+	pageState.Limit = limit
+
+	pageState.Type = "jobs"
+	if query.Get("type") != "" {
+		pageState.Type = query.Get("type")
+	}
+
+	return pageState
 }
 
 func (p page) PrevPageLabel() string {
@@ -73,4 +108,29 @@ func (p page) GetName(doc interface{}) string {
 	default:
 		return ""
 	}
+}
+
+// HumanDuration returns a human-readable approximation of a duration
+// (eg. "About a minute", "4 hours ago", etc.)
+func humanDuration(d time.Duration) string {
+	if seconds := int(d.Seconds()); seconds < 1 {
+		return "Less than a second"
+	} else if seconds < 60 {
+		return fmt.Sprintf("%d seconds", seconds)
+	} else if minutes := int(d.Minutes()); minutes == 1 {
+		return "About a minute"
+	} else if minutes < 60 {
+		return fmt.Sprintf("%d minutes", minutes)
+	} else if hours := int(d.Hours()); hours == 1 {
+		return "About an hour"
+	} else if hours < 48 {
+		return fmt.Sprintf("%d hours", hours)
+	} else if hours < 24*7*2 {
+		return fmt.Sprintf("%d days", hours/24)
+	} else if hours < 24*30*3 {
+		return fmt.Sprintf("%d weeks", hours/24/7)
+	} else if hours < 24*365*2 {
+		return fmt.Sprintf("%d months", hours/24/30)
+	}
+	return fmt.Sprintf("%f years", d.Hours()/24/365)
 }

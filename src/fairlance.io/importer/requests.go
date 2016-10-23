@@ -24,13 +24,12 @@ func getDocFromSearchEngine(options Options, index, docID string) (map[string]in
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
 		return nil, errors.New(resp.Status)
-	}
-
-	if err != nil {
-		return nil, err
 	}
 
 	body, err := ioutil.ReadAll(resp.Body)
@@ -57,11 +56,10 @@ func deleteDocFromSearchEngine(options Options, index, docID string) error {
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
-	defer resp.Body.Close()
 	if err != nil {
 		return err
 	}
-
+	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
 		return errors.New(resp.Status)
 	}
@@ -87,7 +85,6 @@ func getTotalInSearchEngine(options Options, index string) (int, error) {
 		return response.Count, err
 	}
 	defer resp.Body.Close()
-
 	if resp.StatusCode != http.StatusOK {
 		return response.Count, errors.New(resp.Status)
 	}
@@ -113,11 +110,10 @@ func deleteAllFromSearchEngine(options Options, index string) error {
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
-	defer resp.Body.Close()
 	if err != nil {
 		return err
 	}
-
+	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
 		return errors.New(resp.Status)
 	}
@@ -143,7 +139,6 @@ func deleteAllFromSearchEngine(options Options, index string) error {
 }
 
 func importDocs(options Options, index string, docs map[string]interface{}) error {
-	log.Println("Indexing...")
 	count := 0
 	startTime := time.Now()
 	for id, doc := range docs {
@@ -201,10 +196,51 @@ func importDocument(options Options, index, docID string, doc interface{}) error
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
-	defer resp.Body.Close()
 	if err != nil {
 		return err
 	}
+	defer resp.Body.Close()
 
 	return nil
 }
+
+// func batchIndex(i bleve.Index, docs map[string]interface{}) error {
+// 	fmt.Println("Indexing...")
+// 	var err error
+// 	count := 0
+// 	startTime := time.Now()
+// 	batch := i.NewBatch()
+// 	batchCount := 0
+// 	for id, doc := range docs {
+// 		batch.Index(id, doc)
+// 		batchCount++
+
+// 		if batchCount >= 100 {
+// 			err = i.Batch(batch)
+// 			if err != nil {
+// 				return err
+// 			}
+// 			batch = i.NewBatch()
+// 			batchCount = 0
+// 		}
+// 		count++
+// 		if count%1000 == 0 {
+// 			indexDuration := time.Since(startTime)
+// 			indexDurationSeconds := float64(indexDuration) / float64(time.Second)
+// 			timePerDoc := float64(indexDuration) / float64(count)
+// 			fmt.Printf("Indexed %d documents, in %.2fs (average %.2fms/doc)\n", count, indexDurationSeconds, timePerDoc/float64(time.Millisecond))
+// 		}
+// 	}
+// 	// flush the last batch
+// 	if batchCount > 0 {
+// 		err = i.Batch(batch)
+// 		if err != nil {
+// 			return err
+// 		}
+// 	}
+// 	indexDuration := time.Since(startTime)
+// 	indexDurationSeconds := float64(indexDuration) / float64(time.Second)
+// 	timePerDoc := float64(indexDuration) / float64(count)
+// 	fmt.Printf("Indexed %d documents, in %.2fs (average %.2fms/doc)\n", count, indexDurationSeconds, timePerDoc/float64(time.Millisecond))
+// 	return nil
+// }

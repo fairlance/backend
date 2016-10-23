@@ -4,7 +4,6 @@ import (
 	"html/template"
 	"log"
 	"net/http"
-	"strconv"
 
 	"github.com/jinzhu/gorm"
 )
@@ -74,37 +73,6 @@ func (i indexHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	renderTemplate(w, pageState)
-}
-
-func newPage(r *http.Request) page {
-	pageState := page{Message: "ok"}
-	query := r.URL.Query()
-	offset := 0
-	if query.Get("offset") != "" {
-		o, err := strconv.ParseInt(query.Get("offset"), 10, 64)
-		if err != nil {
-			pageState.Message = err.Error()
-		}
-		offset = int(o)
-	}
-	pageState.Offset = offset
-
-	limit := 10
-	if query.Get("limit") != "" {
-		l, err := strconv.ParseInt(query.Get("limit"), 10, 64)
-		if err != nil {
-			pageState.Message = err.Error()
-		}
-		limit = int(l)
-	}
-	pageState.Limit = limit
-
-	pageState.Type = "jobs"
-	if query.Get("type") != "" {
-		pageState.Type = query.Get("type")
-	}
-
-	return pageState
 }
 
 func renderTemplate(w http.ResponseWriter, data page) {
