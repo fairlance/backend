@@ -64,7 +64,7 @@ func deleteAllFromDB(db gorm.DB, selectedType string) error {
 	return nil
 }
 
-func doIndex(options Options, db gorm.DB, selectedType string) error {
+func doImport(options Options, db gorm.DB, selectedType string) error {
 	switch selectedType {
 	case "jobs":
 		jobsFromDB, _, err := getJobsFromDB(db, 0, -1)

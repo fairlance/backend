@@ -24,7 +24,6 @@ var htmlTemplate = `
           <div class="columns twelwe">
             <p>
               Total in DB: <b>{{ .TotalInDB }}</b>,
-              Showing: <b>{{ .CurrentPageLabel }}</b>,
               Total in search engine: <b>{{ .TotalInSearchEngine }}</b>    
             </p>
           </div>
@@ -38,8 +37,11 @@ var htmlTemplate = `
           <a class="{{if eq .Type $freelancers}}button button-primary{{end}}" href="?type=freelancers">Freelancers</a>
           {{if ne (len .Entities) 0 }}
             <p>
+              {{if or (ne .PrevPageURL "") (ne .NextPageURL "")  }}
+                <a href="?type={{.Type}}">reset</a> |
+              {{ end }}
               <a href="{{ .PrevPageURL }}&type={{.Type}}">{{ .PrevPageLabel }}</a>
-              <a href="?type={{.Type}}">reset</a>
+              <b>{{ .CurrentPageLabel }}</b>
               <a href="{{ .NextPageURL }}&type={{.Type}}">{{ .NextPageLabel }}</a>
             </p>
           {{end}}
@@ -58,7 +60,7 @@ var htmlTemplate = `
                 <tr>
                   <td>{{ $docID }}</td>
                   <td>{{ $page.GetName $value }}</td>
-                  <td>{{ $page.FormatTime $value.UpdatedAt }}</td>
+                  <td title="{{ $page.FormatTime $value.UpdatedAt }}">{{ $page.FormatTimeHuman $value.UpdatedAt }}</td>
                   <td>
                     {{if ne (len $page.Document) 0 }}
                       {{if eq $page.Document.id $docID }}
