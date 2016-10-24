@@ -124,11 +124,4 @@ var routes = Routes{
 			}}
 		}},
 	},
-
-	Route{
-		"Info",
-		"GET",
-		"/info",
-		http.HandlerFunc(Info),
-	},
 }

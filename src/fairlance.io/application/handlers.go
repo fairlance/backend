@@ -6,10 +6,6 @@ import (
 	"net/http"
 	"time"
 
-	"io/ioutil"
-	"os"
-	"path/filepath"
-
 	"github.com/asaskevich/govalidator"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gorilla/context"
@@ -62,19 +58,6 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		Token:  tokenString,
 		Type:   userType,
 	})
-}
-
-func Info(w http.ResponseWriter, r *http.Request) {
-	dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
-	if err != nil {
-		respond.With(w, r, http.StatusNotFound, err)
-	}
-	info, err := ioutil.ReadFile(dir + "/application_info.txt")
-	if err != nil {
-		respond.With(w, r, http.StatusNotFound, "No info file found!")
-		return
-	}
-	respond.With(w, r, http.StatusOK, string(info))
 }
 
 func RegisterUserHandler(next http.Handler) http.Handler {
