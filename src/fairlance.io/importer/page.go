@@ -97,6 +97,10 @@ func (p page) FormatTime(t time.Time) string {
 	return t.Format(time.RFC822)
 }
 
+func (p page) FormatTimeHuman(t time.Time) string {
+	return humanDuration(time.Now().Sub(t)) + " ago"
+}
+
 func (p page) GetName(doc interface{}) string {
 	switch doc.(type) {
 	case application.Freelancer:

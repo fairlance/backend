@@ -19,7 +19,7 @@ func (i indexHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	action := query.Get("action")
 	switch action {
 	case "import_all":
-		err := doIndex(i.options, *i.db, pageState.Type)
+		err := doImport(i.options, *i.db, pageState.Type)
 		if err != nil {
 			pageState.Message = err.Error()
 		}

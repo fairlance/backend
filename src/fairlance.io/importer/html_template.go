@@ -60,7 +60,7 @@ var htmlTemplate = `
                 <tr>
                   <td>{{ $docID }}</td>
                   <td>{{ $page.GetName $value }}</td>
-                  <td>{{ $page.FormatTime $value.UpdatedAt }}</td>
+                  <td title="{{ $page.FormatTime $value.UpdatedAt }}">{{ $page.FormatTimeHuman $value.UpdatedAt }}</td>
                   <td>
                     {{if ne (len $page.Document) 0 }}
                       {{if eq $page.Document.id $docID }}
