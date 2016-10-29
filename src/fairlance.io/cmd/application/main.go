@@ -9,6 +9,7 @@ import (
 	"strconv"
 
 	"fairlance.io/application"
+	_ "github.com/jinzhu/gorm/dialects/postgres"
 )
 
 var port int

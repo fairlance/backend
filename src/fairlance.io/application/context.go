@@ -2,13 +2,12 @@ package application
 
 import (
 	"github.com/jinzhu/gorm"
-	_ "github.com/jinzhu/gorm/dialects/postgres"
 )
 
 type ApplicationContext struct {
 	db                   *gorm.DB
 	FreelancerRepository *FreelancerRepository
-	ProjectRepository    *ProjectRepository
+	ProjectRepository    ProjectRepository
 	ClientRepository     *ClientRepository
 	ReferenceRepository  *ReferenceRepository
 	JobRepository        JobRepository // todo: think of a better name
