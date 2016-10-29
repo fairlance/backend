@@ -8,7 +8,7 @@ type ApplicationContext struct {
 	db                   *gorm.DB
 	FreelancerRepository *FreelancerRepository
 	ProjectRepository    ProjectRepository
-	ClientRepository     *ClientRepository
+	ClientRepository     ClientRepository
 	ReferenceRepository  ReferenceRepository
 	JobRepository        JobRepository // todo: think of a better name
 	UserRepository       UserRepository
