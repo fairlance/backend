@@ -6,7 +6,7 @@ import (
 
 type ApplicationContext struct {
 	db                   *gorm.DB
-	FreelancerRepository *FreelancerRepository
+	FreelancerRepository FreelancerRepository
 	ProjectRepository    ProjectRepository
 	ClientRepository     ClientRepository
 	ReferenceRepository  ReferenceRepository
