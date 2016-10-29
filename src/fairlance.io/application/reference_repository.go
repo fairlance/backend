@@ -12,7 +12,7 @@ type PostgreReferenceRepository struct {
 	db *gorm.DB
 }
 
-func NewPostgreReferenceRepository(db *gorm.DB) (*PostgreReferenceRepository, error) {
+func NewReferenceRepository(db *gorm.DB) (ReferenceRepository, error) {
 	repo := &PostgreReferenceRepository{db}
 
 	return repo, nil

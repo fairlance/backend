@@ -9,7 +9,7 @@ type ApplicationContext struct {
 	FreelancerRepository *FreelancerRepository
 	ProjectRepository    ProjectRepository
 	ClientRepository     *ClientRepository
-	ReferenceRepository  *ReferenceRepository
+	ReferenceRepository  ReferenceRepository
 	JobRepository        JobRepository // todo: think of a better name
 	UserRepository       *UserRepository
 	JwtSecret            string
