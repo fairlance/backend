@@ -21,21 +21,22 @@ func IndexFreelancer(w http.ResponseWriter, r *http.Request) {
 	respond.With(w, r, http.StatusOK, freelancers)
 }
 
-func AddFreelancer(w http.ResponseWriter, r *http.Request) {
-	user := context.Get(r, "user").(*User)
-	freelancer := &Freelancer{User: *user}
-	var appContext = context.Get(r, "context").(*ApplicationContext)
-	if err := appContext.FreelancerRepository.AddFreelancer(freelancer); err != nil {
-		respond.With(w, r, http.StatusBadRequest, err)
-		return
-	}
+func AddFreelancer(user *User) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		freelancer := &Freelancer{User: *user}
+		var appContext = context.Get(r, "context").(*ApplicationContext)
+		if err := appContext.FreelancerRepository.AddFreelancer(freelancer); err != nil {
+			respond.With(w, r, http.StatusBadRequest, err)
+			return
+		}
 
-	respond.With(w, r, http.StatusOK, struct {
-		User User   `json:"user"`
-		Type string `json:"type"`
-	}{
-		User: freelancer.User,
-		Type: "freelancer",
+		respond.With(w, r, http.StatusOK, struct {
+			User User   `json:"user"`
+			Type string `json:"type"`
+		}{
+			User: freelancer.User,
+			Type: "freelancer",
+		})
 	})
 }
 

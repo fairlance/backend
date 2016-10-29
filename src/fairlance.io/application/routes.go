@@ -31,7 +31,7 @@ var routes = Routes{
 		"RegisterFreelancer",
 		"PUT",
 		"/freelancer/new",
-		RegisterUserHandler(http.HandlerFunc(AddFreelancer)),
+		WithUser{AddFreelancer},
 	},
 	Route{
 		"GetFreelancer",
@@ -81,7 +81,7 @@ var routes = Routes{
 		"RegisterClient",
 		"PUT",
 		"/client/new",
-		RegisterUserHandler(http.HandlerFunc(AddClient)),
+		WithUser{AddClient},
 	},
 	Route{
 		"GetClient",
