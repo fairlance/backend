@@ -11,7 +11,7 @@ type ApplicationContext struct {
 	ClientRepository     *ClientRepository
 	ReferenceRepository  ReferenceRepository
 	JobRepository        JobRepository // todo: think of a better name
-	UserRepository       *UserRepository
+	UserRepository       UserRepository
 	JwtSecret            string
 }
 
