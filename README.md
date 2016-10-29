@@ -26,8 +26,6 @@ run fairlance_importer service (sudo service fairlance_importer start)
 go to http://localhost:3004
 Use the interface to import
 ```
-Note: search app must not be running for the importer to work
-(only one app can use the index at the same time)
 
 #### Structure:
 ```
