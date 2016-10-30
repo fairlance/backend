@@ -15,7 +15,7 @@ var (
 	emptyHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 )
 
-var badBodyTest = []struct {
+var badBodyLoginTestData = []struct {
 	in string
 }{
 	{"{}"},
@@ -32,7 +32,7 @@ func TestLoginWithBadEmailAndPassword(t *testing.T) {
 		UserRepository: userRepositoryMock,
 	}
 
-	for _, data := range badBodyTest {
+	for _, data := range badBodyLoginTestData {
 		t.Run(data.in, func(t *testing.T) {
 			r := getRequest(userContext, data.in)
 			w := httptest.NewRecorder()
@@ -44,7 +44,7 @@ func TestLoginWithBadEmailAndPassword(t *testing.T) {
 	}
 }
 
-func TestLoginWenUnauthorized(t *testing.T) {
+func TestLoginWhenUnauthorized(t *testing.T) {
 	is := is.New(t)
 	userRepositoryMock := &userRepositoryMock{}
 	userRepositoryMock.CheckCredentialsCall.Returns.Error = errors.New("unauthorized")

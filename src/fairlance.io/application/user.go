@@ -24,7 +24,7 @@ func (withUser WithUser) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := decoder.Decode(&body); err != nil {
-		respond.With(w, r, http.StatusBadRequest, err)
+		respond.With(w, r, http.StatusUnprocessableEntity, err)
 		return
 	}
 
