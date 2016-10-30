@@ -8,11 +8,10 @@ import (
 )
 
 func IndexProject(w http.ResponseWriter, r *http.Request) {
-
 	var appContext = context.Get(r, "context").(*ApplicationContext)
 	projects, err := appContext.ProjectRepository.GetAllProjects()
 	if err != nil {
-		respond.With(w, r, http.StatusBadRequest, err)
+		respond.With(w, r, http.StatusInternalServerError, err)
 		return
 	}
 
