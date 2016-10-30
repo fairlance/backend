@@ -9,7 +9,7 @@ type ClientRepository interface {
 	GetAllClients() ([]Client, error)
 	AddClient(client *Client) error
 	UpdateClient(client *Client) error
-	GetClient(id uint) (Client, error)
+	GetClient(id uint) (*Client, error)
 }
 
 type PostgreClientRepository struct {
@@ -41,9 +41,9 @@ func (repo *PostgreClientRepository) UpdateClient(client *Client) error {
 	return repo.db.Save(client).Error
 }
 
-func (repo *PostgreClientRepository) GetClient(id uint) (Client, error) {
-	client := Client{}
-	if err := repo.db.Preload("Projects").Preload("Jobs").Preload("Reviews").Find(&client, id).Error; err != nil {
+func (repo *PostgreClientRepository) GetClient(id uint) (*Client, error) {
+	client := &Client{}
+	if err := repo.db.Preload("Projects").Preload("Jobs").Preload("Reviews").Find(client, id).Error; err != nil {
 		return client, err
 	}
 	return client, nil

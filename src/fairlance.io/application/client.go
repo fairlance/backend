@@ -9,11 +9,10 @@ import (
 )
 
 func IndexClient(w http.ResponseWriter, r *http.Request) {
-
 	var appContext = context.Get(r, "context").(*ApplicationContext)
 	clients, err := appContext.ClientRepository.GetAllClients()
 	if err != nil {
-		respond.With(w, r, http.StatusBadRequest, err)
+		respond.With(w, r, http.StatusInternalServerError, err)
 		return
 	}
 
@@ -81,7 +80,7 @@ func UpdateClientByID(id uint) http.Handler {
 		client.Payment = body.Payment
 		client.Industry = body.Industry
 
-		if err := appContext.ClientRepository.UpdateClient(&client); err != nil {
+		if err := appContext.ClientRepository.UpdateClient(client); err != nil {
 			respond.With(w, r, http.StatusBadRequest, err)
 			return
 		}
