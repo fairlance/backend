@@ -33,14 +33,12 @@ func TestLoginWithBadEmailAndPassword(t *testing.T) {
 	}
 
 	for _, data := range badBodyLoginTestData {
-		t.Run(data.in, func(t *testing.T) {
-			r := getRequest(userContext, data.in)
-			w := httptest.NewRecorder()
+		r := getRequest(userContext, data.in)
+		w := httptest.NewRecorder()
 
-			Login(w, r)
+		Login(w, r)
 
-			is.Equal(w.Code, http.StatusBadRequest)
-		})
+		is.Equal(w.Code, http.StatusBadRequest)
 	}
 }
 
