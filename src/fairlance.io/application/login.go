@@ -20,11 +20,12 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		respond.With(w, r, http.StatusBadRequest, err)
 		return
 	}
-	email := body["email"]
-	password := body["password"]
 
-	if email == "" || password == "" {
-		respond.With(w, r, http.StatusUnauthorized, errors.New("Provide email and password."))
+	email, emailOk := body["email"]
+	password, passwordOk := body["password"]
+
+	if !emailOk || !passwordOk {
+		respond.With(w, r, http.StatusBadRequest, errors.New("Provide email and password."))
 		return
 	}
 
@@ -44,16 +45,16 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	// Sign and get the complete encoded token as a string
 	tokenString, err := token.SignedString([]byte(appContext.JwtSecret))
 	if err != nil {
-		respond.With(w, r, http.StatusBadRequest, err)
+		respond.With(w, r, http.StatusInternalServerError, err)
 		return
 	}
 
 	respond.With(w, r, http.StatusOK, struct {
-		UserId uint   `json:"id"`
+		UserID uint   `json:"id"`
 		Token  string `json:"token"`
 		Type   string `json:"type"`
 	}{
-		UserId: user.Model.ID,
+		UserID: user.Model.ID,
 		Token:  tokenString,
 		Type:   userType,
 	})

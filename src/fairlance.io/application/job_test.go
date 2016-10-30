@@ -1,16 +1,13 @@
 package application
 
 import (
-	"bytes"
 	"encoding/json"
 	"errors"
-	"log"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/cheekybits/is"
-	"github.com/gorilla/context"
 )
 
 func TestJobIndexJob(t *testing.T) {
@@ -377,15 +374,4 @@ func TestJobWithJobApplicationErrorBadJSON(t *testing.T) {
 	WithJobApplication{next}.ServeHTTP(w, r)
 
 	is.Equal(w.Code, http.StatusBadRequest)
-}
-
-func getRequest(jobContext *ApplicationContext, requestBody string) *http.Request {
-	req, err := http.NewRequest("GET", "http://fairlance.io/", bytes.NewBuffer([]byte(requestBody)))
-	if err != nil {
-		log.Fatal(err)
-	}
-	req.Header.Set("Content-Type", "application/json")
-	context.Set(req, "context", jobContext)
-
-	return req
 }
