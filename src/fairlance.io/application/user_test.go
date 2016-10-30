@@ -58,7 +58,7 @@ func TestWithUserWithBadBody(t *testing.T) {
 
 		withUser.ServeHTTP(w, r)
 
-		is.Equal(w.Code, http.StatusUnprocessableEntity)
+		is.Equal(w.Code, http.StatusBadRequest)
 		var body map[string]interface{}
 		is.NoErr(json.Unmarshal(w.Body.Bytes(), &body))
 	}
