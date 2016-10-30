@@ -1,6 +1,6 @@
 package application
 
-type userRepositoryMock struct {
+type UserRepositoryMock struct {
 	CheckCredentialsCall struct {
 		Receives struct {
 			Email    string
@@ -24,7 +24,7 @@ type userRepositoryMock struct {
 	}
 }
 
-func (repo *userRepositoryMock) CheckCredentials(email string, password string) (User, string, error) {
+func (repo *UserRepositoryMock) CheckCredentials(email string, password string) (User, string, error) {
 	repo.CheckCredentialsCall.Receives.Email = email
 	repo.CheckCredentialsCall.Receives.Password = password
 
@@ -33,7 +33,7 @@ func (repo *userRepositoryMock) CheckCredentials(email string, password string) 
 		repo.CheckCredentialsCall.Returns.Error
 }
 
-func (repo *userRepositoryMock) GetUserByEmail(email string) (User, string, error) {
+func (repo *UserRepositoryMock) GetUserByEmail(email string) (User, string, error) {
 	repo.GetUserByEmailCall.Receives.Email = email
 
 	return repo.GetUserByEmailCall.Returns.User,

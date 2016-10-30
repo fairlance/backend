@@ -27,7 +27,7 @@ var badBodyLoginTestData = []struct {
 
 func TestLoginWithBadEmailAndPassword(t *testing.T) {
 	is := is.New(t)
-	userRepositoryMock := &userRepositoryMock{}
+	userRepositoryMock := &UserRepositoryMock{}
 	userContext := &ApplicationContext{
 		UserRepository: userRepositoryMock,
 	}
@@ -46,7 +46,7 @@ func TestLoginWithBadEmailAndPassword(t *testing.T) {
 
 func TestLoginWhenUnauthorized(t *testing.T) {
 	is := is.New(t)
-	userRepositoryMock := &userRepositoryMock{}
+	userRepositoryMock := &UserRepositoryMock{}
 	userRepositoryMock.CheckCredentialsCall.Returns.Error = errors.New("unauthorized")
 	userContext := &ApplicationContext{
 		UserRepository: userRepositoryMock,
@@ -67,7 +67,7 @@ func TestLoginWhenUnauthorized(t *testing.T) {
 
 func TestLoginCallsCheckCredentialsWithCorrectEmailAndPassword(t *testing.T) {
 	is := is.New(t)
-	userRepositoryMock := &userRepositoryMock{}
+	userRepositoryMock := &UserRepositoryMock{}
 	userContext := &ApplicationContext{
 		UserRepository: userRepositoryMock,
 	}
@@ -89,7 +89,7 @@ func TestLoginCallsCheckCredentialsWithCorrectEmailAndPassword(t *testing.T) {
 
 func TestLogin(t *testing.T) {
 	is := is.New(t)
-	userRepositoryMock := &userRepositoryMock{}
+	userRepositoryMock := &UserRepositoryMock{}
 	userRepositoryMock.CheckCredentialsCall.Returns.UserType = "freelancer"
 	userRepositoryMock.CheckCredentialsCall.Returns.User = User{
 		Model: Model{
