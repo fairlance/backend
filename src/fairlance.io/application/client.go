@@ -38,7 +38,7 @@ func AddClient(user *User) http.Handler {
 		client := &Client{User: *user}
 		var appContext = context.Get(r, "context").(*ApplicationContext)
 		if err := appContext.ClientRepository.AddClient(client); err != nil {
-			respond.With(w, r, http.StatusBadRequest, err)
+			respond.With(w, r, http.StatusInternalServerError, err)
 			return
 		}
 
@@ -76,9 +76,15 @@ func UpdateClientByID(id uint) http.Handler {
 			return
 		}
 
-		client.Timezone = body.Timezone
-		client.Payment = body.Payment
-		client.Industry = body.Industry
+		if body.Timezone != "" {
+			client.Timezone = body.Timezone
+		}
+		if body.Industry != "" {
+			client.Payment = body.Payment
+		}
+		if body.Industry != "" {
+			client.Industry = body.Industry
+		}
 
 		if err := appContext.ClientRepository.UpdateClient(client); err != nil {
 			respond.With(w, r, http.StatusBadRequest, err)
