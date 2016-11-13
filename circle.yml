@@ -10,4 +10,3 @@ test:
         - sudo cp * $CIRCLE_ARTIFACTS:
             pwd:
                 bin
-        - echo $CIRCLE_BUILD_NUM > $CIRCLE_ARTIFACTS/application_info.txt
