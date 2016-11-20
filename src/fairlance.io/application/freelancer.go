@@ -14,7 +14,7 @@ func IndexFreelancer(w http.ResponseWriter, r *http.Request) {
 	var appContext = context.Get(r, "context").(*ApplicationContext)
 	freelancers, err := appContext.FreelancerRepository.GetAllFreelancers()
 	if err != nil {
-		respond.With(w, r, http.StatusBadRequest, err)
+		respond.With(w, r, http.StatusInternalServerError, err)
 		return
 	}
 
@@ -26,7 +26,7 @@ func AddFreelancer(user *User) http.Handler {
 		freelancer := &Freelancer{User: *user}
 		var appContext = context.Get(r, "context").(*ApplicationContext)
 		if err := appContext.FreelancerRepository.AddFreelancer(freelancer); err != nil {
-			respond.With(w, r, http.StatusBadRequest, err)
+			respond.With(w, r, http.StatusInternalServerError, err)
 			return
 		}
 
@@ -131,44 +131,54 @@ func AddFreelancerReviewByID(id uint) http.Handler {
 	})
 }
 
-// AddFreelancerUpdatesByID handler
-func AddFreelancerUpdatesByID(id uint) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		decoder := json.NewDecoder(r.Body)
-		defer r.Body.Close()
+type withFreelancerUpdate struct {
+	next func(freelancerUpdate *FreelancerUpdate) http.Handler
+}
 
-		var body FreelancerUpdate
+func (wfu withFreelancerUpdate) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	decoder := json.NewDecoder(r.Body)
+	defer r.Body.Close()
 
-		if err := decoder.Decode(&body); err != nil {
-			respond.With(w, r, http.StatusBadRequest, err)
-			return
-		}
+	var freelancerUpdate FreelancerUpdate
 
-		// https://github.com/asaskevich/govalidator/issues/133
-		// https://github.com/asaskevich/govalidator/issues/112
-		if len(body.Skills) > 20 {
-			respond.With(w, r, http.StatusBadRequest, errors.New("Max of 20 skills are allowed."))
-			return
-		}
+	if err := decoder.Decode(&freelancerUpdate); err != nil {
+		respond.With(w, r, http.StatusBadRequest, err)
+		return
+	}
 
-		var appContext = context.Get(r, "context").(*ApplicationContext)
-		freelancer, err := appContext.FreelancerRepository.GetFreelancer(id)
-		if err != nil {
-			respond.With(w, r, http.StatusNotFound, err)
-			return
-		}
+	// https://github.com/asaskevich/govalidator/issues/133
+	// https://github.com/asaskevich/govalidator/issues/112
+	if len(freelancerUpdate.Skills) > 20 {
+		respond.With(w, r, http.StatusBadRequest, errors.New("Max of 20 skills are allowed."))
+		return
+	}
 
-		freelancer.Skills = body.Skills
-		freelancer.Timezone = body.Timezone
-		freelancer.IsAvailable = body.IsAvailable
-		freelancer.HourlyRateFrom = body.HourlyRateFrom
-		freelancer.HourlyRateTo = body.HourlyRateTo
+	wfu.next(&freelancerUpdate).ServeHTTP(w, r)
+}
 
-		if err := appContext.FreelancerRepository.UpdateFreelancer(&freelancer); err != nil {
-			respond.With(w, r, http.StatusBadRequest, err)
-			return
-		}
+type updateFreelancerHandler struct {
+	freelancerID     uint
+	freelancerUpdate *FreelancerUpdate
+}
 
-		respond.With(w, r, http.StatusOK, nil)
-	})
+func (ufh updateFreelancerHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	var appContext = context.Get(r, "context").(*ApplicationContext)
+	freelancer, err := appContext.FreelancerRepository.GetFreelancer(ufh.freelancerID)
+	if err != nil {
+		respond.With(w, r, http.StatusNotFound, err)
+		return
+	}
+
+	freelancer.Skills = ufh.freelancerUpdate.Skills
+	freelancer.Timezone = ufh.freelancerUpdate.Timezone
+	freelancer.IsAvailable = ufh.freelancerUpdate.IsAvailable
+	freelancer.HourlyRateFrom = ufh.freelancerUpdate.HourlyRateFrom
+	freelancer.HourlyRateTo = ufh.freelancerUpdate.HourlyRateTo
+
+	if err := appContext.FreelancerRepository.UpdateFreelancer(&freelancer); err != nil {
+		respond.With(w, r, http.StatusBadRequest, err)
+		return
+	}
+
+	respond.With(w, r, http.StatusOK, nil)
 }

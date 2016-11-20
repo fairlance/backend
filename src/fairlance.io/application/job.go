@@ -61,8 +61,8 @@ func (withJob WithJob) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		Details  string  `json:"details" valid:"required"`
 		ClientID uint    `json:"clientId" valid:"required"`
 		IsActive bool    `json:"isActive"`
-		Tags     strings `json:"tags"`
-		Links    strings `json:"links"`
+		Tags     stringList `json:"tags"`
+		Links    stringList `json:"links"`
 	}
 
 	if err := decoder.Decode(&body); err != nil {
@@ -121,11 +121,13 @@ func (withJobApplication WithJobApplication) ServeHTTP(w http.ResponseWriter, r 
 	decoder := json.NewDecoder(r.Body)
 	defer r.Body.Close()
 
+	// use JobApplication
+	// JobApplication should not contain JobID
 	var body struct {
 		Message          string  `json:"message" valid:"required"`
-		Samples          uints   `json:"samples" valid:"required"`
+		Samples          uintList   `json:"samples" valid:"required"`
 		DeliveryEstimate int     `json:"deliveryEstimate" valid:"required"`
-		Milestones       strings `json:"milestones" valid:"required"`
+		Milestones       stringList `json:"milestones" valid:"required"`
 		HourPrice        float64 `json:"hourPrice" valid:"required"`
 		Hours            int     `json:"hours" valid:"required"`
 		FreelancerID     uint    `json:"freelancerId" valid:"required"`

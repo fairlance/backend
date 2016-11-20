@@ -9,7 +9,6 @@ import (
 
 type UserRepository interface {
 	CheckCredentials(email string, password string) (User, string, error)
-	GetUserByEmail(email string) (User, string, error)
 }
 
 type PostgreUserRepository struct {
@@ -23,7 +22,7 @@ func NewUserRepository(db *gorm.DB) (UserRepository, error) {
 }
 
 func (repo PostgreUserRepository) CheckCredentials(email string, password string) (User, string, error) {
-	user, userType, err := repo.GetUserByEmail(email)
+	user, userType, err := repo.getUserByEmail(email)
 	if err != nil {
 		return user, "", err
 	}
@@ -35,7 +34,7 @@ func (repo PostgreUserRepository) CheckCredentials(email string, password string
 	return user, userType, nil
 }
 
-func (repo *PostgreUserRepository) GetUserByEmail(email string) (User, string, error) {
+func (repo *PostgreUserRepository) getUserByEmail(email string) (User, string, error) {
 	user := User{}
 	var userType string
 	freelancer := Freelancer{}

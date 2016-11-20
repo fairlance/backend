@@ -21,7 +21,7 @@ type Freelancer struct {
 	User
 	Rating          float64          `json:"rating"`
 	Timezone        string           `json:"timezone"`
-	Skills          strings          `json:"skills" sql:"type:JSONB NOT NULL DEFAULT '{}'::JSONB"`
+	Skills          stringList          `json:"skills" sql:"type:JSONB NOT NULL DEFAULT '{}'::JSONB"`
 	IsAvailable     bool             `json:"isAvailable"`
 	HourlyRateFrom  uint             `json:"hourlyRateFrom"`
 	HourlyRateTo    uint             `json:"hourlyRateTo"`
@@ -32,7 +32,7 @@ type Freelancer struct {
 }
 
 type FreelancerUpdate struct {
-	Skills         strings `json:"skills" sql:"type:JSONB NOT NULL DEFAULT '{}'::JSONB"`
+	Skills         stringList `json:"skills" sql:"type:JSONB NOT NULL DEFAULT '{}'::JSONB"`
 	Timezone       string  `json:"timezone" valid:"required"`
 	IsAvailable    bool    `json:"isAvailable"`
 	HourlyRateFrom uint    `json:"hourlyRateFrom" valid:"required"`
@@ -70,8 +70,8 @@ type Job struct {
 	IsActive        bool             `json:"isActive"`
 	Price           int              `json:"price"`
 	StartDate       time.Time        `json:"startDate"`
-	Links           strings          `json:"links" sql:"type:JSONB NOT NULL DEFAULT '{}'::JSONB"`
-	Tags            strings          `json:"tags" sql:"type:JSONB NOT NULL DEFAULT '{}'::JSONB"`
+	Links           stringList          `json:"links" sql:"type:JSONB NOT NULL DEFAULT '{}'::JSONB"`
+	Tags            stringList          `json:"tags" sql:"type:JSONB NOT NULL DEFAULT '{}'::JSONB"`
 	JobApplications []JobApplication `json:"jobApplications"`
 }
 
@@ -103,9 +103,9 @@ type Media struct {
 type JobApplication struct {
 	Model
 	Message          string  `json:"message" valid:"required"`
-	Samples          uints   `json:"samples" valid:"required" sql:"type:JSONB NOT NULL DEFAULT '{}'::JSONB"`
+	Samples          uintList   `json:"samples" valid:"required" sql:"type:JSONB NOT NULL DEFAULT '{}'::JSONB"`
 	DeliveryEstimate int     `json:"deliveryEstimate" valid:"required"`
-	Milestones       strings `json:"milestones" valid:"required" sql:"type:JSONB NOT NULL DEFAULT '{}'::JSONB"`
+	Milestones       stringList `json:"milestones" valid:"required" sql:"type:JSONB NOT NULL DEFAULT '{}'::JSONB"`
 	HourPrice        float64 `json:"hourPrice" valid:"required"`
 	Hours            int     `json:"hours" valid:"required"`
 	FreelancerID     uint    `json:"freelancerId" valid:"required"`

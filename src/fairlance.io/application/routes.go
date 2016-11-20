@@ -43,7 +43,11 @@ var routes = Routes{
 		"UpdateFreelancer",
 		"POST",
 		"/freelancer/{id}",
-		WithID{AddFreelancerUpdatesByID},
+		WithID{func(freelancerID uint) http.Handler {
+			return withFreelancerUpdate{func(freelancerUpdate *FreelancerUpdate) http.Handler {
+				return updateFreelancerHandler{freelancerID, freelancerUpdate}
+			}}
+		}},
 	},
 	Route{
 		"DeleteFreelancer",

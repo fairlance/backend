@@ -101,7 +101,7 @@ func (ac *ApplicationContext) FillTables() {
 		HourlyRateFrom: 12,
 		HourlyRateTo:   22,
 		Timezone:       "CET",
-		Skills:         strings{"good", "bad", "ugly"},
+		Skills:         stringList{"good", "bad", "ugly"},
 	})
 
 	ac.FreelancerRepository.AddReview(&Review{
@@ -139,8 +139,8 @@ func (ac *ApplicationContext) FillTables() {
 		Message:          "I apply",
 		JobID:            1,
 		FreelancerID:     1,
-		Milestones:       strings{"Milestone1", "Milestone2"},
-		Samples:          uints{1, 2},
+		Milestones:       stringList{"Milestone1", "Milestone2"},
+		Samples:          uintList{1, 2},
 		DeliveryEstimate: 15,
 	})
 
@@ -162,8 +162,8 @@ func (ac *ApplicationContext) FillTables() {
 		Summary:  "Summary Job",
 		Details:  "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.",
 		ClientID: 1,
-		Tags:     strings{"tag"},
-		Links:    strings{"http://www.google.com/"},
+		Tags:     stringList{"tag"},
+		Links:    stringList{"http://www.google.com/"},
 	})
 
 	ac.FreelancerRepository.AddFreelancer(&Freelancer{
