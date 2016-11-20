@@ -295,3 +295,41 @@ func TestUpdateFreelancerHandler(t *testing.T) {
 	is.Equal(freelancer.Skills[0], "one")
 	is.Equal(freelancer.Skills[1], "two")
 }
+
+func TestUpdateFreelancerHandlerFailedUpdate(t *testing.T) {
+	is := is.New(t)
+	freelancerRepositoryMock := &FreelancerRepositoryMock{}
+	freelancerRepositoryMock.GetFreelancerCall.Returns.Freelancer = Freelancer{
+		User: User{
+			Model: Model{
+				ID: 1,
+			},
+		},
+	}
+	freelancerRepositoryMock.UpdateFreelancerCall.Returns.Error = errors.New("bad updataa")
+	var userContext = &ApplicationContext{
+		FreelancerRepository: freelancerRepositoryMock,
+	}
+	w := httptest.NewRecorder()
+	r := getRequest(userContext, ``)
+
+	updateFreelancerHandler{1, &FreelancerUpdate{}}.ServeHTTP(w, r)
+
+	is.Equal(w.Code, http.StatusBadRequest)
+}
+
+func TestUpdateFreelancerHandlerNotExistingFreelancer(t *testing.T) {
+	is := is.New(t)
+	freelancerRepositoryMock := &FreelancerRepositoryMock{}
+	freelancerRepositoryMock.GetFreelancerCall.Returns.Error = errors.New("freelancer mia")
+	var userContext = &ApplicationContext{
+		FreelancerRepository: freelancerRepositoryMock,
+	}
+	w := httptest.NewRecorder()
+	r := getRequest(userContext, ``)
+
+	updateFreelancerHandler{1, &FreelancerUpdate{}}.ServeHTTP(w, r)
+
+	is.Equal(w.Code, http.StatusNotFound)
+	is.Equal(freelancerRepositoryMock.GetFreelancerCall.Receives.ID, 1)
+}
