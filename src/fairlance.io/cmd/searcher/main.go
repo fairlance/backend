@@ -1,12 +1,3 @@
-//  Copyright (c) 2014 Couchbase, Inc.
-//  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
-//  except in compliance with the License. You may obtain a copy of the License at
-//    http://www.apache.org/licenses/LICENSE-2.0
-//  Unless required by applicable law or agreed to in writing, software distributed under the
-//  License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
-//  either express or implied. See the License for the specific language governing permissions
-//  and limitations under the License.
-
 package main
 
 import (
@@ -34,6 +25,16 @@ func init() {
 		log.Fatalf("error opening file: %v", err)
 	}
 	log.SetOutput(f)
+
+	if err := os.MkdirAll(*dataDir, 0755); err != nil {
+		log.Fatalf("error creating data dir: %v", err)
+	}
+	if err := initIndex("jobs"); err != nil {
+		log.Fatalf("error initializing index: %v", err)
+	}
+	if err := initIndex("freelancers"); err != nil {
+		log.Fatalf("error initializing index: %v", err)
+	}
 }
 
 func main() {
@@ -42,20 +43,7 @@ func main() {
 	// walk the data dir and register index names
 	dirEntries, err := ioutil.ReadDir(*dataDir)
 	if err != nil {
-		log.Printf("Creating folder %s ...\n", *dataDir)
-		os.MkdirAll(*dataDir, 0777)
-		dirEntries, err = ioutil.ReadDir(*dataDir)
-		if err != nil {
-			log.Fatalf("error reading data dir: %v", err)
-		}
-	}
-
-	if len(dirEntries) == 0 {
-		if err := buildIndices(); err != nil {
-			log.Fatalf("error reading data dir: %v", err)
-		} else {
-			log.Println("Created indices.")
-		}
+		log.Fatalf("error reading data dir: %v", err)
 	}
 
 	for _, dirInfo := range dirEntries {
@@ -138,14 +126,17 @@ func main() {
 	log.Fatal(http.ListenAndServe(":"+*port, nil))
 }
 
-func buildIndices() error {
-	for _, indexName := range []string{"jobs", "freelancers"} {
-		log.Printf("creating %s\n", indexName)
-		mapping := bleve.NewIndexMapping()
-		_, err := bleve.New(*dataDir+"/"+indexName, mapping)
+func initIndex(name string) error {
+	indexPath := *dataDir + string(os.PathSeparator) + name
+	if _, err := os.Stat(indexPath); os.IsNotExist(err) {
+		log.Printf("%s does not exist. Creating...", name)
+		index, err := bleve.New(indexPath, bleve.NewIndexMapping())
 		if err != nil {
 			return err
 		}
+		// close so we can open later
+		index.Close()
+		log.Printf("%s created.", name)
 	}
 
 	return nil
