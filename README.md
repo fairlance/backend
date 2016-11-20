@@ -10,7 +10,6 @@ Available targets:
 - install: install all services
 - test: run tests
 - testShort: run short tests, without using the db
-- installDependenciesAndTest: install dependencies declared in dependencies.txt and run tests
 - installDependencies: installs dependencies declared in dependencies.txt
 - installARM: install all services with GOARCH=arm GOARM=7
 ```
