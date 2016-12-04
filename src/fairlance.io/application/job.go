@@ -56,13 +56,13 @@ func (withJob WithJob) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
 	var body struct {
-		Name     string  `json:"name" valid:"required"`
-		Summary  string  `json:"summary" valid:"required"`
-		Details  string  `json:"details" valid:"required"`
-		ClientID uint    `json:"clientId" valid:"required"`
-		IsActive bool    `json:"isActive"`
-		Tags     strings `json:"tags"`
-		Links    strings `json:"links"`
+		Name     string     `json:"name" valid:"required"`
+		Summary  string     `json:"summary" valid:"required"`
+		Details  string     `json:"details" valid:"required"`
+		ClientID uint       `json:"clientId" valid:"required"`
+		IsActive bool       `json:"isActive"`
+		Tags     stringList `json:"tags"`
+		Links    stringList `json:"links"`
 	}
 
 	if err := decoder.Decode(&body); err != nil {
@@ -122,13 +122,13 @@ func (withJobApplication WithJobApplication) ServeHTTP(w http.ResponseWriter, r 
 	defer r.Body.Close()
 
 	var body struct {
-		Message          string  `json:"message" valid:"required"`
-		Samples          uints   `json:"samples" valid:"required"`
-		DeliveryEstimate int     `json:"deliveryEstimate" valid:"required"`
-		Milestones       strings `json:"milestones" valid:"required"`
-		HourPrice        float64 `json:"hourPrice" valid:"required"`
-		Hours            int     `json:"hours" valid:"required"`
-		FreelancerID     uint    `json:"freelancerId" valid:"required"`
+		Message          string     `json:"message" valid:"required"`
+		Samples          uintList   `json:"samples" valid:"required"`
+		DeliveryEstimate int        `json:"deliveryEstimate" valid:"required"`
+		Milestones       stringList `json:"milestones" valid:"required"`
+		HourPrice        float64    `json:"hourPrice" valid:"required"`
+		Hours            int        `json:"hours" valid:"required"`
+		FreelancerID     uint       `json:"freelancerId" valid:"required"`
 	}
 
 	if err := decoder.Decode(&body); err != nil {

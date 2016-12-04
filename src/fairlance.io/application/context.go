@@ -2,17 +2,16 @@ package application
 
 import (
 	"github.com/jinzhu/gorm"
-	_ "github.com/jinzhu/gorm/dialects/postgres"
 )
 
 type ApplicationContext struct {
 	db                   *gorm.DB
-	FreelancerRepository *FreelancerRepository
-	ProjectRepository    *ProjectRepository
-	ClientRepository     *ClientRepository
-	ReferenceRepository  *ReferenceRepository
-	JobRepository        IJobRepository // todo: think of a better name
-	UserRepository       *UserRepository
+	FreelancerRepository FreelancerRepository
+	ProjectRepository    ProjectRepository
+	ClientRepository     ClientRepository
+	ReferenceRepository  ReferenceRepository
+	JobRepository        JobRepository // todo: think of a better name
+	UserRepository       UserRepository
 	JwtSecret            string
 }
 
@@ -77,19 +76,18 @@ func (ac *ApplicationContext) FillTables() {
 		Timezone:       "UTC",
 	})
 
-	ac.FreelancerRepository.AddReview(&Review{
-		Title:        "text2",
-		Content:      "content",
-		Rating:       4.1,
-		ClientID:     1,
-		FreelancerID: 1,
+	ac.FreelancerRepository.AddReview(1, &Review{
+		Title:    "text2",
+		Content:  "content",
+		Rating:   4.3,
+		ClientID: 1,
+		JobID:    4,
 	})
 
-	ac.ReferenceRepository.AddReference(&Reference{
-		Title:        "title",
-		Content:      "content",
-		Media:        Media{Image: "image", Video: "video"},
-		FreelancerID: 1,
+	ac.ReferenceRepository.AddReference(1, &Reference{
+		Title:   "title",
+		Content: "content",
+		Media:   Media{Image: "image", Video: "video"},
 	})
 
 	ac.FreelancerRepository.AddFreelancer(&Freelancer{
@@ -102,31 +100,28 @@ func (ac *ApplicationContext) FillTables() {
 		HourlyRateFrom: 12,
 		HourlyRateTo:   22,
 		Timezone:       "CET",
-		Skills:         strings{"good", "bad", "ugly"},
+		Skills:         stringList{"good", "bad", "ugly"},
 	})
 
-	ac.FreelancerRepository.AddReview(&Review{
-		Title:        "text2",
-		Content:      "content",
-		Rating:       4.1,
-		JobID:        1,
-		ClientID:     1,
-		FreelancerID: 2,
+	ac.FreelancerRepository.AddReview(2, &Review{
+		Title:    "text2",
+		Content:  "content",
+		Rating:   4.1,
+		JobID:    1,
+		ClientID: 1,
 	})
 
-	ac.FreelancerRepository.AddReview(&Review{
-		Title:        "text2",
-		Content:      "content",
-		Rating:       2.4,
-		JobID:        2,
-		ClientID:     1,
-		FreelancerID: 2,
+	ac.FreelancerRepository.AddReview(2, &Review{
+		Title:    "text2",
+		Content:  "content",
+		Rating:   2.4,
+		JobID:    2,
+		ClientID: 1,
 	})
-	ac.ReferenceRepository.AddReference(&Reference{
-		Title:        "title",
-		Content:      "content",
-		Media:        Media{Image: "image", Video: "video"},
-		FreelancerID: 2,
+	ac.ReferenceRepository.AddReference(2, &Reference{
+		Title:   "title",
+		Content: "content",
+		Media:   Media{Image: "image", Video: "video"},
 	})
 
 	ac.db.Create(&Project{
@@ -140,8 +135,8 @@ func (ac *ApplicationContext) FillTables() {
 		Message:          "I apply",
 		JobID:            1,
 		FreelancerID:     1,
-		Milestones:       strings{"Milestone1", "Milestone2"},
-		Samples:          uints{1, 2},
+		Milestones:       stringList{"Milestone1", "Milestone2"},
+		Samples:          uintList{1, 2},
 		DeliveryEstimate: 15,
 	})
 
@@ -163,8 +158,8 @@ func (ac *ApplicationContext) FillTables() {
 		Summary:  "Summary Job",
 		Details:  "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.",
 		ClientID: 1,
-		Tags:     strings{"tag"},
-		Links:    strings{"http://www.google.com/"},
+		Tags:     stringList{"tag"},
+		Links:    stringList{"http://www.google.com/"},
 	})
 
 	ac.FreelancerRepository.AddFreelancer(&Freelancer{
@@ -179,19 +174,17 @@ func (ac *ApplicationContext) FillTables() {
 		Timezone:       "UTC",
 	})
 
-	ac.FreelancerRepository.AddReview(&Review{
-		Title:        "deleted text2",
-		Content:      "deleted content",
-		Rating:       2.4,
-		JobID:        2,
-		ClientID:     1,
-		FreelancerID: 3,
+	ac.FreelancerRepository.AddReview(3, &Review{
+		Title:    "deleted text2",
+		Content:  "deleted content",
+		Rating:   2.4,
+		JobID:    2,
+		ClientID: 1,
 	})
-	ac.ReferenceRepository.AddReference(&Reference{
-		Title:        "deleted title",
-		Content:      "deleted content",
-		Media:        Media{Image: "deleted media image", Video: "deleted media video"},
-		FreelancerID: 3,
+	ac.ReferenceRepository.AddReference(3, &Reference{
+		Title:   "deleted title",
+		Content: "deleted content",
+		Media:   Media{Image: "deleted media image", Video: "deleted media video"},
 	})
 	ac.FreelancerRepository.DeleteFreelancer(3)
 }

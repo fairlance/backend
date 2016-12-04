@@ -10,23 +10,23 @@ import (
  *  remember to use `sql:"type:JSONB NOT NULL DEFAULT '{}'::JSONB"`
  */
 
-type uints []uint
+type uintList []uint
 
-func (u uints) Value() (driver.Value, error) {
+func (u uintList) Value() (driver.Value, error) {
 	return value(u)
 }
 
-func (u *uints) Scan(src interface{}) error {
+func (u *uintList) Scan(src interface{}) error {
 	return scan(u, src)
 }
 
-type strings []string
+type stringList []string
 
-func (s strings) Value() (driver.Value, error) {
+func (s stringList) Value() (driver.Value, error) {
 	return value(s)
 }
 
-func (s *strings) Scan(src interface{}) error {
+func (s *stringList) Scan(src interface{}) error {
 	return scan(s, src)
 }
 

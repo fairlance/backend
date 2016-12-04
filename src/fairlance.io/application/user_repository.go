@@ -7,18 +7,22 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-type UserRepository struct {
+type UserRepository interface {
+	CheckCredentials(email string, password string) (User, string, error)
+}
+
+type PostgreUserRepository struct {
 	db *gorm.DB
 }
 
-func NewUserRepository(db *gorm.DB) (*UserRepository, error) {
-	repo := &UserRepository{db}
+func NewUserRepository(db *gorm.DB) (UserRepository, error) {
+	repo := &PostgreUserRepository{db}
 
 	return repo, nil
 }
 
-func (repo UserRepository) CheckCredentials(email string, password string) (User, string, error) {
-	user, userType, err := repo.GetUserByEmail(email)
+func (repo PostgreUserRepository) CheckCredentials(email string, password string) (User, string, error) {
+	user, userType, err := repo.getUserByEmail(email)
 	if err != nil {
 		return user, "", err
 	}
@@ -30,7 +34,7 @@ func (repo UserRepository) CheckCredentials(email string, password string) (User
 	return user, userType, nil
 }
 
-func (repo *UserRepository) GetUserByEmail(email string) (User, string, error) {
+func (repo *PostgreUserRepository) getUserByEmail(email string) (User, string, error) {
 	user := User{}
 	var userType string
 	freelancer := Freelancer{}

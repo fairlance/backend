@@ -15,28 +15,29 @@ type User struct {
 	LastName  string `json:"lastName" valid:"required"`
 	Password  string `json:"-" valid:"required"`
 	Email     string `json:"email" valid:"required,email" sql:"index" gorm:"unique"`
+	//	References      []Reference      `json:"references"`
 }
 
 type Freelancer struct {
 	User
 	Rating          float64          `json:"rating"`
 	Timezone        string           `json:"timezone"`
-	Skills          strings          `json:"skills" sql:"type:JSONB NOT NULL DEFAULT '{}'::JSONB"`
+	Skills          stringList       `json:"skills" sql:"type:JSONB NOT NULL DEFAULT '{}'::JSONB"`
 	IsAvailable     bool             `json:"isAvailable"`
 	HourlyRateFrom  uint             `json:"hourlyRateFrom"`
 	HourlyRateTo    uint             `json:"hourlyRateTo"`
 	Projects        []Project        `json:"projects" gorm:"many2many:project_freelancers;"`
 	Reviews         []Review         `json:"reviews"`
-	References      []Reference      `json:"references"`
+	References      []Reference      `json:"references"` // should be part of User
 	JobApplications []JobApplication `json:"jobApplications"`
 }
 
 type FreelancerUpdate struct {
-	Skills         strings `json:"skills" sql:"type:JSONB NOT NULL DEFAULT '{}'::JSONB"`
-	Timezone       string  `json:"timezone" valid:"required"`
-	IsAvailable    bool    `json:"isAvailable"`
-	HourlyRateFrom uint    `json:"hourlyRateFrom" valid:"required"`
-	HourlyRateTo   uint    `json:"hourlyRateTo" valid:"required"`
+	Skills         stringList `json:"skills" sql:"type:JSONB NOT NULL DEFAULT '{}'::JSONB"`
+	Timezone       string     `json:"timezone" valid:"required"`
+	IsAvailable    bool       `json:"isAvailable"`
+	HourlyRateFrom uint       `json:"hourlyRateFrom" valid:"required"`
+	HourlyRateTo   uint       `json:"hourlyRateTo" valid:"required"`
 }
 
 type Client struct {
@@ -70,8 +71,8 @@ type Job struct {
 	IsActive        bool             `json:"isActive"`
 	Price           int              `json:"price"`
 	StartDate       time.Time        `json:"startDate"`
-	Links           strings          `json:"links" sql:"type:JSONB NOT NULL DEFAULT '{}'::JSONB"`
-	Tags            strings          `json:"tags" sql:"type:JSONB NOT NULL DEFAULT '{}'::JSONB"`
+	Links           stringList       `json:"links" sql:"type:JSONB NOT NULL DEFAULT '{}'::JSONB"`
+	Tags            stringList       `json:"tags" sql:"type:JSONB NOT NULL DEFAULT '{}'::JSONB"`
 	JobApplications []JobApplication `json:"jobApplications"`
 }
 
@@ -82,7 +83,7 @@ type Review struct {
 	Rating       float64 `json:"rating" valid:"required"`
 	JobID        uint    `json:"jobId" valid:"required"`
 	ClientID     uint    `json:"clientId" valid:"required"`
-	FreelancerID uint    `json:"freelancerId" valid:"required"`
+	FreelancerID uint    `json:"freelancerId"`
 }
 
 type Reference struct {
@@ -90,7 +91,7 @@ type Reference struct {
 	Title        string `json:"title" valid:"required"`
 	Content      string `json:"content"`
 	Media        Media  `json:"media"`
-	FreelancerID uint   `json:"freelancerId" valid:"required"`
+	FreelancerID uint   `json:"freelancerId"` //should be userID
 }
 
 type Media struct {
@@ -102,12 +103,12 @@ type Media struct {
 
 type JobApplication struct {
 	Model
-	Message          string  `json:"message" valid:"required"`
-	Samples          uints   `json:"samples" valid:"required" sql:"type:JSONB NOT NULL DEFAULT '{}'::JSONB"`
-	DeliveryEstimate int     `json:"deliveryEstimate" valid:"required"`
-	Milestones       strings `json:"milestones" valid:"required" sql:"type:JSONB NOT NULL DEFAULT '{}'::JSONB"`
-	HourPrice        float64 `json:"hourPrice" valid:"required"`
-	Hours            int     `json:"hours" valid:"required"`
-	FreelancerID     uint    `json:"freelancerId" valid:"required"`
-	JobID            uint    `json:"-" valid:"required"`
+	Message          string     `json:"message" valid:"required"`
+	Samples          uintList   `json:"samples" valid:"required" sql:"type:JSONB NOT NULL DEFAULT '{}'::JSONB"`
+	DeliveryEstimate int        `json:"deliveryEstimate" valid:"required"`
+	Milestones       stringList `json:"milestones" valid:"required" sql:"type:JSONB NOT NULL DEFAULT '{}'::JSONB"`
+	HourPrice        float64    `json:"hourPrice" valid:"required"`
+	Hours            int        `json:"hours" valid:"required"`
+	FreelancerID     uint       `json:"freelancerId" valid:"required"`
+	JobID            uint       `json:"-" valid:"required"`
 }
