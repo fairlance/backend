@@ -48,7 +48,6 @@ func TestIndexFreelancer(t *testing.T) {
 }
 
 func TestIndexFreelancerWithError(t *testing.T) {
-	is := is.New(t)
 	freelancerRepositoryMock := &FreelancerRepositoryMock{}
 	freelancerRepositoryMock.GetAllFreelancersCall.Returns.Error = errors.New("bb")
 	freelancerContext := &ApplicationContext{
@@ -60,7 +59,9 @@ func TestIndexFreelancerWithError(t *testing.T) {
 
 	IndexFreelancer(w, r)
 
-	is.Equal(w.Code, http.StatusInternalServerError)
+	if w.Code != http.StatusInternalServerError {
+		t.Errorf("Bad status code %d, expected %d", w.Code, http.StatusInternalServerError)
+	}
 }
 
 func TestAddFreelancer(t *testing.T) {
@@ -92,7 +93,6 @@ func TestAddFreelancer(t *testing.T) {
 }
 
 func TestAddFreelancerWithError(t *testing.T) {
-	is := is.New(t)
 	freelancerRepositoryMock := &FreelancerRepositoryMock{}
 	freelancerRepositoryMock.AddFreelancerCall.Returns.Error = errors.New("dum dum dum duuummmm")
 	freelancerContext := &ApplicationContext{
@@ -104,7 +104,9 @@ func TestAddFreelancerWithError(t *testing.T) {
 
 	AddFreelancer(&User{}).ServeHTTP(w, r)
 
-	is.Equal(w.Code, http.StatusInternalServerError)
+	if w.Code != http.StatusInternalServerError {
+		t.Errorf("Bad status code %d, expected %d", w.Code, http.StatusInternalServerError)
+	}
 }
 
 func TestGetFreelancerByID(t *testing.T) {
@@ -134,7 +136,6 @@ func TestGetFreelancerByID(t *testing.T) {
 }
 
 func TestGetFreelancerByIDWithError(t *testing.T) {
-	is := is.New(t)
 	freelancerRepositoryMock := &FreelancerRepositoryMock{}
 	freelancerRepositoryMock.GetFreelancerCall.Returns.Error = errors.New("oopsy daisy")
 	freelancerContext := &ApplicationContext{
@@ -146,11 +147,12 @@ func TestGetFreelancerByIDWithError(t *testing.T) {
 
 	GetFreelancerByID(1).ServeHTTP(w, r)
 
-	is.Equal(w.Code, http.StatusNotFound)
+	if w.Code != http.StatusNotFound {
+		t.Errorf("Bad status code %d, expected %d", w.Code, http.StatusNotFound)
+	}
 }
 
 func TestDeleteFreelancerByID(t *testing.T) {
-	is := is.New(t)
 	freelancerRepositoryMock := &FreelancerRepositoryMock{}
 	freelancerContext := &ApplicationContext{
 		FreelancerRepository: freelancerRepositoryMock,
@@ -161,11 +163,12 @@ func TestDeleteFreelancerByID(t *testing.T) {
 
 	DeleteFreelancerByID(1).ServeHTTP(w, r)
 
-	is.Equal(w.Code, http.StatusOK)
+	if w.Code != http.StatusOK {
+		t.Errorf("Bad status code %d, expected %d", w.Code, http.StatusOK)
+	}
 }
 
 func TestDeleteFreelancerByIDWithError(t *testing.T) {
-	is := is.New(t)
 	freelancerRepositoryMock := &FreelancerRepositoryMock{}
 	freelancerRepositoryMock.DeleteFreelancerCall.Returns.Error = errors.New("oopsy daisy")
 	freelancerContext := &ApplicationContext{
@@ -177,7 +180,9 @@ func TestDeleteFreelancerByIDWithError(t *testing.T) {
 
 	DeleteFreelancerByID(1).ServeHTTP(w, r)
 
-	is.Equal(w.Code, http.StatusBadRequest)
+	if w.Code != http.StatusBadRequest {
+		t.Errorf("Bad status code %d, expected %d", w.Code, http.StatusBadRequest)
+	}
 }
 
 func TestWithFreelancerUpdate(t *testing.T) {
@@ -206,11 +211,12 @@ func TestWithFreelancerUpdate(t *testing.T) {
 
 	withFreelancerUpdate{next}.ServeHTTP(w, r)
 
-	is.Equal(w.Code, http.StatusOK)
+	if w.Code != http.StatusOK {
+		t.Errorf("Bad status code %d, expected %d", w.Code, http.StatusOK)
+	}
 }
 
 func TestWithFreelancerUpdateWithErrorMaxSkills(t *testing.T) {
-	is := is.New(t)
 	var freelancerContext = &ApplicationContext{}
 	w := httptest.NewRecorder()
 
@@ -234,18 +240,20 @@ func TestWithFreelancerUpdateWithErrorMaxSkills(t *testing.T) {
 
 	withFreelancerUpdate{next}.ServeHTTP(w, r)
 
-	is.Equal(w.Code, http.StatusBadRequest)
+	if w.Code != http.StatusBadRequest {
+		t.Errorf("Bad status code %d, expected %d", w.Code, http.StatusBadRequest)
+	}
 }
 
 var badBodyWithFreelancerUpdate = []struct {
-	in string
+	in  string
+	out int
 }{
-	{""},
-	{"{bad json}"},
+	{"", http.StatusBadRequest},
+	{"{bad json}", http.StatusBadRequest},
 }
 
 func TestWithFreelancerUpdateWithBadBody(t *testing.T) {
-	is := is.New(t)
 	var freelancerContext = &ApplicationContext{}
 
 	for _, data := range badBodyWithFreelancerUpdate {
@@ -258,7 +266,9 @@ func TestWithFreelancerUpdateWithBadBody(t *testing.T) {
 
 		withFreelancerUpdate{next}.ServeHTTP(w, r)
 
-		is.Equal(w.Code, http.StatusBadRequest)
+		if w.Code != data.out {
+			t.Errorf("Bad status code %d, expected %d", w.Code, data.out)
+		}
 	}
 }
 
@@ -297,7 +307,6 @@ func TestUpdateFreelancerHandler(t *testing.T) {
 }
 
 func TestUpdateFreelancerHandlerFailedUpdate(t *testing.T) {
-	is := is.New(t)
 	freelancerRepositoryMock := &FreelancerRepositoryMock{}
 	freelancerRepositoryMock.GetFreelancerCall.Returns.Freelancer = Freelancer{
 		User: User{
@@ -315,11 +324,12 @@ func TestUpdateFreelancerHandlerFailedUpdate(t *testing.T) {
 
 	updateFreelancerHandler{1, &FreelancerUpdate{}}.ServeHTTP(w, r)
 
-	is.Equal(w.Code, http.StatusBadRequest)
+	if w.Code != http.StatusBadRequest {
+		t.Errorf("Bad status code %d, expected %d", w.Code, http.StatusBadRequest)
+	}
 }
 
 func TestUpdateFreelancerHandlerNotExistingFreelancer(t *testing.T) {
-	is := is.New(t)
 	freelancerRepositoryMock := &FreelancerRepositoryMock{}
 	freelancerRepositoryMock.GetFreelancerCall.Returns.Error = errors.New("freelancer mia")
 	var freelancerContext = &ApplicationContext{
@@ -330,8 +340,13 @@ func TestUpdateFreelancerHandlerNotExistingFreelancer(t *testing.T) {
 
 	updateFreelancerHandler{1, &FreelancerUpdate{}}.ServeHTTP(w, r)
 
-	is.Equal(w.Code, http.StatusNotFound)
-	is.Equal(freelancerRepositoryMock.GetFreelancerCall.Receives.ID, 1)
+	if w.Code != http.StatusNotFound {
+		t.Errorf("Bad status code %d, expected %d", w.Code, http.StatusNotFound)
+	}
+
+	if freelancerRepositoryMock.GetFreelancerCall.Receives.ID != 1 {
+		t.Errorf("Wrong freelancerID received %d, expected %d", freelancerRepositoryMock.GetFreelancerCall.Receives.ID, 1)
+	}
 }
 
 func TestWithReview(t *testing.T) {
@@ -365,6 +380,84 @@ func TestWithReview(t *testing.T) {
 	withReview{next}.ServeHTTP(w, r)
 }
 
+var bodyWithReview = []struct {
+	in  string
+	out int
+}{
+	{"", http.StatusBadRequest},
+	{"{bad json}", http.StatusBadRequest},
+	{`{
+		"clientID":     2,
+		"content":      "content",
+		"jobID":        4,
+		"rating":       5.6
+	}`, http.StatusBadRequest},
+	{`{
+		"title":        "title",
+		"content":      "content",
+		"jobID":        4,
+		"rating":       5.6
+	}`, http.StatusBadRequest},
+	{`{
+		"title":        "title",
+		"clientID":     2,
+		"content":      "content",
+		"rating":       5.6
+	}`, http.StatusBadRequest},
+	{`{
+		"title":        "title",
+		"clientID":     2,
+		"content":      "content",
+		"jobID":        4
+	}`, http.StatusBadRequest},
+	{`{
+		"title":        "title",
+		"clientID":     "2",
+		"content":      "content",
+		"jobID":        4,
+		"rating":       5.6
+	}`, http.StatusBadRequest},
+	{`{
+		"title":        "title",
+		"clientID":     2,
+		"content":      "content",
+		"jobID":        "4",
+		"rating":       5.6
+	}`, http.StatusBadRequest},
+	{`{
+		"title":        "title",
+		"clientID":     2,
+		"content":      "content",
+		"jobID":        4,
+		"rating":       "5.6"
+	}`, http.StatusBadRequest},
+	{`{
+		"title":      "no content",
+		"clientID":     2,
+		"jobID":        4,
+		"rating":       5.6
+	}`, http.StatusOK},
+}
+
+func TestWithReviewWithBadBody(t *testing.T) {
+	var freelancerContext = &ApplicationContext{}
+
+	for _, data := range bodyWithReview {
+		w := httptest.NewRecorder()
+		r := getRequest(freelancerContext, data.in)
+
+		next := func(review *Review) http.Handler {
+			return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+		}
+
+		withReview{next}.ServeHTTP(w, r)
+
+		if w.Code != data.out {
+			t.Errorf("Bad status code %d, expected %d\nFor request body: %s\nResponse body: %s", w.Code, data.out, data.in, w.Body.String())
+		}
+	}
+}
+
 func TestAddFreelancerReviewByID(t *testing.T) {
 	is := is.New(t)
 	freelancerRepositoryMock := &FreelancerRepositoryMock{}
@@ -392,6 +485,23 @@ func TestAddFreelancerReviewByID(t *testing.T) {
 	is.Equal(receivedReview.ClientID, 2)
 	is.Equal(receivedReview.JobID, 4)
 	is.Equal(freelancerRepositoryMock.AddReviewCall.Receives.ID, 3)
+}
+
+func TestAddFreelancerReviewByIDWithError(t *testing.T) {
+	freelancerRepositoryMock := &FreelancerRepositoryMock{}
+	freelancerRepositoryMock.AddReviewCall.Returns.Error = errors.New("review krak")
+	var freelancerContext = &ApplicationContext{
+		FreelancerRepository: freelancerRepositoryMock,
+	}
+
+	w := httptest.NewRecorder()
+	r := getRequest(freelancerContext, ``)
+
+	addFreelancerReviewByID{1, &Review{}}.ServeHTTP(w, r)
+
+	if w.Code != http.StatusInternalServerError {
+		t.Errorf("Bad status code %d, expected %d", w.Code, http.StatusInternalServerError)
+	}
 }
 
 func TestWithReference(t *testing.T) {
@@ -424,6 +534,47 @@ func TestWithReference(t *testing.T) {
 	withReference{next}.ServeHTTP(w, r)
 }
 
+var bodyWithReference = []struct {
+	in  string
+	out int
+}{
+	{"", http.StatusBadRequest},
+	{"{bad json}", http.StatusBadRequest},
+	{`{
+		"content":      "no title",
+		"media":		{
+			"image":	"image",
+			"video":	"video"
+		}
+	}`, http.StatusBadRequest},
+	{`{
+		"content":      "content",
+		"title":		"title"
+	}`, http.StatusOK},
+	{`{
+		"title":		"title"
+	}`, http.StatusOK},
+}
+
+func TestWithRferenceWithBadBody(t *testing.T) {
+	var freelancerContext = &ApplicationContext{}
+
+	for _, data := range bodyWithReference {
+		w := httptest.NewRecorder()
+		r := getRequest(freelancerContext, data.in)
+
+		next := func(reference *Reference) http.Handler {
+			return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+		}
+
+		withReference{next}.ServeHTTP(w, r)
+
+		if w.Code != data.out {
+			t.Errorf("Bad status code %d, expected %d\nFor request body: %s\nResponse body: %s", w.Code, data.out, data.in, w.Body.String())
+		}
+	}
+}
+
 func TestAddFreelancerReferenceByID(t *testing.T) {
 	is := is.New(t)
 	referenceRepositoryMock := &ReferenceRepositoryMock{}
@@ -451,4 +602,21 @@ func TestAddFreelancerReferenceByID(t *testing.T) {
 	is.Equal(receivedReference.Media.Image, "image")
 	is.Equal(receivedReference.Media.Video, "video")
 	is.Equal(referenceRepositoryMock.AddReferenceCall.Receives.ID, 3)
+}
+
+func TestAddFreelancerReferenceByIDWithError(t *testing.T) {
+	referenceRepositoryMock := &ReferenceRepositoryMock{}
+	referenceRepositoryMock.AddReferenceCall.Returns.Error = errors.New("darn it")
+	var freelancerContext = &ApplicationContext{
+		ReferenceRepository: referenceRepositoryMock,
+	}
+
+	w := httptest.NewRecorder()
+	r := getRequest(freelancerContext, ``)
+
+	addFreelancerReferenceByID{3, &Reference{}}.ServeHTTP(w, r)
+
+	if w.Code != http.StatusInternalServerError {
+		t.Errorf("Bad status code %d, expected %d", w.Code, http.StatusInternalServerError)
+	}
 }

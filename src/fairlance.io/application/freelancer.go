@@ -98,7 +98,7 @@ type addFreelancerReferenceByID struct {
 func (afrbi addFreelancerReferenceByID) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	var appContext = context.Get(r, "context").(*ApplicationContext)
 	if err := appContext.ReferenceRepository.AddReference(afrbi.freelancerID, afrbi.reference); err != nil {
-		respond.With(w, r, http.StatusBadRequest, err)
+		respond.With(w, r, http.StatusInternalServerError, err)
 		return
 	}
 
@@ -136,7 +136,7 @@ type addFreelancerReviewByID struct {
 func (afrbi addFreelancerReviewByID) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	var appContext = context.Get(r, "context").(*ApplicationContext)
 	if err := appContext.FreelancerRepository.AddReview(afrbi.freelancerID, afrbi.review); err != nil {
-		respond.With(w, r, http.StatusBadRequest, err)
+		respond.With(w, r, http.StatusInternalServerError, err)
 		return
 	}
 
