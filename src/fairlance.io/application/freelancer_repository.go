@@ -13,7 +13,7 @@ type FreelancerRepository interface {
 	AddFreelancer(freelancer *Freelancer) error
 	UpdateFreelancer(freelancer *Freelancer) error
 	DeleteFreelancer(id uint) error
-	AddReview(newReview *Review) error
+	AddReview(id uint, newReview *Review) error
 }
 
 type PostgreFreelancerRepository struct {
@@ -79,20 +79,21 @@ func (repo *PostgreFreelancerRepository) DeleteFreelancer(id uint) error {
 	return repo.db.Delete(&freelancer).Error
 }
 
-func (repo *PostgreFreelancerRepository) AddReview(newReview *Review) error {
+func (repo *PostgreFreelancerRepository) AddReview(freelancerID uint, review *Review) error {
 	freelancer := Freelancer{}
-	err := repo.db.Preload("Reviews").Find(&freelancer, newReview.FreelancerID).Error
+
+	err := repo.db.Preload("Reviews").Find(&freelancer, freelancerID).Error
 	if err != nil {
 		return err
 	}
-	rating := newReview.Rating
+
+	freelancer.Reviews = append(freelancer.Reviews, *review)
+
+	rating := review.Rating
 	for _, review := range freelancer.Reviews {
 		rating += review.Rating
 	}
 	freelancer.Rating = rating / float64(len(freelancer.Reviews)+1)
-	err = repo.db.Save(newReview).Error
-	if err != nil {
-		return err
-	}
+
 	return repo.db.Save(&freelancer).Error
 }

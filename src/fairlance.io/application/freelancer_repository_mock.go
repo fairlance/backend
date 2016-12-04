@@ -43,6 +43,7 @@ type FreelancerRepositoryMock struct {
 	AddReviewCall struct {
 		Receives struct {
 			Review *Review
+			ID     uint
 		}
 		Returns struct {
 			Error error
@@ -76,7 +77,8 @@ func (repo *FreelancerRepositoryMock) DeleteFreelancer(id uint) error {
 	return repo.DeleteFreelancerCall.Returns.Error
 }
 
-func (repo *FreelancerRepositoryMock) AddReview(newReview *Review) error {
+func (repo *FreelancerRepositoryMock) AddReview(id uint, newReview *Review) error {
 	repo.AddReviewCall.Receives.Review = newReview
+	repo.AddReviewCall.Receives.ID = id
 	return repo.AddReviewCall.Returns.Error
 }

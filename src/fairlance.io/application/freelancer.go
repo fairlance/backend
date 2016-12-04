@@ -67,68 +67,80 @@ func DeleteFreelancerByID(id uint) http.Handler {
 	})
 }
 
-// AddFreelancerReferenceByID handler
-func AddFreelancerReferenceByID(id uint) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		decoder := json.NewDecoder(r.Body)
-		defer r.Body.Close()
-
-		var reference Reference
-		if err := decoder.Decode(&reference); err != nil {
-			respond.With(w, r, http.StatusBadRequest, err)
-			return
-		}
-
-		if id != reference.FreelancerID {
-			respond.With(w, r, http.StatusBadRequest, "Freelancer id must match the id in the body!")
-			return
-		}
-
-		if ok, err := govalidator.ValidateStruct(reference); ok == false || err != nil {
-			errs := govalidator.ErrorsByField(err)
-			respond.With(w, r, http.StatusBadRequest, errs)
-			return
-		}
-		var appContext = context.Get(r, "context").(*ApplicationContext)
-		if err := appContext.ReferenceRepository.AddReference(&reference); err != nil {
-			respond.With(w, r, http.StatusBadRequest, err)
-			return
-		}
-
-		respond.With(w, r, http.StatusOK, nil)
-	})
+type withReference struct {
+	next func(reference *Reference) http.Handler
 }
 
-// AddFreelancerReviewByID handler
-func AddFreelancerReviewByID(id uint) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		decoder := json.NewDecoder(r.Body)
-		defer r.Body.Close()
+func (wr withReference) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	decoder := json.NewDecoder(r.Body)
+	defer r.Body.Close()
 
-		var review Review
-		if err := decoder.Decode(&review); err != nil {
-			respond.With(w, r, http.StatusBadRequest, err)
-			return
-		}
+	var reference Reference
+	if err := decoder.Decode(&reference); err != nil {
+		respond.With(w, r, http.StatusBadRequest, err)
+		return
+	}
 
-		if id != review.FreelancerID {
-			respond.With(w, r, http.StatusBadRequest, "Freelancer id must match the id in the body!")
-			return
-		}
+	if ok, err := govalidator.ValidateStruct(reference); ok == false || err != nil {
+		errs := govalidator.ErrorsByField(err)
+		respond.With(w, r, http.StatusBadRequest, errs)
+		return
+	}
 
-		if ok, err := govalidator.ValidateStruct(review); ok == false || err != nil {
-			errs := govalidator.ErrorsByField(err)
-			respond.With(w, r, http.StatusBadRequest, errs)
-			return
-		}
-		var appContext = context.Get(r, "context").(*ApplicationContext)
-		if err := appContext.FreelancerRepository.AddReview(&review); err != nil {
-			respond.With(w, r, http.StatusBadRequest, err)
-			return
-		}
+	wr.next(&reference).ServeHTTP(w, r)
+}
 
-		respond.With(w, r, http.StatusOK, nil)
-	})
+type addFreelancerReferenceByID struct {
+	freelancerID uint
+	reference    *Reference
+}
+
+func (afrbi addFreelancerReferenceByID) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	var appContext = context.Get(r, "context").(*ApplicationContext)
+	if err := appContext.ReferenceRepository.AddReference(afrbi.freelancerID, afrbi.reference); err != nil {
+		respond.With(w, r, http.StatusBadRequest, err)
+		return
+	}
+
+	respond.With(w, r, http.StatusOK, nil)
+}
+
+type withReview struct {
+	next func(review *Review) http.Handler
+}
+
+func (wr withReview) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	decoder := json.NewDecoder(r.Body)
+	defer r.Body.Close()
+
+	var review Review
+	if err := decoder.Decode(&review); err != nil {
+		respond.With(w, r, http.StatusBadRequest, err)
+		return
+	}
+
+	if ok, err := govalidator.ValidateStruct(review); ok == false || err != nil {
+		errs := govalidator.ErrorsByField(err)
+		respond.With(w, r, http.StatusBadRequest, errs)
+		return
+	}
+
+	wr.next(&review).ServeHTTP(w, r)
+}
+
+type addFreelancerReviewByID struct {
+	freelancerID uint
+	review       *Review
+}
+
+func (afrbi addFreelancerReviewByID) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	var appContext = context.Get(r, "context").(*ApplicationContext)
+	if err := appContext.FreelancerRepository.AddReview(afrbi.freelancerID, afrbi.review); err != nil {
+		respond.With(w, r, http.StatusBadRequest, err)
+		return
+	}
+
+	respond.With(w, r, http.StatusOK, nil)
 }
 
 type withFreelancerUpdate struct {
@@ -149,7 +161,7 @@ func (wfu withFreelancerUpdate) ServeHTTP(w http.ResponseWriter, r *http.Request
 	// https://github.com/asaskevich/govalidator/issues/133
 	// https://github.com/asaskevich/govalidator/issues/112
 	if len(freelancerUpdate.Skills) > 20 {
-		respond.With(w, r, http.StatusBadRequest, errors.New("Max of 20 skills are allowed."))
+		respond.With(w, r, http.StatusBadRequest, errors.New("max of 20 skills are allowed"))
 		return
 	}
 

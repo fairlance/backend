@@ -1,8 +1,6 @@
 package application
 
-import (
-	"net/http"
-)
+import "net/http"
 
 type Route struct {
 	Name    string
@@ -59,13 +57,27 @@ var routes = Routes{
 		"AddFreelancerReference",
 		"PUT",
 		"/freelancer/{id}/reference",
-		WithID{AddFreelancerReferenceByID},
+		WithID{func(freelancerID uint) http.Handler {
+			return withReference{func(reference *Reference) http.Handler {
+				return addFreelancerReferenceByID{
+					freelancerID: freelancerID,
+					reference:    reference,
+				}
+			}}
+		}},
 	},
 	Route{
 		"AddFreelancerReview",
 		"PUT",
 		"/freelancer/{id}/review",
-		WithID{AddFreelancerReviewByID},
+		WithID{func(freelancerID uint) http.Handler {
+			return withReview{func(review *Review) http.Handler {
+				return addFreelancerReviewByID{
+					freelancerID: freelancerID,
+					review:       review,
+				}
+			}}
+		}},
 	},
 
 	Route{

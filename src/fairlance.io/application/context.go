@@ -76,19 +76,18 @@ func (ac *ApplicationContext) FillTables() {
 		Timezone:       "UTC",
 	})
 
-	ac.FreelancerRepository.AddReview(&Review{
-		Title:        "text2",
-		Content:      "content",
-		Rating:       4.1,
-		ClientID:     1,
-		FreelancerID: 1,
+	ac.FreelancerRepository.AddReview(1, &Review{
+		Title:    "text2",
+		Content:  "content",
+		Rating:   4.3,
+		ClientID: 1,
+		JobID:    4,
 	})
 
-	ac.ReferenceRepository.AddReference(&Reference{
-		Title:        "title",
-		Content:      "content",
-		Media:        Media{Image: "image", Video: "video"},
-		FreelancerID: 1,
+	ac.ReferenceRepository.AddReference(1, &Reference{
+		Title:   "title",
+		Content: "content",
+		Media:   Media{Image: "image", Video: "video"},
 	})
 
 	ac.FreelancerRepository.AddFreelancer(&Freelancer{
@@ -104,28 +103,25 @@ func (ac *ApplicationContext) FillTables() {
 		Skills:         stringList{"good", "bad", "ugly"},
 	})
 
-	ac.FreelancerRepository.AddReview(&Review{
-		Title:        "text2",
-		Content:      "content",
-		Rating:       4.1,
-		JobID:        1,
-		ClientID:     1,
-		FreelancerID: 2,
+	ac.FreelancerRepository.AddReview(2, &Review{
+		Title:    "text2",
+		Content:  "content",
+		Rating:   4.1,
+		JobID:    1,
+		ClientID: 1,
 	})
 
-	ac.FreelancerRepository.AddReview(&Review{
-		Title:        "text2",
-		Content:      "content",
-		Rating:       2.4,
-		JobID:        2,
-		ClientID:     1,
-		FreelancerID: 2,
+	ac.FreelancerRepository.AddReview(2, &Review{
+		Title:    "text2",
+		Content:  "content",
+		Rating:   2.4,
+		JobID:    2,
+		ClientID: 1,
 	})
-	ac.ReferenceRepository.AddReference(&Reference{
-		Title:        "title",
-		Content:      "content",
-		Media:        Media{Image: "image", Video: "video"},
-		FreelancerID: 2,
+	ac.ReferenceRepository.AddReference(2, &Reference{
+		Title:   "title",
+		Content: "content",
+		Media:   Media{Image: "image", Video: "video"},
 	})
 
 	ac.db.Create(&Project{
@@ -178,19 +174,17 @@ func (ac *ApplicationContext) FillTables() {
 		Timezone:       "UTC",
 	})
 
-	ac.FreelancerRepository.AddReview(&Review{
-		Title:        "deleted text2",
-		Content:      "deleted content",
-		Rating:       2.4,
-		JobID:        2,
-		ClientID:     1,
-		FreelancerID: 3,
+	ac.FreelancerRepository.AddReview(3, &Review{
+		Title:    "deleted text2",
+		Content:  "deleted content",
+		Rating:   2.4,
+		JobID:    2,
+		ClientID: 1,
 	})
-	ac.ReferenceRepository.AddReference(&Reference{
-		Title:        "deleted title",
-		Content:      "deleted content",
-		Media:        Media{Image: "deleted media image", Video: "deleted media video"},
-		FreelancerID: 3,
+	ac.ReferenceRepository.AddReference(3, &Reference{
+		Title:   "deleted title",
+		Content: "deleted content",
+		Media:   Media{Image: "deleted media image", Video: "deleted media video"},
 	})
 	ac.FreelancerRepository.DeleteFreelancer(3)
 }

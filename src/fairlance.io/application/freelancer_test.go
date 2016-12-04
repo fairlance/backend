@@ -31,11 +31,11 @@ func TestIndexFreelancer(t *testing.T) {
 			},
 		},
 	}
-	userContext := &ApplicationContext{
+	freelancerContext := &ApplicationContext{
 		FreelancerRepository: freelancerRepositoryMock,
 	}
 
-	r := getRequest(userContext, ``)
+	r := getRequest(freelancerContext, ``)
 	w := httptest.NewRecorder()
 
 	IndexFreelancer(w, r)
@@ -51,11 +51,11 @@ func TestIndexFreelancerWithError(t *testing.T) {
 	is := is.New(t)
 	freelancerRepositoryMock := &FreelancerRepositoryMock{}
 	freelancerRepositoryMock.GetAllFreelancersCall.Returns.Error = errors.New("bb")
-	userContext := &ApplicationContext{
+	freelancerContext := &ApplicationContext{
 		FreelancerRepository: freelancerRepositoryMock,
 	}
 
-	r := getRequest(userContext, ``)
+	r := getRequest(freelancerContext, ``)
 	w := httptest.NewRecorder()
 
 	IndexFreelancer(w, r)
@@ -66,11 +66,11 @@ func TestIndexFreelancerWithError(t *testing.T) {
 func TestAddFreelancer(t *testing.T) {
 	is := is.New(t)
 	freelancerRepositoryMock := &FreelancerRepositoryMock{}
-	userContext := &ApplicationContext{
+	freelancerContext := &ApplicationContext{
 		FreelancerRepository: freelancerRepositoryMock,
 	}
 
-	r := getRequest(userContext, ``)
+	r := getRequest(freelancerContext, ``)
 	w := httptest.NewRecorder()
 
 	user := &User{
@@ -95,11 +95,11 @@ func TestAddFreelancerWithError(t *testing.T) {
 	is := is.New(t)
 	freelancerRepositoryMock := &FreelancerRepositoryMock{}
 	freelancerRepositoryMock.AddFreelancerCall.Returns.Error = errors.New("dum dum dum duuummmm")
-	userContext := &ApplicationContext{
+	freelancerContext := &ApplicationContext{
 		FreelancerRepository: freelancerRepositoryMock,
 	}
 
-	r := getRequest(userContext, ``)
+	r := getRequest(freelancerContext, ``)
 	w := httptest.NewRecorder()
 
 	AddFreelancer(&User{}).ServeHTTP(w, r)
@@ -117,11 +117,11 @@ func TestGetFreelancerByID(t *testing.T) {
 			},
 		},
 	}
-	userContext := &ApplicationContext{
+	freelancerContext := &ApplicationContext{
 		FreelancerRepository: freelancerRepositoryMock,
 	}
 
-	r := getRequest(userContext, ``)
+	r := getRequest(freelancerContext, ``)
 	w := httptest.NewRecorder()
 
 	GetFreelancerByID(1).ServeHTTP(w, r)
@@ -137,11 +137,11 @@ func TestGetFreelancerByIDWithError(t *testing.T) {
 	is := is.New(t)
 	freelancerRepositoryMock := &FreelancerRepositoryMock{}
 	freelancerRepositoryMock.GetFreelancerCall.Returns.Error = errors.New("oopsy daisy")
-	userContext := &ApplicationContext{
+	freelancerContext := &ApplicationContext{
 		FreelancerRepository: freelancerRepositoryMock,
 	}
 
-	r := getRequest(userContext, ``)
+	r := getRequest(freelancerContext, ``)
 	w := httptest.NewRecorder()
 
 	GetFreelancerByID(1).ServeHTTP(w, r)
@@ -152,11 +152,11 @@ func TestGetFreelancerByIDWithError(t *testing.T) {
 func TestDeleteFreelancerByID(t *testing.T) {
 	is := is.New(t)
 	freelancerRepositoryMock := &FreelancerRepositoryMock{}
-	userContext := &ApplicationContext{
+	freelancerContext := &ApplicationContext{
 		FreelancerRepository: freelancerRepositoryMock,
 	}
 
-	r := getRequest(userContext, ``)
+	r := getRequest(freelancerContext, ``)
 	w := httptest.NewRecorder()
 
 	DeleteFreelancerByID(1).ServeHTTP(w, r)
@@ -168,11 +168,11 @@ func TestDeleteFreelancerByIDWithError(t *testing.T) {
 	is := is.New(t)
 	freelancerRepositoryMock := &FreelancerRepositoryMock{}
 	freelancerRepositoryMock.DeleteFreelancerCall.Returns.Error = errors.New("oopsy daisy")
-	userContext := &ApplicationContext{
+	freelancerContext := &ApplicationContext{
 		FreelancerRepository: freelancerRepositoryMock,
 	}
 
-	r := getRequest(userContext, ``)
+	r := getRequest(freelancerContext, ``)
 	w := httptest.NewRecorder()
 
 	DeleteFreelancerByID(1).ServeHTTP(w, r)
@@ -181,7 +181,7 @@ func TestDeleteFreelancerByIDWithError(t *testing.T) {
 }
 
 func TestWithFreelancerUpdate(t *testing.T) {
-	var jobContext = &ApplicationContext{}
+	var freelancerContext = &ApplicationContext{}
 	is := is.New(t)
 	w := httptest.NewRecorder()
 	requestBody := `{
@@ -191,7 +191,7 @@ func TestWithFreelancerUpdate(t *testing.T) {
         "timezone": "timez",
 		"skills": ["one", "two"]
 	}`
-	r := getRequest(jobContext, requestBody)
+	r := getRequest(freelancerContext, requestBody)
 
 	next := func(freelancerUpdate *FreelancerUpdate) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -211,7 +211,7 @@ func TestWithFreelancerUpdate(t *testing.T) {
 
 func TestWithFreelancerUpdateWithErrorMaxSkills(t *testing.T) {
 	is := is.New(t)
-	var jobContext = &ApplicationContext{}
+	var freelancerContext = &ApplicationContext{}
 	w := httptest.NewRecorder()
 
 	skills := []string{}
@@ -226,7 +226,7 @@ func TestWithFreelancerUpdateWithErrorMaxSkills(t *testing.T) {
         "timezone": "timez",
 		"skills": ["` + strings.Join(skills, `","`) + `"]
 	}`
-	r := getRequest(jobContext, requestBody)
+	r := getRequest(freelancerContext, requestBody)
 
 	next := func(freelancerUpdate *FreelancerUpdate) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
@@ -246,11 +246,11 @@ var badBodyWithFreelancerUpdate = []struct {
 
 func TestWithFreelancerUpdateWithBadBody(t *testing.T) {
 	is := is.New(t)
-	var jobContext = &ApplicationContext{}
+	var freelancerContext = &ApplicationContext{}
 
 	for _, data := range badBodyWithFreelancerUpdate {
 		w := httptest.NewRecorder()
-		r := getRequest(jobContext, data.in)
+		r := getRequest(freelancerContext, data.in)
 
 		next := func(freelancerUpdate *FreelancerUpdate) http.Handler {
 			return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
@@ -272,11 +272,11 @@ func TestUpdateFreelancerHandler(t *testing.T) {
 			},
 		},
 	}
-	var userContext = &ApplicationContext{
+	var freelancerContext = &ApplicationContext{
 		FreelancerRepository: freelancerRepositoryMock,
 	}
 	w := httptest.NewRecorder()
-	r := getRequest(userContext, ``)
+	r := getRequest(freelancerContext, ``)
 
 	updateFreelancerHandler{1, &FreelancerUpdate{
 		HourlyRateFrom: 11,
@@ -307,11 +307,11 @@ func TestUpdateFreelancerHandlerFailedUpdate(t *testing.T) {
 		},
 	}
 	freelancerRepositoryMock.UpdateFreelancerCall.Returns.Error = errors.New("bad updataa")
-	var userContext = &ApplicationContext{
+	var freelancerContext = &ApplicationContext{
 		FreelancerRepository: freelancerRepositoryMock,
 	}
 	w := httptest.NewRecorder()
-	r := getRequest(userContext, ``)
+	r := getRequest(freelancerContext, ``)
 
 	updateFreelancerHandler{1, &FreelancerUpdate{}}.ServeHTTP(w, r)
 
@@ -322,14 +322,133 @@ func TestUpdateFreelancerHandlerNotExistingFreelancer(t *testing.T) {
 	is := is.New(t)
 	freelancerRepositoryMock := &FreelancerRepositoryMock{}
 	freelancerRepositoryMock.GetFreelancerCall.Returns.Error = errors.New("freelancer mia")
-	var userContext = &ApplicationContext{
+	var freelancerContext = &ApplicationContext{
 		FreelancerRepository: freelancerRepositoryMock,
 	}
 	w := httptest.NewRecorder()
-	r := getRequest(userContext, ``)
+	r := getRequest(freelancerContext, ``)
 
 	updateFreelancerHandler{1, &FreelancerUpdate{}}.ServeHTTP(w, r)
 
 	is.Equal(w.Code, http.StatusNotFound)
 	is.Equal(freelancerRepositoryMock.GetFreelancerCall.Receives.ID, 1)
+}
+
+func TestWithReview(t *testing.T) {
+	is := is.New(t)
+	freelancerRepositoryMock := &FreelancerRepositoryMock{}
+	var freelancerContext = &ApplicationContext{
+		FreelancerRepository: freelancerRepositoryMock,
+	}
+	w := httptest.NewRecorder()
+	r := getRequest(freelancerContext, `
+	{
+		"title":        "title",
+		"clientID":     2,
+		"content":      "content",
+		"freelancerID": 3,
+		"jobID":        4,
+		"rating":       5.6
+	}`)
+
+	next := func(review *Review) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			is.Equal(review.Title, "title")
+			is.Equal(review.ClientID, 2)
+			is.Equal(review.Content, "content")
+			is.Equal(review.FreelancerID, 3)
+			is.Equal(review.JobID, 4)
+			is.Equal(review.Rating, 5.6)
+		})
+	}
+
+	withReview{next}.ServeHTTP(w, r)
+}
+
+func TestAddFreelancerReviewByID(t *testing.T) {
+	is := is.New(t)
+	freelancerRepositoryMock := &FreelancerRepositoryMock{}
+	var freelancerContext = &ApplicationContext{
+		FreelancerRepository: freelancerRepositoryMock,
+	}
+
+	w := httptest.NewRecorder()
+	r := getRequest(freelancerContext, ``)
+
+	review := Review{
+		Title:    "title",
+		ClientID: 2,
+		Content:  "content",
+		JobID:    4,
+		Rating:   5.6,
+	}
+
+	addFreelancerReviewByID{3, &review}.ServeHTTP(w, r)
+	receivedReview := freelancerRepositoryMock.AddReviewCall.Receives.Review
+
+	is.Equal(receivedReview.Title, "title")
+	is.Equal(receivedReview.Content, "content")
+	is.Equal(receivedReview.Rating, 5.6)
+	is.Equal(receivedReview.ClientID, 2)
+	is.Equal(receivedReview.JobID, 4)
+	is.Equal(freelancerRepositoryMock.AddReviewCall.Receives.ID, 3)
+}
+
+func TestWithReference(t *testing.T) {
+	is := is.New(t)
+	referenceRepositoryMock := &ReferenceRepositoryMock{}
+	var freelancerContext = &ApplicationContext{
+		ReferenceRepository: referenceRepositoryMock,
+	}
+
+	w := httptest.NewRecorder()
+	r := getRequest(freelancerContext, `
+	{
+		"content":      "content",
+		"title":		"title",
+		"media":		{
+			"image":	"image",
+			"video":	"video"
+		}
+	}`)
+
+	next := func(reference *Reference) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			is.Equal(reference.Title, "title")
+			is.Equal(reference.Content, "content")
+			is.Equal(reference.Media.Image, "image")
+			is.Equal(reference.Media.Video, "video")
+		})
+	}
+
+	withReference{next}.ServeHTTP(w, r)
+}
+
+func TestAddFreelancerReferenceByID(t *testing.T) {
+	is := is.New(t)
+	referenceRepositoryMock := &ReferenceRepositoryMock{}
+	var freelancerContext = &ApplicationContext{
+		ReferenceRepository: referenceRepositoryMock,
+	}
+
+	w := httptest.NewRecorder()
+	r := getRequest(freelancerContext, ``)
+
+	reference := Reference{
+		Title:   "title",
+		Content: "content",
+		Media: Media{
+			Image: "image",
+			Video: "video",
+		},
+	}
+
+	addFreelancerReferenceByID{3, &reference}.ServeHTTP(w, r)
+	receivedReference := referenceRepositoryMock.AddReferenceCall.Receives.Reference
+
+	is.Equal(receivedReference.Title, "title")
+	is.Equal(receivedReference.Content, "content")
+	is.Equal(receivedReference.Media.Image, "image")
+	is.Equal(receivedReference.Media.Video, "video")
+	is.Equal(referenceRepositoryMock.AddReferenceCall.Receives.ID, 3)
 }

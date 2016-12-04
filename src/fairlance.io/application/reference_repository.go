@@ -5,7 +5,7 @@ import (
 )
 
 type ReferenceRepository interface {
-	AddReference(reference *Reference) error
+	AddReference(id uint, reference *Reference) error
 }
 
 type PostgreReferenceRepository struct {
@@ -18,6 +18,7 @@ func NewReferenceRepository(db *gorm.DB) (ReferenceRepository, error) {
 	return repo, nil
 }
 
-func (repo *PostgreReferenceRepository) AddReference(reference *Reference) error {
+func (repo *PostgreReferenceRepository) AddReference(id uint, reference *Reference) error {
+	reference.FreelancerID = id
 	return repo.db.Create(reference).Error
 }
