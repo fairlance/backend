@@ -20,6 +20,8 @@ type page struct {
 	Type                string
 	Timestamps          map[string]time.Time
 	ImporterStarted     string
+	Action              string
+	DocID               string
 }
 
 func newPage(r *http.Request) page {
@@ -49,6 +51,8 @@ func newPage(r *http.Request) page {
 	if query.Get("type") != "" {
 		pageState.Type = query.Get("type")
 	}
+	pageState.Action = query.Get("action")
+	pageState.DocID = query.Get("docID")
 
 	return pageState
 }

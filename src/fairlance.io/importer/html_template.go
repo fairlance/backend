@@ -10,6 +10,9 @@ var htmlTemplate = `
       html {
           overflow-y: scroll; 
       }
+      table > tbody > tr:nth-child(odd) {
+          background-color: #f2f2f2;
+      }
     </style>
   </head>
   <body>
@@ -22,18 +25,22 @@ var htmlTemplate = `
       </div>
       <div class="row">
         <div class="twelwe columns">
-          {{$jobs := "jobs"}}
-          {{$freelancers := "freelancers"}}
-          <a class="button {{if eq .Type $jobs}}button-primary{{end}}" href="?type=jobs">Jobs</a>
-          <a class="button {{if eq .Type $freelancers}}button-primary{{end}}" href="?type=freelancers">Freelancers</a>
+          {{$jobs := eq "jobs" .Type}}
+          {{$freelancers := eq "freelancers" .Type}}
+          <a class="button {{if $jobs}}button-primary{{end}}" href="?type=jobs">Jobs</a>
+          <a class="button {{if $freelancers}}button-primary{{end}}" href="?type=freelancers">Freelancers</a>
         </div>
       </div>
       <div class="row">
         <div class="twelwe columns">
-          <a class="button" href="?action=re_generate_test_data&type={{.Type}}">Re-generate test data</a>
-          <a class="button" href="?action=import_all&type={{.Type}}">Import to search engine</a>
-          <a class="button" href="?action=delete_all_from_db&type={{.Type}}" onclick="return confirm('Are you sure?')">Delete from DB</a>
-          <a class="button" href="?action=delete_all_from_search_engine&type={{.Type}}" onclick="return confirm('Are you sure?')">Delete from search engine</a>
+          {{$re_generate_test_data := eq "re_generate_test_data" .Action}}
+          {{$import_all := eq "import_all" .Action}}
+          {{$delete_all_from_db := eq "delete_all_from_db" .Action}}
+          {{$delete_all_from_search_engine := eq "delete_all_from_search_engine" .Action}}
+          <a class="button {{if $re_generate_test_data}}button-primary{{end}}" href="?action=re_generate_test_data&type={{.Type}}">Re-generate test data</a>
+          <a class="button {{if $import_all}}button-primary{{end}}" href="?action=import_all&type={{.Type}}">Import to search engine</a>
+          <a class="button {{if $delete_all_from_db}}button-primary{{end}}" href="?action=delete_all_from_db&type={{.Type}}" onclick="return confirm('Are you sure?')">Delete from DB</a>
+          <a class="button {{if $delete_all_from_search_engine}}button-primary{{end}}" href="?action=delete_all_from_search_engine&type={{.Type}}" onclick="return confirm('Are you sure?')">Delete from search engine</a>
         </div>
       </div>
       <div class="row">

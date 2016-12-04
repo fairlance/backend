@@ -15,27 +15,25 @@ type indexHandler struct {
 
 func (i indexHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	pageState := newPage(r)
-	query := r.URL.Query()
-	action := query.Get("action")
-	switch action {
+	switch pageState.Action {
 	case "import_all":
 		err := doImport(i.options, *i.db, pageState.Type)
 		if err != nil {
 			pageState.Message = err.Error()
 		}
 	case "get":
-		doc, err := getDocFromSearchEngine(i.options, pageState.Type, query.Get("docID"))
+		doc, err := getDocFromSearchEngine(i.options, pageState.Type, pageState.DocID)
 		if err != nil {
 			pageState.Message = err.Error()
 		}
 		pageState.Document = doc
 	case "import":
-		err := importDoc(*i.db, i.options, pageState.Type, query.Get("docID"))
+		err := importDoc(*i.db, i.options, pageState.Type, pageState.DocID)
 		if err != nil {
 			pageState.Message = err.Error()
 		}
 	case "remove":
-		err := deleteDocFromSearchEngine(i.options, pageState.Type, query.Get("docID"))
+		err := deleteDocFromSearchEngine(i.options, pageState.Type, pageState.DocID)
 		if err != nil {
 			pageState.Message = err.Error()
 		}
