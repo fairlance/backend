@@ -27,8 +27,8 @@ var htmlTemplate = `
         <div class="twelwe columns">
           {{$jobs := eq "jobs" .Type}}
           {{$freelancers := eq "freelancers" .Type}}
-          <button class="{{if $jobs}}button-primary{{end}}" href="?type=jobs">Jobs</button>
-          <button class="{{if $freelancers}}button-primary{{end}}" href="?type=freelancers">Freelancers</button>
+          <a class="button {{if $jobs}}button-primary{{end}}" href="?type=jobs">Jobs</a>
+          <a class="button {{if $freelancers}}button-primary{{end}}" href="?type=freelancers">Freelancers</a>
         </div>
       </div>
       <div class="row">
@@ -37,10 +37,10 @@ var htmlTemplate = `
           {{$import_all := eq "import_all" .Action}}
           {{$delete_all_from_db := eq "delete_all_from_db" .Action}}
           {{$delete_all_from_search_engine := eq "delete_all_from_search_engine" .Action}}
-          <button class="{{if $re_generate_test_data}}button-primary{{end}}" href="?action=re_generate_test_data&type={{.Type}}">Re-generate test data</button>
-          <button class="{{if $import_all}}button-primary{{end}}" href="?action=import_all&type={{.Type}}">Import to search engine</button>
-          <button class="{{if $delete_all_from_db}}button-primary{{end}}" href="?action=delete_all_from_db&type={{.Type}}" onclick="return confirm('Are you sure?')">Delete from DB</button>
-          <button class="{{if $delete_all_from_search_engine}}button-primary{{end}}" href="?action=delete_all_from_search_engine&type={{.Type}}" onclick="return confirm('Are you sure?')">Delete from search engine</button>
+          <a class="button {{if $re_generate_test_data}}button-primary{{end}}" href="?action=re_generate_test_data&type={{.Type}}">Re-generate test data</a>
+          <a class="button {{if $import_all}}button-primary{{end}}" href="?action=import_all&type={{.Type}}">Import to search engine</a>
+          <a class="button {{if $delete_all_from_db}}button-primary{{end}}" href="?action=delete_all_from_db&type={{.Type}}" onclick="return confirm('Are you sure?')">Delete from DB</a>
+          <a class="button {{if $delete_all_from_search_engine}}button-primary{{end}}" href="?action=delete_all_from_search_engine&type={{.Type}}" onclick="return confirm('Are you sure?')">Delete from search engine</a>
         </div>
       </div>
       <div class="row">
