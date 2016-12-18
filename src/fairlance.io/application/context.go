@@ -103,7 +103,7 @@ func (ac *ApplicationContext) FillTables() {
 		Timezone:       "CET",
 		Skills:         stringList{"good", "bad", "ugly"},
 	}
-	ac.FreelancerRepository.AddFreelancer(f1)
+	ac.FreelancerRepository.AddFreelancer(f2)
 
 	ac.FreelancerRepository.AddReview(2, &Review{
 		Title:    "text2",
