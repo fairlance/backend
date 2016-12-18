@@ -56,3 +56,47 @@ func TestIndexProjectWithError(t *testing.T) {
 
 	is.Equal(w.Code, http.StatusInternalServerError)
 }
+
+func TestProjectGetByID(t *testing.T) {
+	projectRepositoryMock := ProjectRepositoryMock{}
+	projectRepositoryMock.GetByIDCall.Returns.Project = Project{
+		Model: Model{
+			ID: 123456789,
+		},
+		Name:        "Name1",
+		Description: "Description1",
+		ClientID:    1,
+		IsActive:    true,
+	}
+	var context = &ApplicationContext{
+		ProjectRepository: &projectRepositoryMock,
+	}
+	is := is.New(t)
+	w := httptest.NewRecorder()
+	r := getRequest(context, "")
+
+	GetProjectByID(0).ServeHTTP(w, r)
+
+	is.Equal(w.Code, http.StatusOK)
+	var body Project
+	is.NoErr(json.Unmarshal(w.Body.Bytes(), &body))
+	is.Equal(body.Model.ID, uint(123456789))
+	is.Equal(body.Name, "Name1")
+	is.Equal(body.Description, "Description1")
+	is.Equal(body.IsActive, true)
+}
+
+func TestProjectGetByIDError(t *testing.T) {
+	projectRepositoryMock := ProjectRepositoryMock{}
+	projectRepositoryMock.GetByIDCall.Returns.Error = errors.New("Blah")
+	var context = &ApplicationContext{
+		ProjectRepository: &projectRepositoryMock,
+	}
+	is := is.New(t)
+	w := httptest.NewRecorder()
+	r := getRequest(context, "")
+
+	GetProjectByID(0).ServeHTTP(w, r)
+
+	is.Equal(w.Code, http.StatusNotFound)
+}

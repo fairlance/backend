@@ -64,7 +64,7 @@ func (ac *ApplicationContext) CreateTables() {
 }
 
 func (ac *ApplicationContext) FillTables() {
-	ac.FreelancerRepository.AddFreelancer(&Freelancer{
+	f1 := &Freelancer{
 		User: User{
 			FirstName: "First",
 			LastName:  "Last",
@@ -74,7 +74,8 @@ func (ac *ApplicationContext) FillTables() {
 		HourlyRateFrom: 3,
 		HourlyRateTo:   55,
 		Timezone:       "UTC",
-	})
+	}
+	ac.FreelancerRepository.AddFreelancer(f1)
 
 	ac.FreelancerRepository.AddReview(1, &Review{
 		Title:    "text2",
@@ -90,7 +91,7 @@ func (ac *ApplicationContext) FillTables() {
 		Media:   Media{Image: "image", Video: "video"},
 	})
 
-	ac.FreelancerRepository.AddFreelancer(&Freelancer{
+	f2 := &Freelancer{
 		User: User{
 			FirstName: "Pera",
 			LastName:  "Peric",
@@ -101,7 +102,8 @@ func (ac *ApplicationContext) FillTables() {
 		HourlyRateTo:   22,
 		Timezone:       "CET",
 		Skills:         stringList{"good", "bad", "ugly"},
-	})
+	}
+	ac.FreelancerRepository.AddFreelancer(f1)
 
 	ac.FreelancerRepository.AddReview(2, &Review{
 		Title:    "text2",
@@ -129,6 +131,7 @@ func (ac *ApplicationContext) FillTables() {
 		Description: "Description",
 		ClientID:    1,
 		IsActive:    true,
+		Freelancers: []Freelancer{*f1, *f2},
 	})
 
 	ac.db.Create(&JobApplication{

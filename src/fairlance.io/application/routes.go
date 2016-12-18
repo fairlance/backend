@@ -86,6 +86,12 @@ var routes = Routes{
 		"/project",
 		http.HandlerFunc(IndexProject),
 	},
+	Route{
+		"GetProject",
+		"GET",
+		"/project/{id}",
+		WithID{GetProjectByID},
+	},
 
 	Route{
 		"IndexClient",

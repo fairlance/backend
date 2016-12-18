@@ -6,6 +6,7 @@ import (
 
 type ProjectRepository interface {
 	GetAllProjects() ([]Project, error)
+	GetByID(id uint) (Project, error)
 }
 
 type PostgreProjectRepository struct {
@@ -20,6 +21,12 @@ func NewProjectRepository(db *gorm.DB) (ProjectRepository, error) {
 
 func (repo *PostgreProjectRepository) GetAllProjects() ([]Project, error) {
 	projects := []Project{}
-	repo.db.Preload("Freelancers").Find(&projects)
+	repo.db.Preload("Client").Preload("Freelancers").Find(&projects)
 	return projects, nil
+}
+
+func (repo *PostgreProjectRepository) GetByID(id uint) (Project, error) {
+	project := Project{}
+	err := repo.db.Preload("Client").Preload("Freelancers").Find(&project, id).Error
+	return project, err
 }
