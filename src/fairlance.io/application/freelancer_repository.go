@@ -13,7 +13,7 @@ type FreelancerRepository interface {
 	AddFreelancer(freelancer *Freelancer) error
 	UpdateFreelancer(freelancer *Freelancer) error
 	DeleteFreelancer(id uint) error
-	AddReview(id uint, newReview *Review) error
+	AddReview(freelancerID uint, newReview *Review) error
 }
 
 type PostgreFreelancerRepository struct {
