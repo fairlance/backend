@@ -16,7 +16,7 @@ var routes = Routes{
 		"Login",
 		"POST",
 		"/login",
-		http.HandlerFunc(Login),
+		login(),
 	},
 
 	Route{

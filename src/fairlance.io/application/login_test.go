@@ -36,7 +36,7 @@ func TestLoginWithBadEmailAndPassword(t *testing.T) {
 		r := getRequest(userContext, data.in)
 		w := httptest.NewRecorder()
 
-		Login(w, r)
+		login().ServeHTTP(w, r)
 
 		is.Equal(w.Code, http.StatusBadRequest)
 	}
@@ -58,7 +58,7 @@ func TestLoginWhenUnauthorized(t *testing.T) {
 	`)
 	w := httptest.NewRecorder()
 
-	Login(w, r)
+	login().ServeHTTP(w, r)
 
 	is.Equal(w.Code, http.StatusUnauthorized)
 }
@@ -78,7 +78,7 @@ func TestLoginCallsCheckCredentialsWithCorrectEmailAndPassword(t *testing.T) {
 	`)
 	w := httptest.NewRecorder()
 
-	Login(w, r)
+	login().ServeHTTP(w, r)
 
 	is.Equal(w.Code, http.StatusOK)
 	is.Equal(userRepositoryMock.CheckCredentialsCall.Receives.Email, "email@mail.com")
@@ -110,7 +110,7 @@ func TestLogin(t *testing.T) {
 	`)
 	w := httptest.NewRecorder()
 
-	Login(w, r)
+	login().ServeHTTP(w, r)
 
 	is.Equal(w.Code, http.StatusOK)
 	var body map[string]interface{}
