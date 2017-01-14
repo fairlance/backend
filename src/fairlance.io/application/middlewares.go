@@ -104,7 +104,7 @@ func RecoverHandler(next http.Handler) http.Handler {
 	})
 }
 
-func AuthHandler(next http.Handler) http.Handler {
+func authHandler(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		tokenString := r.Header.Get("Authorization")
 		if tokenString == "" {

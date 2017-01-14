@@ -23,61 +23,43 @@ var routes = Routes{
 		"IndexFreelancer",
 		"GET",
 		"/freelancer",
-		http.HandlerFunc(IndexFreelancer),
+		getAllFreelancers(),
 	},
 	Route{
 		"RegisterFreelancer",
 		"PUT",
 		"/freelancer/new",
-		WithUser{AddFreelancer},
+		withUser(addFreelancer()),
 	},
 	Route{
 		"GetFreelancer",
 		"GET",
 		"/freelancer/{id}",
-		WithID{GetFreelancerByID},
+		withID(getFreelancerByID()),
 	},
 	Route{
 		"UpdateFreelancer",
 		"POST",
 		"/freelancer/{id}",
-		WithID{func(freelancerID uint) http.Handler {
-			return withFreelancerUpdate{func(freelancerUpdate *FreelancerUpdate) http.Handler {
-				return updateFreelancerHandler{freelancerID, freelancerUpdate}
-			}}
-		}},
+		withID(withFreelancerUpdate(updateFreelancerHandler())),
 	},
 	Route{
 		"DeleteFreelancer",
 		"DELETE",
 		"/freelancer/{id}",
-		AuthHandler(WithID{DeleteFreelancerByID}),
+		authHandler(withID(deleteFreelancerByID())),
 	},
 	Route{
 		"AddFreelancerReference",
 		"PUT",
 		"/freelancer/{id}/reference",
-		WithID{func(freelancerID uint) http.Handler {
-			return withReference{func(reference *Reference) http.Handler {
-				return addFreelancerReferenceByID{
-					freelancerID: freelancerID,
-					reference:    reference,
-				}
-			}}
-		}},
+		withID(withReference(addFreelancerReferenceByID())),
 	},
 	Route{
 		"AddFreelancerReview",
 		"PUT",
 		"/freelancer/{id}/review",
-		WithID{func(freelancerID uint) http.Handler {
-			return withReview{func(review *Review) http.Handler {
-				return addFreelancerReviewByID{
-					freelancerID: freelancerID,
-					review:       review,
-				}
-			}}
-		}},
+		withID(withReview(addFreelancerReviewByID())),
 	},
 
 	Route{
