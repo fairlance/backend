@@ -28,7 +28,8 @@ func NewRouter(appContext *ApplicationContext) *mux.Router {
 	for _, route := range routes {
 		var handler http.Handler
 		handler = opts.Handler(route.Handler)
-		handler = CORSHandler(ContextAwareHandler(handler, appContext), route)
+		handler = ContextAwareHandler(handler, appContext)
+		handler = CORSHandler(handler)
 		handler = context.ClearHandler(handler)
 
 		router.

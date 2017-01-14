@@ -122,28 +122,24 @@ var routes = Routes{
 		"IndexJob",
 		"GET",
 		"/job",
-		http.HandlerFunc(IndexJob),
+		getAllJobs(),
 	},
 	Route{
 		"NewJob",
 		"PUT",
 		"/job/new",
-		WithJob{AddJob},
+		withID(addJob()),
 	},
 	Route{
 		"GetJob",
 		"GET",
 		"/job/{id}",
-		WithID{GetJobByID},
+		withID(getJob()),
 	},
 	Route{
 		"ApplyForJob",
 		"PUT",
 		"/job/{id}/apply",
-		WithID{func(jobID uint) http.Handler {
-			return WithJobApplication{func(jobApplication *JobApplication) http.Handler {
-				return ApplyForJobHandler{jobID, jobApplication}
-			}}
-		}},
+		withID(withJobApplication(applyForJob())),
 	},
 }

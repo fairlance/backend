@@ -7,7 +7,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/cheekybits/is"
+	isHelper "github.com/cheekybits/is"
+	"github.com/gorilla/context"
 )
 
 func TestJobIndexJob(t *testing.T) {
@@ -30,11 +31,11 @@ func TestJobIndexJob(t *testing.T) {
 		JobRepository: &jobRepositoryMock,
 	}
 
-	is := is.New(t)
+	is := isHelper.New(t)
 	w := httptest.NewRecorder()
 	r := getRequest(jobContext, "")
 
-	IndexJob(w, r)
+	getAllJobs().ServeHTTP(w, r)
 
 	is.Equal(w.Code, http.StatusOK)
 	var body []Job
@@ -55,11 +56,11 @@ func TestJobIndexJobError(t *testing.T) {
 		JobRepository: &jobRepositoryMock,
 	}
 
-	is := is.New(t)
+	is := isHelper.New(t)
 	w := httptest.NewRecorder()
 	r := getRequest(jobContext, "")
 
-	IndexJob(w, r)
+	getAllJobs().ServeHTTP(w, r)
 
 	is.Equal(w.Code, http.StatusBadRequest)
 }
@@ -69,18 +70,19 @@ func TestJobAddJob(t *testing.T) {
 	var jobContext = &ApplicationContext{
 		JobRepository: &jobRepositoryMock,
 	}
-	is := is.New(t)
+	is := isHelper.New(t)
 	w := httptest.NewRecorder()
 	r := getRequest(jobContext, "")
-
-	AddJob(&Job{
+	context.Set(r, "job", &Job{
 		Name:     "Name1",
 		Summary:  "Summary1",
 		Details:  "Details1",
 		ClientID: 1,
 		IsActive: true,
 		Price:    100,
-	}).ServeHTTP(w, r)
+	})
+
+	addJob().ServeHTTP(w, r)
 
 	is.Equal(w.Code, http.StatusOK)
 	is.Equal(jobRepositoryMock.AddJobCall.Receives.Job.Name, "Name1")
@@ -96,11 +98,12 @@ func TestJobGetJobByIDReceivesTheRightID(t *testing.T) {
 	var jobContext = &ApplicationContext{
 		JobRepository: &jobRepositoryMock,
 	}
-	is := is.New(t)
+	is := isHelper.New(t)
 	w := httptest.NewRecorder()
 	r := getRequest(jobContext, "")
+	context.Set(r, "id", uint(1))
 
-	GetJobByID(1).ServeHTTP(w, r)
+	getJob().ServeHTTP(w, r)
 
 	is.Equal(w.Code, http.StatusOK)
 	is.Equal(jobRepositoryMock.GetJobCall.Receives.ID, uint(1))
@@ -122,11 +125,12 @@ func TestJobGetJobByID(t *testing.T) {
 	var jobContext = &ApplicationContext{
 		JobRepository: &jobRepositoryMock,
 	}
-	is := is.New(t)
+	is := isHelper.New(t)
 	w := httptest.NewRecorder()
 	r := getRequest(jobContext, "")
+	context.Set(r, "id", uint(0))
 
-	GetJobByID(0).ServeHTTP(w, r)
+	getJob().ServeHTTP(w, r)
 
 	is.Equal(w.Code, http.StatusOK)
 	var body Job
@@ -145,11 +149,12 @@ func TestJobGetJobByIDError(t *testing.T) {
 	var jobContext = &ApplicationContext{
 		JobRepository: &jobRepositoryMock,
 	}
-	is := is.New(t)
+	is := isHelper.New(t)
 	w := httptest.NewRecorder()
 	r := getRequest(jobContext, "")
+	context.Set(r, "id", uint(0))
 
-	GetJobByID(0).ServeHTTP(w, r)
+	getJob().ServeHTTP(w, r)
 
 	is.Equal(w.Code, http.StatusNotFound)
 }
@@ -160,11 +165,12 @@ func TestJobAddJobError(t *testing.T) {
 	var jobContext = &ApplicationContext{
 		JobRepository: &jobRepositoryMock,
 	}
-	is := is.New(t)
+	is := isHelper.New(t)
 	w := httptest.NewRecorder()
 	r := getRequest(jobContext, "")
+	context.Set(r, "job", &Job{})
 
-	AddJob(&Job{}).ServeHTTP(w, r)
+	addJob().ServeHTTP(w, r)
 
 	is.Equal(w.Code, http.StatusBadRequest)
 }
@@ -175,7 +181,7 @@ func TestJobHandleApplyForJob(t *testing.T) {
 		JobRepository: &jobRepositoryMock,
 	}
 
-	is := is.New(t)
+	is := isHelper.New(t)
 	w := httptest.NewRecorder()
 	r := getRequest(jobContext, "")
 	jobApplication := &JobApplication{
@@ -186,8 +192,10 @@ func TestJobHandleApplyForJob(t *testing.T) {
 		HourPrice:    1.1,
 		Hours:        1,
 	}
+	context.Set(r, "id", uint(1))
+	context.Set(r, "jobApplication", jobApplication)
 
-	ApplyForJobHandler{1, jobApplication}.ServeHTTP(w, r)
+	applyForJob().ServeHTTP(w, r)
 
 	is.Equal(w.Code, http.StatusOK)
 	is.Equal(jobRepositoryMock.AddJobApplicationCall.Receives.JobApplication.JobID, 1)
@@ -206,18 +214,20 @@ func TestJobHandleApplyForJobHandlerError(t *testing.T) {
 		JobRepository: &jobRepositoryMock,
 	}
 
-	is := is.New(t)
+	is := isHelper.New(t)
 	w := httptest.NewRecorder()
 	r := getRequest(jobContext, "")
+	context.Set(r, "id", uint(1))
+	context.Set(r, "jobApplication", &JobApplication{})
 
-	ApplyForJobHandler{1, &JobApplication{}}.ServeHTTP(w, r)
+	applyForJob().ServeHTTP(w, r)
 
 	is.Equal(w.Code, http.StatusBadRequest)
 }
 
 func TestJobWithJob(t *testing.T) {
 	var jobContext = &ApplicationContext{}
-	is := is.New(t)
+	is := isHelper.New(t)
 	w := httptest.NewRecorder()
 	requestBody := `{
 		"name": "Name1",
@@ -227,32 +237,32 @@ func TestJobWithJob(t *testing.T) {
 	}`
 	r := getRequest(jobContext, requestBody)
 
-	next := func(job *Job) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			is.Equal(job.Name, "Name1")
-			is.Equal(job.Details, "Details1")
-			is.Equal(job.Summary, "Summary1")
-			is.Equal(job.ClientID, 1)
-		})
-	}
-
-	WithJob{next}.ServeHTTP(w, r)
+	nextCalled := false
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		nextCalled = true
+	})
+	withJob(handler).ServeHTTP(w, r)
 
 	is.Equal(w.Code, http.StatusOK)
+	is.Equal(nextCalled, true)
+	job := context.Get(r, "job").(*Job)
+	is.Equal(job.Name, "Name1")
+	is.Equal(job.Details, "Details1")
+	is.Equal(job.Summary, "Summary1")
+	is.Equal(job.ClientID, 1)
 }
 
 func TestJobWithJobError(t *testing.T) {
 	var jobContext = &ApplicationContext{}
-	is := is.New(t)
+	is := isHelper.New(t)
 	w := httptest.NewRecorder()
 	requestBody := `{}`
 	r := getRequest(jobContext, requestBody)
 
-	next := func(job *Job) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
-	}
-
-	WithJob{next}.ServeHTTP(w, r)
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		t.Error("Should not be called")
+	})
+	withJob(handler).ServeHTTP(w, r)
 
 	is.Equal(w.Code, http.StatusBadRequest)
 	var body map[string]string
@@ -266,7 +276,7 @@ func TestJobWithJobError(t *testing.T) {
 
 func TestJobWithJobErrorBadTooManyTags(t *testing.T) {
 	var jobContext = &ApplicationContext{}
-	is := is.New(t)
+	is := isHelper.New(t)
 	w := httptest.NewRecorder()
 	requestBody := `{
 		"name": "Name1",
@@ -277,34 +287,32 @@ func TestJobWithJobErrorBadTooManyTags(t *testing.T) {
 	}`
 	r := getRequest(jobContext, requestBody)
 
-	next := func(job *Job) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
-	}
-
-	WithJob{next}.ServeHTTP(w, r)
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		t.Error("Should not be called")
+	})
+	withJob(handler).ServeHTTP(w, r)
 
 	is.Equal(w.Code, http.StatusBadRequest)
 }
 
 func TestJobWithJobErrorBadJSON(t *testing.T) {
 	var jobContext = &ApplicationContext{}
-	is := is.New(t)
+	is := isHelper.New(t)
 	w := httptest.NewRecorder()
 	requestBody := `{bad:json}`
 	r := getRequest(jobContext, requestBody)
 
-	next := func(job *Job) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
-	}
-
-	WithJob{next}.ServeHTTP(w, r)
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		t.Error("Should not be called")
+	})
+	withJob(handler).ServeHTTP(w, r)
 
 	is.Equal(w.Code, http.StatusBadRequest)
 }
 
 func TestJobWithJobApplication(t *testing.T) {
 	var jobContext = &ApplicationContext{}
-	is := is.New(t)
+	is := isHelper.New(t)
 	w := httptest.NewRecorder()
 	requestBody := `{
 		"message":"message",
@@ -317,35 +325,36 @@ func TestJobWithJobApplication(t *testing.T) {
 	}`
 	r := getRequest(jobContext, requestBody)
 
-	next := func(jobApplication *JobApplication) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			is.Equal(jobApplication.Message, "message")
-			is.Equal(jobApplication.Milestones, []string{"one", "two"})
-			is.Equal(jobApplication.Samples, []uint{1, 2})
-			is.Equal(jobApplication.DeliveryEstimate, 3)
-			is.Equal(jobApplication.FreelancerID, 1)
-			is.Equal(jobApplication.Hours, 1)
-			is.Equal(jobApplication.HourPrice, 1.1)
-		})
-	}
+	nextCalled := false
+	handler :=  http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		nextCalled = true
+	})
 
-	WithJobApplication{next}.ServeHTTP(w, r)
+	withJobApplication(handler).ServeHTTP(w, r)
 
 	is.Equal(w.Code, http.StatusOK)
+	is.Equal(nextCalled, true)
+	jobApplication := context.Get(r, "jobApplication").(*JobApplication)
+	is.Equal(jobApplication.Message, "message")
+	is.Equal(jobApplication.Milestones, []string{"one", "two"})
+	is.Equal(jobApplication.Samples, []uint{1, 2})
+	is.Equal(jobApplication.DeliveryEstimate, 3)
+	is.Equal(jobApplication.FreelancerID, 1)
+	is.Equal(jobApplication.Hours, 1)
+	is.Equal(jobApplication.HourPrice, 1.1)
 }
 
 func TestJobWithJobApplicationError(t *testing.T) {
 	var jobContext = &ApplicationContext{}
-	is := is.New(t)
+	is := isHelper.New(t)
 	w := httptest.NewRecorder()
 	requestBody := `{}`
 	r := getRequest(jobContext, requestBody)
 
-	next := func(jobApplication *JobApplication) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
-	}
-
-	WithJobApplication{next}.ServeHTTP(w, r)
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		t.Error("Should not be called")
+	})
+	withJobApplication(handler).ServeHTTP(w, r)
 
 	is.Equal(w.Code, http.StatusBadRequest)
 	var body map[string]string
@@ -362,16 +371,15 @@ func TestJobWithJobApplicationError(t *testing.T) {
 
 func TestJobWithJobApplicationErrorBadJSON(t *testing.T) {
 	var jobContext = &ApplicationContext{}
-	is := is.New(t)
+	is := isHelper.New(t)
 	w := httptest.NewRecorder()
 	requestBody := `{bad:json}`
 	r := getRequest(jobContext, requestBody)
 
-	next := func(jobApplication *JobApplication) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
-	}
-
-	WithJobApplication{next}.ServeHTTP(w, r)
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		t.Error("Should not be called")
+	})
+	withJobApplication(handler).ServeHTTP(w, r)
 
 	is.Equal(w.Code, http.StatusBadRequest)
 }
