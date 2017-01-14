@@ -8,21 +8,23 @@ import (
 	"gopkg.in/matryer/respond.v1"
 )
 
-func IndexClient(w http.ResponseWriter, r *http.Request) {
-	var appContext = context.Get(r, "context").(*ApplicationContext)
-	clients, err := appContext.ClientRepository.GetAllClients()
-	if err != nil {
-		respond.With(w, r, http.StatusInternalServerError, err)
-		return
-	}
-
-	respond.With(w, r, http.StatusOK, clients)
-}
-
-// GetClientByID handler
-func GetClientByID(id uint) http.Handler {
+func getAllClients() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var appContext = context.Get(r, "context").(*ApplicationContext)
+		clients, err := appContext.ClientRepository.GetAllClients()
+		if err != nil {
+			respond.With(w, r, http.StatusInternalServerError, err)
+			return
+		}
+
+		respond.With(w, r, http.StatusOK, clients)
+	})
+}
+
+func getClientByID() http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var appContext = context.Get(r, "context").(*ApplicationContext)
+		var id = context.Get(r, "id").(uint)
 		client, err := appContext.ClientRepository.GetClient(id)
 		if err != nil {
 			respond.With(w, r, http.StatusNotFound, err)
@@ -33,8 +35,9 @@ func GetClientByID(id uint) http.Handler {
 	})
 }
 
-func AddClient(user *User) http.Handler {
+func addClient() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var user = context.Get(r, "user").(*User)
 		client := &Client{User: *user}
 		var appContext = context.Get(r, "context").(*ApplicationContext)
 		if err := appContext.ClientRepository.AddClient(client); err != nil {
@@ -52,8 +55,7 @@ func AddClient(user *User) http.Handler {
 	})
 }
 
-// UpdateClientByID handler
-func UpdateClientByID(id uint) http.Handler {
+func updateClientByID() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		decoder := json.NewDecoder(r.Body)
 		defer r.Body.Close()
@@ -70,6 +72,7 @@ func UpdateClientByID(id uint) http.Handler {
 		}
 
 		var appContext = context.Get(r, "context").(*ApplicationContext)
+		var id = context.Get(r, "id").(uint)
 		client, err := appContext.ClientRepository.GetClient(id)
 		if err != nil {
 			respond.With(w, r, http.StatusNotFound, err)

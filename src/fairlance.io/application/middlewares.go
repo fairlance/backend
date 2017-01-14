@@ -51,7 +51,7 @@ func withID(handler http.Handler) http.Handler {
 			respond.With(w, r, http.StatusBadRequest, err)
 			return
 		}
-		context.Set(r, "id", id)
+		context.Set(r, "id", uint(id))
 
 		handler.ServeHTTP(w, r)
 	})

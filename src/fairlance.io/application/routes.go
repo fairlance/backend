@@ -97,25 +97,25 @@ var routes = Routes{
 		"IndexClient",
 		"GET",
 		"/client",
-		http.HandlerFunc(IndexClient),
+		getAllClients(),
 	},
 	Route{
 		"RegisterClient",
 		"PUT",
 		"/client/new",
-		WithUser{AddClient},
+		withUser(addClient()),
 	},
 	Route{
 		"GetClient",
 		"GET",
 		"/client/{id}",
-		WithID{GetClientByID},
+		withID(getClientByID()),
 	},
 	Route{
 		"UpdateClient",
 		"POST",
 		"/client/{id}",
-		WithID{UpdateClientByID},
+		withID(updateClientByID()),
 	},
 
 	Route{

@@ -7,11 +7,12 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/cheekybits/is"
+	isHelper "github.com/cheekybits/is"
+	"github.com/gorilla/context"
 )
 
 func TestIndexClient(t *testing.T) {
-	is := is.New(t)
+	is := isHelper.New(t)
 	clientRepositoryMock := &ClientRepositoryMock{}
 	clientRepositoryMock.GetAllClientsCall.Returns.Clients = []Client{
 		Client{
@@ -40,7 +41,7 @@ func TestIndexClient(t *testing.T) {
 	r := getRequest(userContext, ``)
 	w := httptest.NewRecorder()
 
-	IndexClient(w, r)
+	getAllClients().ServeHTTP(w, r)
 
 	is.Equal(w.Code, http.StatusOK)
 	var body []Client
@@ -50,7 +51,7 @@ func TestIndexClient(t *testing.T) {
 }
 
 func TestIndexClientWithError(t *testing.T) {
-	is := is.New(t)
+	is := isHelper.New(t)
 	clientRepositoryMock := &ClientRepositoryMock{}
 	clientRepositoryMock.GetAllClientsCall.Returns.Error = errors.New("Clients kabooom")
 	userContext := &ApplicationContext{
@@ -60,13 +61,13 @@ func TestIndexClientWithError(t *testing.T) {
 	r := getRequest(userContext, ``)
 	w := httptest.NewRecorder()
 
-	IndexClient(w, r)
+	getAllClients().ServeHTTP(w, r)
 
 	is.Equal(w.Code, http.StatusInternalServerError)
 }
 
 func TestGetClientByIDWithError(t *testing.T) {
-	is := is.New(t)
+	is := isHelper.New(t)
 	clientRepositoryMock := &ClientRepositoryMock{}
 	clientRepositoryMock.GetClientCall.Returns.Error = errors.New("Clients kabooom")
 	userContext := &ApplicationContext{
@@ -75,14 +76,15 @@ func TestGetClientByIDWithError(t *testing.T) {
 
 	r := getRequest(userContext, ``)
 	w := httptest.NewRecorder()
+	context.Set(r, "id", uint(1))
 
-	GetClientByID(0).ServeHTTP(w, r)
+	getClientByID().ServeHTTP(w, r)
 
 	is.Equal(w.Code, http.StatusNotFound)
 }
 
 func TestGetClientByID(t *testing.T) {
-	is := is.New(t)
+	is := isHelper.New(t)
 	clientRepositoryMock := &ClientRepositoryMock{}
 	clientRepositoryMock.GetClientCall.Returns.Client = &Client{
 		User: User{
@@ -97,17 +99,19 @@ func TestGetClientByID(t *testing.T) {
 
 	r := getRequest(userContext, ``)
 	w := httptest.NewRecorder()
+	context.Set(r, "id", uint(1))
 
-	GetClientByID(0).ServeHTTP(w, r)
+	getClientByID().ServeHTTP(w, r)
 
 	is.Equal(w.Code, http.StatusOK)
 	var body map[string]interface{}
 	is.NoErr(json.Unmarshal(w.Body.Bytes(), &body))
 	is.Equal(body["id"], 1)
+	is.Equal(clientRepositoryMock.GetClientCall.Receives.ID, uint(1))
 }
 
 func TestAddClientWithError(t *testing.T) {
-	is := is.New(t)
+	is := isHelper.New(t)
 	clientRepositoryMock := &ClientRepositoryMock{}
 	clientRepositoryMock.AddClientCall.Returns.Error = errors.New("bummer")
 	userContext := &ApplicationContext{
@@ -122,14 +126,15 @@ func TestAddClientWithError(t *testing.T) {
 			ID: 1,
 		},
 	}
+	context.Set(r, "user", user)
 
-	AddClient(user).ServeHTTP(w, r)
+	addClient().ServeHTTP(w, r)
 
 	is.Equal(w.Code, http.StatusInternalServerError)
 }
 
 func TestAddClient(t *testing.T) {
-	is := is.New(t)
+	is := isHelper.New(t)
 	clientRepositoryMock := &ClientRepositoryMock{}
 	userContext := &ApplicationContext{
 		ClientRepository: clientRepositoryMock,
@@ -143,8 +148,9 @@ func TestAddClient(t *testing.T) {
 			ID: 1,
 		},
 	}
+	context.Set(r, "user", user)
 
-	AddClient(user).ServeHTTP(w, r)
+	addClient().ServeHTTP(w, r)
 
 	is.Equal(w.Code, http.StatusOK)
 	is.Equal(clientRepositoryMock.AddClientCall.Receives.Client.User.ID, 1)
@@ -163,7 +169,7 @@ var badBodyUpdateClientByID = []struct {
 }
 
 func TestUpdateClientByIDWithBadBody(t *testing.T) {
-	is := is.New(t)
+	is := isHelper.New(t)
 	clientRepositoryMock := &ClientRepositoryMock{}
 	userContext := &ApplicationContext{
 		ClientRepository: clientRepositoryMock,
@@ -172,15 +178,16 @@ func TestUpdateClientByIDWithBadBody(t *testing.T) {
 	for _, data := range badBodyUpdateClientByID {
 		w := httptest.NewRecorder()
 		r := getRequest(userContext, data.in)
+		context.Set(r, "id", uint(1))
 
-		UpdateClientByID(1).ServeHTTP(w, r)
+		updateClientByID().ServeHTTP(w, r)
 
 		is.Equal(w.Code, http.StatusBadRequest)
 	}
 }
 
 func TestUpdateClientByIDWithNonExistingClient(t *testing.T) {
-	is := is.New(t)
+	is := isHelper.New(t)
 	clientRepositoryMock := &ClientRepositoryMock{}
 	clientRepositoryMock.GetClientCall.Returns.Error = errors.New("nope")
 	userContext := &ApplicationContext{
@@ -189,14 +196,15 @@ func TestUpdateClientByIDWithNonExistingClient(t *testing.T) {
 
 	w := httptest.NewRecorder()
 	r := getRequest(userContext, "{}")
+	context.Set(r, "id", uint(1))
 
-	UpdateClientByID(1).ServeHTTP(w, r)
+	updateClientByID().ServeHTTP(w, r)
 
 	is.Equal(w.Code, http.StatusNotFound)
 }
 
 func TestUpdateClientByIDWithFailedUpdate(t *testing.T) {
-	is := is.New(t)
+	is := isHelper.New(t)
 	clientRepositoryMock := &ClientRepositoryMock{}
 	clientRepositoryMock.UpdateClientCall.Returns.Error = errors.New("nope")
 	userContext := &ApplicationContext{
@@ -205,14 +213,15 @@ func TestUpdateClientByIDWithFailedUpdate(t *testing.T) {
 
 	w := httptest.NewRecorder()
 	r := getRequest(userContext, "{}")
+	context.Set(r, "id", uint(1))
 
-	UpdateClientByID(1).ServeHTTP(w, r)
+	updateClientByID().ServeHTTP(w, r)
 
 	is.Equal(w.Code, http.StatusBadRequest)
 }
 
 func TestUpdateClientByID(t *testing.T) {
-	is := is.New(t)
+	is := isHelper.New(t)
 	clientRepositoryMock := &ClientRepositoryMock{}
 	clientRepositoryMock.GetClientCall.Returns.Client = &Client{
 		User: User{
@@ -232,8 +241,9 @@ func TestUpdateClientByID(t *testing.T) {
         "industry": "feet cartoon drawings"
     }`)
 	w := httptest.NewRecorder()
+	context.Set(r, "id", uint(1))
 
-	UpdateClientByID(1).ServeHTTP(w, r)
+	updateClientByID().ServeHTTP(w, r)
 
 	is.Equal(w.Code, http.StatusOK)
 	is.Equal(clientRepositoryMock.GetClientCall.Receives.ID, 1)
