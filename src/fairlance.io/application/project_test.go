@@ -7,11 +7,12 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/cheekybits/is"
+	isHelper "github.com/cheekybits/is"
+	"github.com/gorilla/context"
 )
 
 func TestIndexProject(t *testing.T) {
-	is := is.New(t)
+	is := isHelper.New(t)
 	projectRepositoryMock := &ProjectRepositoryMock{}
 	projectRepositoryMock.GetAllProjectsCall.Returns.Projects = []Project{
 		Project{
@@ -32,7 +33,7 @@ func TestIndexProject(t *testing.T) {
 	r := getRequest(userContext, ``)
 	w := httptest.NewRecorder()
 
-	IndexProject(w, r)
+	getAllProjects().ServeHTTP(w, r)
 
 	is.Equal(w.Code, http.StatusOK)
 	var body []Project
@@ -42,7 +43,7 @@ func TestIndexProject(t *testing.T) {
 }
 
 func TestIndexProjectWithError(t *testing.T) {
-	is := is.New(t)
+	is := isHelper.New(t)
 	projectRepositoryMock := &ProjectRepositoryMock{}
 	projectRepositoryMock.GetAllProjectsCall.Returns.Error = errors.New("nein")
 	userContext := &ApplicationContext{
@@ -52,7 +53,7 @@ func TestIndexProjectWithError(t *testing.T) {
 	r := getRequest(userContext, ``)
 	w := httptest.NewRecorder()
 
-	IndexProject(w, r)
+	getAllProjects().ServeHTTP(w, r)
 
 	is.Equal(w.Code, http.StatusInternalServerError)
 }
@@ -68,14 +69,15 @@ func TestProjectGetByID(t *testing.T) {
 		ClientID:    1,
 		IsActive:    true,
 	}
-	var context = &ApplicationContext{
+	var appContext = &ApplicationContext{
 		ProjectRepository: &projectRepositoryMock,
 	}
-	is := is.New(t)
+	is := isHelper.New(t)
 	w := httptest.NewRecorder()
-	r := getRequest(context, "")
+	r := getRequest(appContext, "")
+	context.Set(r, "id", uint(1))
 
-	GetProjectByID(0).ServeHTTP(w, r)
+	getProjectByID().ServeHTTP(w, r)
 
 	is.Equal(w.Code, http.StatusOK)
 	var body Project
@@ -84,19 +86,21 @@ func TestProjectGetByID(t *testing.T) {
 	is.Equal(body.Name, "Name1")
 	is.Equal(body.Description, "Description1")
 	is.Equal(body.IsActive, true)
+	is.Equal(projectRepositoryMock.GetByIDCall.Receives.ID, uint(1))
 }
 
 func TestProjectGetByIDError(t *testing.T) {
 	projectRepositoryMock := ProjectRepositoryMock{}
 	projectRepositoryMock.GetByIDCall.Returns.Error = errors.New("Blah")
-	var context = &ApplicationContext{
+	var appContext = &ApplicationContext{
 		ProjectRepository: &projectRepositoryMock,
 	}
-	is := is.New(t)
+	is := isHelper.New(t)
 	w := httptest.NewRecorder()
-	r := getRequest(context, "")
+	r := getRequest(appContext, "")
+	context.Set(r, "id", uint(1))
 
-	GetProjectByID(0).ServeHTTP(w, r)
+	getProjectByID().ServeHTTP(w, r)
 
 	is.Equal(w.Code, http.StatusNotFound)
 }

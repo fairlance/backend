@@ -84,13 +84,13 @@ var routes = Routes{
 		"IndexProject",
 		"GET",
 		"/project",
-		http.HandlerFunc(IndexProject),
+		getAllProjects(),
 	},
 	Route{
 		"GetProject",
 		"GET",
 		"/project/{id}",
-		WithID{GetProjectByID},
+		withID(getProjectByID()),
 	},
 
 	Route{
