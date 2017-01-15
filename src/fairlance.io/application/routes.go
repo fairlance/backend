@@ -41,7 +41,7 @@ var routes = Routes{
 		"UpdateFreelancer",
 		"POST",
 		"/freelancer/{id}",
-		withID(withFreelancerUpdate(updateFreelancerHandler())),
+		withID(withFreelancerUpdate(updateFreelancerByID())),
 	},
 	Route{
 		"DeleteFreelancer",
@@ -122,6 +122,6 @@ var routes = Routes{
 		"ApplyForJob",
 		"PUT",
 		"/job/{id}/apply",
-		withID(withJobApplication(applyForJob())),
+		withID(withJobApplication(addJobApplicationByID())),
 	},
 }

@@ -169,7 +169,7 @@ func withFreelancerUpdate(handler http.Handler) http.Handler {
 	})
 }
 
-func updateFreelancerHandler() http.Handler {
+func updateFreelancerByID() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var freelancerID = context.Get(r, "id").(uint)
 		var freelancerUpdate = context.Get(r, "freelancerUpdate").(*FreelancerUpdate)

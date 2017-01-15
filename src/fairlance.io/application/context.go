@@ -10,7 +10,7 @@ type ApplicationContext struct {
 	ProjectRepository    ProjectRepository
 	ClientRepository     ClientRepository
 	ReferenceRepository  ReferenceRepository
-	JobRepository        JobRepository // todo: think of a better name
+	JobRepository        JobRepository
 	UserRepository       UserRepository
 	JwtSecret            string
 }

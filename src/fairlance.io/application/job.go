@@ -12,7 +12,7 @@ import (
 
 func getAllJobs() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		var appContext= context.Get(r, "context").(*ApplicationContext)
+		var appContext = context.Get(r, "context").(*ApplicationContext)
 		jobs, err := appContext.JobRepository.GetAllJobs()
 		if err != nil {
 			respond.With(w, r, http.StatusBadRequest, err)
@@ -141,7 +141,7 @@ func withJobApplication(handler http.Handler) http.Handler {
 	})
 }
 
-func applyForJob() http.Handler {
+func addJobApplicationByID() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var appContext = context.Get(r, "context").(*ApplicationContext)
 		var jobID = context.Get(r, "id").(uint)

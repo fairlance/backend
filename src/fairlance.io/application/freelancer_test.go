@@ -301,7 +301,7 @@ func TestUpdateFreelancerHandler(t *testing.T) {
 		Skills:         stringList{"one", "two"},
 	})
 
-	updateFreelancerHandler().ServeHTTP(w, r)
+	updateFreelancerByID().ServeHTTP(w, r)
 
 	freelancer := freelancerRepositoryMock.UpdateFreelancerCall.Receives.Freelancer
 	is.Equal(w.Code, http.StatusOK)
@@ -332,7 +332,7 @@ func TestUpdateFreelancerHandlerFailedUpdate(t *testing.T) {
 	context.Set(r, "id", uint(1))
 	context.Set(r, "freelancerUpdate", &FreelancerUpdate{})
 
-	updateFreelancerHandler().ServeHTTP(w, r)
+	updateFreelancerByID().ServeHTTP(w, r)
 
 	if w.Code != http.StatusBadRequest {
 		t.Errorf("Bad status code %d, expected %d", w.Code, http.StatusBadRequest)
@@ -350,7 +350,7 @@ func TestUpdateFreelancerHandlerNotExistingFreelancer(t *testing.T) {
 	context.Set(r, "id", uint(1))
 	context.Set(r, "freelancerUpdate", &FreelancerUpdate{})
 
-	updateFreelancerHandler().ServeHTTP(w, r)
+	updateFreelancerByID().ServeHTTP(w, r)
 
 	if w.Code != http.StatusNotFound {
 		t.Errorf("Bad status code %d, expected %d", w.Code, http.StatusNotFound)

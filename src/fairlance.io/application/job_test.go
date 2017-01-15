@@ -195,7 +195,7 @@ func TestJobHandleApplyForJob(t *testing.T) {
 	context.Set(r, "id", uint(1))
 	context.Set(r, "jobApplication", jobApplication)
 
-	applyForJob().ServeHTTP(w, r)
+	addJobApplicationByID().ServeHTTP(w, r)
 
 	is.Equal(w.Code, http.StatusOK)
 	is.Equal(jobRepositoryMock.AddJobApplicationCall.Receives.JobApplication.JobID, 1)
@@ -220,7 +220,7 @@ func TestJobHandleApplyForJobHandlerError(t *testing.T) {
 	context.Set(r, "id", uint(1))
 	context.Set(r, "jobApplication", &JobApplication{})
 
-	applyForJob().ServeHTTP(w, r)
+	addJobApplicationByID().ServeHTTP(w, r)
 
 	is.Equal(w.Code, http.StatusBadRequest)
 }
@@ -326,7 +326,7 @@ func TestJobWithJobApplication(t *testing.T) {
 	r := getRequest(jobContext, requestBody)
 
 	nextCalled := false
-	handler :=  http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		nextCalled = true
 	})
 

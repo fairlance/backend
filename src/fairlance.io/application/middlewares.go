@@ -14,29 +14,6 @@ import (
 	"gopkg.in/matryer/respond.v1"
 )
 
-// WithID handler
-type WithID struct {
-	next func(ID uint) http.Handler
-}
-
-// TODO: maybe see if we can continue the chain here by returning http.Handler
-// https://medium.com/@cep21/how-to-correctly-use-context-context-in-go-1-7-8f2c0fafdf39#.hot4tz1ap
-func (withID WithID) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-
-	if vars["id"] == "" {
-		respond.With(w, r, http.StatusBadRequest, errors.New("Id not provided."))
-		return
-	}
-
-	id, err := strconv.ParseUint(vars["id"], 10, 32)
-	if err != nil {
-		respond.With(w, r, http.StatusBadRequest, err)
-		return
-	}
-	withID.next(uint(id)).ServeHTTP(w, r)
-}
-
 func withID(handler http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
