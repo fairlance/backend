@@ -11,6 +11,21 @@ import (
 	"gopkg.in/matryer/respond.v1"
 )
 
+func CreateToken(claims map[string]interface{}, secret string, duration time.Duration) (string, error) {
+	// Create the token
+	token := jwt.New(jwt.SigningMethodHS256)
+	jwtClaims := token.Claims.(jwt.MapClaims)
+	// Set some claims
+	for k, v := range claims {
+		jwtClaims[k] = v
+	}
+	jwtClaims["exp"] = time.Now().Add(duration).Unix()
+	// Sign and get the complete encoded token as a string
+	tokenString, err := token.SignedString([]byte(secret))
+
+	return tokenString, err
+}
+
 func login() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		decoder := json.NewDecoder(r.Body)
@@ -37,14 +52,9 @@ func login() http.Handler {
 			return
 		}
 
-		// Create the token
-		token := jwt.New(jwt.SigningMethodHS256)
-		claims := token.Claims.(jwt.MapClaims)
-		// Set some claims
+		claims := make(map[string]interface{})
 		claims["user"] = user
-		claims["exp"] = time.Now().Add(time.Minute * 5).Unix()
-		// Sign and get the complete encoded token as a string
-		tokenString, err := token.SignedString([]byte(appContext.JwtSecret))
+		tokenString, err := CreateToken(claims, appContext.JwtSecret, time.Hour*8)
 		if err != nil {
 			respond.With(w, r, http.StatusInternalServerError, err)
 			return

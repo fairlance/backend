@@ -25,3 +25,4 @@ installARM:
 	env GOOS=linux GOARCH=arm GOARM=7 go build -o ./bin/ddns_arm fairlance.io/cmd/ddns
 	env GOOS=linux GOARCH=arm GOARM=7 go build -o ./bin/importer_arm fairlance.io/cmd/importer
 	env GOOS=linux GOARCH=arm GOARM=7 go build -o ./bin/searcher_arm fairlance.io/cmd/searcher
+	env GOOS=linux GOARCH=arm GOARM=7 go build -o ./bin/messaging_arm fairlance.io/cmd/messaging
