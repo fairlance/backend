@@ -9,10 +9,13 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/gorilla/mux"
-
-	"fairlance.io/application"
+	app "fairlance.io/application"
 	"fairlance.io/messaging"
+
+	"fmt"
+
+	"github.com/gorilla/context"
+	"github.com/gorilla/mux"
 )
 
 var (
@@ -41,15 +44,19 @@ func main() {
 	go hub.Run()
 
 	router.Handle("/{name}/{room}/ws", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		room := mux.Vars(r)["room"]
+		roomID := mux.Vars(r)["room"]
 		user := mux.Vars(r)["name"]
-		messaging.NewServeWS(hub, &application.User{
-			Model: application.Model{
+
+		context.Set(r, "roomID", roomID)
+		context.Set(r, "user", &app.User{
+			Model: app.Model{
 				ID: uint(rand.Intn(100)),
 			},
 			FirstName: "User",
 			LastName:  user,
-		}, room).ServeHTTP(w, r)
+		})
+
+		messaging.ServeWS(hub).ServeHTTP(w, r)
 	}))
 
 	router.Handle("/{username}/{room}/send", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -60,19 +67,23 @@ func main() {
 	}))
 
 	checkAccess := func(userID uint, room string) (bool, error) {
-		response, err := http.Get(projectURL + "/" + room)
+		response, err := http.Get(fmt.Sprintf("%s/%s", projectURL, room))
 		if err != nil {
 			return false, err
 		}
 
 		var responseStruct struct {
-			Code    int                 `json:"code"`
-			Data    application.Project `json:"data"`
-			Success bool                `json:"success"`
+			Code    int         `json:"code"`
+			Data    app.Project `json:"data"`
+			Success bool        `json:"success"`
 		}
 		err = json.NewDecoder(response.Body).Decode(&responseStruct)
-		if err != nil || responseStruct.Code != http.StatusOK || responseStruct.Success == false {
+		if err != nil {
 			return false, err
+		}
+
+		if responseStruct.Code != http.StatusOK || responseStruct.Success == false {
+			return false, fmt.Errorf("failed request Code=%d, Success=%v", responseStruct.Code, responseStruct.Success)
 		}
 
 		found := false
@@ -87,17 +98,12 @@ func main() {
 	}
 
 	// requires a GET 'token' parameter
-	router.Handle("/{room}/ws", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		messaging.NewWithTokenFromParams(func(token string) http.Handler {
-			return application.NewAuthenticateWithClaims(secret, token, func(claims map[string]interface{}) http.Handler {
-				return application.NewWithUserFromClaims(claims, func(user *application.User) http.Handler {
-					return messaging.NewValidatedWithRoom(user, checkAccess, func(room string) http.Handler {
-						return messaging.NewServeWS(hub, user, room)
-					})
-				})
-			})
-		}).ServeHTTP(w, r)
-	}))
+	router.Handle("/{room}/ws", messaging.WithRoom(
+		messaging.WithTokenFromParams(
+			app.AuthenticateTokenWithClaims(
+				secret, app.WithUserFromClaims(
+					messaging.ValidateUser(
+						checkAccess, messaging.ServeWS(hub)))))))
 
 	// opts := &respond.Options{
 	// 	Before: func(w http.ResponseWriter, r *http.Request, status int, data interface{}) (int, interface{}) {

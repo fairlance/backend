@@ -121,64 +121,54 @@ func authHandler(next http.Handler) http.Handler {
 	})
 }
 
-// NewWithTokenFromHeader ...
-func NewWithTokenFromHeader(next func(token string) http.Handler) *WithTokenFromHeader {
-	return &WithTokenFromHeader{next}
-}
-
 // WithTokenFromHeader ...
-type WithTokenFromHeader struct {
-	next func(token string) http.Handler
-}
-
-func (wt *WithTokenFromHeader) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	tokenString := r.Header.Get("Authorization")
-	if tokenString == "" {
-		respond.With(w, r, http.StatusForbidden, errors.New("authorization header missing"))
-		return
-	}
-
-	if tokenString[:7] != "Bearer " {
-		respond.With(w, r, http.StatusForbidden, errors.New("authorization header must start with 'Bearer '"))
-		return
-	}
-
-	wt.next(tokenString[7:]).ServeHTTP(w, r)
-}
-
-// NewAuthenticateWithClaims ...
-func NewAuthenticateWithClaims(secret string, token string, next func(claims map[string]interface{}) http.Handler) *AuthenticateWithClaims {
-	return &AuthenticateWithClaims{secret, token, next}
-}
-
-// AuthenticateWithClaims ...
-type AuthenticateWithClaims struct {
-	secret string
-	token  string
-	next   func(claims map[string]interface{}) http.Handler
-}
-
-func (awu *AuthenticateWithClaims) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	token, err := jwt.Parse(awu.token, func(jwtToken *jwt.Token) (interface{}, error) {
-		// Don't forget to validate the alg is what you expect:
-		if _, ok := jwtToken.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, fmt.Errorf("Unexpected signing method: %v", jwtToken.Header["alg"])
+func WithTokenFromHeader(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		tokenString := r.Header.Get("Authorization")
+		if tokenString == "" {
+			respond.With(w, r, http.StatusForbidden, errors.New("authorization header missing"))
+			return
 		}
-		return []byte(awu.secret), nil
+
+		if tokenString[:7] != "Bearer " {
+			respond.With(w, r, http.StatusForbidden, errors.New("authorization header must start with 'Bearer '"))
+			return
+		}
+
+		context.Set(r, "token", tokenString[7:])
+
+		next.ServeHTTP(w, r)
 	})
+}
 
-	if err != nil {
-		respond.With(w, r, http.StatusUnauthorized, err)
-		return
-	}
+// AuthenticateTokenWithClaims ...
+func AuthenticateTokenWithClaims(secret string, next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		tokenFromContext := context.Get(r, "token").(string)
 
-	claims, ok := token.Claims.(jwt.MapClaims)
-	if !ok || !token.Valid {
-		respond.With(w, r, http.StatusUnauthorized, errors.New("not logged in"))
-		return
-	}
+		token, err := jwt.Parse(tokenFromContext, func(jwtToken *jwt.Token) (interface{}, error) {
+			// Don't forget to validate the alg is what you expect:
+			if _, ok := jwtToken.Method.(*jwt.SigningMethodHMAC); !ok {
+				return nil, fmt.Errorf("Unexpected signing method: %v", jwtToken.Header["alg"])
+			}
+			return []byte(secret), nil
+		})
 
-	awu.next(claims).ServeHTTP(w, r)
+		if err != nil {
+			respond.With(w, r, http.StatusUnauthorized, err)
+			return
+		}
+
+		claims, ok := token.Claims.(jwt.MapClaims)
+		if !ok || !token.Valid {
+			respond.With(w, r, http.StatusUnauthorized, errors.New("not logged in"))
+			return
+		}
+
+		context.Set(r, "claims", claims)
+
+		next.ServeHTTP(w, r)
+	})
 }
 
 func getUserFomClaims(claims map[string]interface{}) (*User, error) {
@@ -208,24 +198,19 @@ func getUserFomClaims(claims map[string]interface{}) (*User, error) {
 	return user, nil
 }
 
-// NewWithUserFromClaims ...
-func NewWithUserFromClaims(claims map[string]interface{}, next func(user *User) http.Handler) *WithUserFromClaims {
-	return &WithUserFromClaims{claims, next}
-}
-
 // WithUserFromClaims ...
-type WithUserFromClaims struct {
-	claims map[string]interface{}
-	next   func(user *User) http.Handler
-}
+func WithUserFromClaims(handler http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		claims := context.Get(r, "claims").(jwt.MapClaims)
+		user, err := getUserFomClaims(claims)
+		if err != nil {
+			respond.With(w, r, http.StatusBadRequest, err)
+		}
 
-func (ufc *WithUserFromClaims) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	user, err := getUserFomClaims(ufc.claims)
-	if err != nil {
-		respond.With(w, r, http.StatusBadRequest, err)
-	}
+		context.Set(r, "user", user)
 
-	ufc.next(user).ServeHTTP(w, r)
+		handler.ServeHTTP(w, r)
+	})
 }
 
 // func HTTPAuthHandler(next http.Handler) http.Handler {

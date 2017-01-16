@@ -5,10 +5,11 @@ import (
 	"log"
 	"net/http"
 
-	respond "gopkg.in/matryer/respond.v1"
-
 	"fairlance.io/application"
 
+	respond "gopkg.in/matryer/respond.v1"
+
+	"github.com/gorilla/context"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 )
@@ -21,91 +22,88 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
-// NewServeWS creates new websocket handler
-func NewServeWS(hub *Hub, user *application.User, room string) *ServeWS {
-	return &ServeWS{hub, user, room}
-}
+// ServeWS builds websocket handler
+func ServeWS(hub *Hub) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		appUser := context.Get(r, "user").(*application.User)
+		room := context.Get(r, "room").(string)
 
-// ServeWS has websocket handler
-type ServeWS struct {
-	hub  *Hub
-	user *application.User
-	room string
-}
+		conn, err := upgrader.Upgrade(w, r, nil)
+		if err != nil {
+			log.Println(err)
+			return
+		}
 
-func (sws *ServeWS) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	conn, err := upgrader.Upgrade(w, r, nil)
-	if err != nil {
-		log.Println(err)
-		return
-	}
+		user := &user{
+			hub:       hub,
+			conn:      conn,
+			send:      make(chan message, 256),
+			username:  appUser.FirstName + " " + appUser.LastName,
+			projectID: room,
+			id:        appUser.ID,
+		}
 
-	user := &user{
-		hub:       sws.hub,
-		conn:      conn,
-		send:      make(chan message, 256),
-		username:  sws.user.FirstName + " " + sws.user.LastName,
-		projectID: sws.room,
-		id:        sws.user.ID,
-	}
+		hub.register <- user
 
-	sws.hub.register <- user
-
-	go user.startWriting()
-	user.startReading()
+		go user.startWriting()
+		user.startReading()
+	})
 }
 
 type hasAccessFunc func(userID uint, room string) (bool, error)
 
-// NewValidatedWithRoom ...
-func NewValidatedWithRoom(user *application.User, hasAccess hasAccessFunc, next func(room string) http.Handler) *ValidatedWithRoom {
-	return &ValidatedWithRoom{user, hasAccess, next}
-}
+// ValidateUser ...
+func ValidateUser(hasAccess hasAccessFunc, next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		room := context.Get(r, "room").(string)
+		user := context.Get(r, "user").(*application.User)
 
-// ValidatedWithRoom provides room name from parameters
-type ValidatedWithRoom struct {
-	user      *application.User
-	hasAccess hasAccessFunc
-	next      func(room string) http.Handler
-}
+		// check if user can access the room
+		ok, err := hasAccess(user.ID, room)
+		if err != nil {
+			log.Println(err)
+			respond.With(w, r, http.StatusInternalServerError, errors.New("could not check the room"))
+			return
+		}
 
-func (vwr *ValidatedWithRoom) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	roomID := mux.Vars(r)["room"]
+		if !ok {
+			log.Printf("room not allowed\n")
+			respond.With(w, r, http.StatusUnauthorized, errors.New("room not allowed"))
+			return
+		}
 
-	// check if user can access the room
-	ok, err := vwr.hasAccess(vwr.user.ID, roomID)
-	if err != nil {
-		log.Println(err)
-		respond.With(w, r, http.StatusInternalServerError, errors.New("could not check the room"))
-		return
-	}
-
-	if !ok {
-		respond.With(w, r, http.StatusUnauthorized, errors.New("room not allowed"))
-		return
-	}
-
-	vwr.next(roomID).ServeHTTP(w, r)
-}
-
-// NewWithTokenFromParams ...
-func NewWithTokenFromParams(next func(token string) http.Handler) *WithTokenFromParams {
-	return &WithTokenFromParams{next}
+		next.ServeHTTP(w, r)
+	})
 }
 
 // WithTokenFromParams ...
-type WithTokenFromParams struct {
-	next func(token string) http.Handler
+func WithTokenFromParams(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		token := r.URL.Query().Get("token")
+		if token == "" {
+			respond.With(w, r, http.StatusBadRequest, errors.New("valid token is missing from parameters"))
+			return
+		}
+
+		context.Set(r, "token", token)
+
+		next.ServeHTTP(w, r)
+	})
 }
 
-func (wrfc *WithTokenFromParams) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	token := r.URL.Query().Get("token")
-	if token == "" {
-		respond.With(w, r, http.StatusBadRequest, errors.New("valid token is missing from parameters"))
-		return
-	}
+func WithRoom(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
 
-	wrfc.next(token).ServeHTTP(w, r)
+		if vars["room"] == "" {
+			respond.With(w, r, http.StatusBadRequest, "Room not provided.")
+			return
+		}
+
+		context.Set(r, "room", vars["room"])
+
+		next.ServeHTTP(w, r)
+	})
 }
 
 //// NewGenerateToken ...
