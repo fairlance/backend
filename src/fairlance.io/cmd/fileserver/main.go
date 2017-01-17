@@ -29,7 +29,7 @@ func main() {
 	}))
 	http.Handle("/file/", http.StripPrefix("/file/", http.FileServer(http.Dir(folderPath))))
 	http.Handle("/upload", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodPost {
+		if r.Method != "POST" { //http.MethodPost {
 			w.Write([]byte("bad method, only POST is allowed"))
 			w.WriteHeader(http.StatusMethodNotAllowed)
 			return
