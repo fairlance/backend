@@ -134,6 +134,22 @@ func (ac *ApplicationContext) FillTables() {
 		Freelancers: []Freelancer{*f1, *f2},
 	})
 
+	ac.db.Create(&Project{
+		Name:        "Project2",
+		Description: "Description2",
+		ClientID:    2,
+		IsActive:    false,
+		Freelancers: []Freelancer{*f1},
+	})
+
+	ac.db.Create(&Project{
+		Name:        "Project3",
+		Description: "Description3",
+		ClientID:    1,
+		IsActive:    true,
+		Freelancers: []Freelancer{*f2},
+	})
+
 	ac.db.Create(&JobApplication{
 		Message:          "I apply",
 		JobID:            1,
