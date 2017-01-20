@@ -10,18 +10,26 @@ import (
 )
 
 type page struct {
-	Message             string
-	Entities            map[string]interface{}
-	Document            map[string]interface{}
-	Offset              int
-	Limit               int
-	TotalInDB           int
-	TotalInSearchEngine int
-	Type                string
-	Timestamps          map[string]time.Time
-	ImporterStarted     string
-	Action              string
-	DocID               string
+	Message         string
+	Entities        map[string]interface{}
+	Offset          int
+	Limit           int
+	Type            string
+	Tab             string
+	ImporterStarted string
+	Action          string
+	DB              struct {
+		TotalInDB           int
+		TotalInSearchEngine int
+		DocID               string
+		Document            map[string]interface{}
+	}
+	Search struct {
+		Tags      []string
+		Period    string
+		PriceFrom string
+		PriceTo   string
+	}
 }
 
 func newPage(r *http.Request) page {
@@ -51,8 +59,17 @@ func newPage(r *http.Request) page {
 	if query.Get("type") != "" {
 		pageState.Type = query.Get("type")
 	}
+	pageState.Tab = "db"
+	if query.Get("tab") != "" {
+		pageState.Tab = query.Get("tab")
+	}
 	pageState.Action = query.Get("action")
-	pageState.DocID = query.Get("docID")
+	pageState.DB.DocID = query.Get("docID")
+
+	pageState.Search.Period = query.Get("period")
+	pageState.Search.PriceFrom = query.Get("price_from")
+	pageState.Search.PriceTo = query.Get("price_to")
+	pageState.Search.Tags = query["tags"]
 
 	return pageState
 }
@@ -66,7 +83,7 @@ func (p page) PrevPageLabel() string {
 }
 
 func (p page) NextPageLabel() string {
-	if p.Offset+p.Limit < p.TotalInDB {
+	if p.Offset+p.Limit < p.DB.TotalInDB {
 		return strconv.Itoa(p.Offset+p.Limit+1) + "-" + strconv.Itoa(p.Offset+(p.Limit*2))
 	}
 
@@ -86,7 +103,7 @@ func (p page) PrevPageURL() string {
 }
 
 func (p page) NextPageURL() string {
-	if p.Offset+p.Limit < p.TotalInDB {
+	if p.Offset+p.Limit < p.DB.TotalInDB {
 		return "?offset=" + strconv.Itoa(p.Offset+p.Limit) + "&limit=" + strconv.Itoa(p.Limit)
 	}
 

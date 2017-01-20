@@ -1,19 +1,19 @@
 package importer
 
 import (
-	"html/template"
-	"log"
 	"net/http"
+
+	"encoding/json"
 
 	"github.com/jinzhu/gorm"
 )
 
-type indexHandler struct {
+type indexHandlerJSON struct {
 	options Options
 	db      *gorm.DB
 }
 
-func (i indexHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (i indexHandlerJSON) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	pageState := newPage(r)
 	switch pageState.Action {
 	case "import_all":
@@ -22,18 +22,18 @@ func (i indexHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			pageState.Message = err.Error()
 		}
 	case "get":
-		doc, err := getDocFromSearchEngine(i.options, pageState.Type, pageState.DocID)
+		doc, err := getDocFromDB(*i.db, pageState.Type, pageState.DB.DocID)
 		if err != nil {
 			pageState.Message = err.Error()
 		}
-		pageState.Document = doc
+		pageState.DB.Document = doc
 	case "import":
-		err := importDoc(*i.db, i.options, pageState.Type, pageState.DocID)
+		err := importDoc(*i.db, i.options, pageState.Type, pageState.DB.DocID)
 		if err != nil {
 			pageState.Message = err.Error()
 		}
 	case "remove":
-		err := deleteDocFromSearchEngine(i.options, pageState.Type, pageState.DocID)
+		err := deleteDocFromSearchEngine(i.options, pageState.Type, pageState.DB.DocID)
 		if err != nil {
 			pageState.Message = err.Error()
 		}
@@ -52,34 +52,35 @@ func (i indexHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			pageState.Message = err.Error()
 		}
+	case "search":
+		entities, err := doSearch(i.options, pageState)
+		if err != nil {
+			pageState.Message = err.Error()
+		}
+		pageState.Entities = entities
 	}
 
 	var err error
-	switch pageState.Type {
-	case "jobs":
-		pageState.Entities, pageState.TotalInDB, err = getJobsFromDB(*i.db, pageState.Offset, pageState.Limit)
-	case "freelancers":
-		pageState.Entities, pageState.TotalInDB, err = getFreelancersFromDB(*i.db, pageState.Offset, pageState.Limit)
-	}
-	if err != nil {
-		pageState.Message = err.Error()
+	switch pageState.Tab {
+	case "db":
+		switch pageState.Type {
+		case "jobs":
+			pageState.Entities, pageState.DB.TotalInDB, err = getJobsFromDB(*i.db, pageState.Offset, pageState.Limit)
+		case "freelancers":
+			pageState.Entities, pageState.DB.TotalInDB, err = getFreelancersFromDB(*i.db, pageState.Offset, pageState.Limit)
+		}
+		pageState.DB.TotalInSearchEngine, err = getTotalInSearchEngine(i.options, pageState.Type)
+		if err != nil {
+			pageState.Message = err.Error()
+		}
+	case "search":
+		pageState.Search.Tags, err = getSearchTags(i.options)
+		if err != nil {
+			pageState.Message = err.Error()
+		}
 	}
 
-	pageState.TotalInSearchEngine, err = getTotalInSearchEngine(i.options, pageState.Type)
-	if err != nil {
-		pageState.Message = err.Error()
-	}
-
-	renderTemplate(w, pageState)
-}
-
-func renderTemplate(w http.ResponseWriter, data page) {
-	t, err := template.New("index").Parse(htmlTemplate)
-	if err != nil {
-		log.Fatal(err)
-	}
-	err = t.Execute(w, data)
-	if err != nil {
-		log.Fatal(err)
-	}
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(pageState)
 }

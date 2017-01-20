@@ -1,6 +1,7 @@
 package importer
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"strconv"
@@ -135,6 +136,53 @@ func getFreelancersFromDB(db gorm.DB, start, limit int) (map[string]interface{},
 	}
 
 	return freelancersMap, total, nil
+}
+
+func getDocFromDB(db gorm.DB, docType, docID string) (map[string]interface{}, error) {
+	docMap := make(map[string]interface{})
+	switch docType {
+	case "jobs":
+		entity := &application.Job{}
+		if err := db.Find(entity, docID).Error; err != nil {
+			return nil, err
+		}
+		docMap["ID"] = entity.ID
+		docMap["Name"] = entity.Name
+		docMap["ClientID"] = entity.ClientID
+		docMap["CreatedAt"] = entity.CreatedAt
+		docMap["UpdatedAt"] = entity.UpdatedAt
+		docMap["Details"] = entity.Details
+		docMap["IsActive"] = entity.IsActive
+		docMap["Price"] = entity.Price
+		docMap["StartDate"] = entity.StartDate
+		docMap["Tags"] = entity.Tags
+		docMap["Summary"] = entity.Summary
+		docMap["Number of applications"] = len(entity.JobApplications)
+
+		return docMap, nil
+	case "freelancers":
+		entity := &application.Freelancer{}
+		if err := db.Find(entity, docID).Error; err != nil {
+			return nil, err
+		}
+
+		docMap["ID"] = entity.ID
+		docMap["FirstName"] = entity.FirstName
+		docMap["LastName"] = entity.LastName
+		docMap["IsAvailable"] = entity.IsAvailable
+		docMap["CreatedAt"] = entity.CreatedAt
+		docMap["Email"] = entity.Email
+		docMap["HourlyRateFrom"] = entity.HourlyRateFrom
+		docMap["HourlyRateTo"] = entity.HourlyRateTo
+		docMap["Rating"] = entity.Rating
+		docMap["UpdatedAt"] = entity.UpdatedAt
+		docMap["Number of applications"] = len(entity.JobApplications)
+		docMap["Number of projects"] = len(entity.Projects)
+
+		return docMap, nil
+	}
+
+	return nil, errors.New("unknown type " + docType)
 }
 
 func getDB(options Options) (*gorm.DB, error) {
