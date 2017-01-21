@@ -98,7 +98,7 @@ func getJobsFromDB(db gorm.DB, start, limit int) (map[string]interface{}, int, e
 	if limit > 0 {
 		dbQuery = dbQuery.Limit(limit)
 	}
-	if err := dbQuery.Find(&jobs).Error; err != nil {
+	if err := dbQuery.Order("id ASC").Find(&jobs).Error; err != nil {
 		return jobsMap, total, err
 	}
 
@@ -122,7 +122,7 @@ func getFreelancersFromDB(db gorm.DB, start, limit int) (map[string]interface{},
 	if limit > 0 {
 		dbQuery = dbQuery.Limit(limit)
 	}
-	if err := dbQuery.Find(&freelancers).Error; err != nil {
+	if err := dbQuery.Order("id ASC").Find(&freelancers).Error; err != nil {
 		return freelancersMap, total, err
 	}
 

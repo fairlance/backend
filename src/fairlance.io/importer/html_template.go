@@ -15,20 +15,22 @@ var htmlTemplate = `
             }
             .alert-fixed {
                 position:fixed; 
-                top: 0px; 
-                left: 0px; 
-                width: 100%;
+                top: 0px;
+                left: 30%;
+                width: 40%;
                 z-index:9999; 
-                border-radius:0px
+                border-top-left-radius:0px;
+                border-top-right-radius:0px;
             }
         </style>
     </head>
     <body>
         <div id="app" class="container">
+            <div v-if="msg !== ''" v-bind:class="{ 'alert-success': msg == 'ok', 'alert-warning': msg == 'Running...', 'alert-danger': (msg != 'ok' && msg != 'Running...') }" class="alert alert-fixed">${msg}</div>
             <nav class="navbar navbar-default">
                 <div class="container-fluid">
                     <div class="navbar-header">
-                        <a class="navbar-brand" href="http://fairlance.io">
+                        <a class="navbar-brand" href="#">
                             Fairlance Importer
                         </a>
                     </div>
@@ -51,16 +53,13 @@ var htmlTemplate = `
                         <button class="btn btn-default btn-sm btn-danger" v-on:click="update('action=delete_all_from_db')" type="button">Delete all from DB</button>
                     </div>
                 </div>
-                <div class="col-md-9">
-                    <div v-if="msg !== ''" v-bind:class="{ 'alert-success': msg == 'ok', 'alert-danger': msg != 'ok' }" class="alert alert-fixed">${msg}</div>
-                </div>
                 <div class="col-md-9" v-if="tab == 'db'">
-                    <select style="display: inline; width: auto;" class="form-control pull-right" v-model="type">
-                        <option value="jobs">Jobs</option>
-                        <option value="freelancers">Freelancers</option>
-                    </select>
+                    <div class="btn-group pull-right">
+                        <button type="button" v-bind:class="{ 'btn-primary': type == 'jobs'}" class="btn btn-default" v-on:click="type = 'jobs'">Jobs</button>
+                        <button type="button" v-bind:class="{ 'btn-primary': type == 'freelancers'}" class="btn btn-default" v-on:click="type = 'freelancers'">Freelancers</button>
+                    </div>
                     <h1>${type}</h1>
-                    <div>
+                    <div class="clearfix">
                         <span>Total In DB: <span class="badge">${totalInDB}</span></span>
                         <span>TotalIn Search Engine: <span class="badge">${totalInSearchEngine}</span></span>
                         <span class="pull-right">
@@ -73,8 +72,8 @@ var htmlTemplate = `
                             </template>
                         </span>
                     </div>
-                    <div>
-                        <table class="table table-responsive table-striped">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-condensed">
                             <thead>
                                 <tr>
                                     <th>id</th>
@@ -130,38 +129,15 @@ var htmlTemplate = `
                 </div>
                 <div class="col-sm-12" v-if="tab == 'search'">
                     <div class="well">
-                        <button class="btn btn-default pull-right" v-on:click="search.selectedTag=null;search.priceFrom=null;search.priceTo=null;search.period=null;">reset</button>
-                        <h1>Search</h1>
+                        <div class="btn-group pull-right">
+                            <button type="button" v-bind:class="{ 'btn-primary': type == 'jobs'}" class="btn btn-default" v-on:click="type = 'jobs'">Jobs</button>
+                            <button type="button" v-bind:class="{ 'btn-primary': type == 'freelancers'}" class="btn btn-default" v-on:click="type = 'freelancers'">Freelancers</button>
+                        </div>
+                        <h1>${type}</h1>
                         <form class="form-horizontal">
                             <div class="form-group">
-                                <div class="col-sm-12 col-md-4">
-                                    <select class="form-control" v-model="search.selectedTag">
-                                        <option v-for="tag in search.tags" v-bind:value="tag">${tag}</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="form-group">
-                                <div class="col-sm-12 col-md-4">
-                                    <input type="number" class="form-control" v-model="search.priceFrom" placeholder="price from">
-                                </div>
-                                <div class="col-sm-12 col-md-4">
-                                    <input type="number" class="form-control" v-model="search.priceTo" placeholder="price to">
-                                </div>
-                            </div>
-                            <div class="form-group">
-                                <div class="col-sm-12">
-                                    <label class="radio-inline">
-                                        <input type="radio" v-model="search.period" value="1"> 1 day
-                                    </label>
-                                    <label class="radio-inline">
-                                        <input type="radio" v-model="search.period" value="2"> 2 days
-                                    </label>
-                                    <label class="radio-inline">
-                                        <input type="radio" v-model="search.period" value="3"> 3 days
-                                    </label>
-                                    <label class="radio-inline">
-                                        <input type="radio" v-model="search.period" value="7"> 7 days
-                                    </label>
+                                <div class="col-sm-12 col-md-3">
+                                    <input type="number" class="form-control" v-model="docID" placeholder="id">
                                 </div>
                             </div>
                             <div class="form-group">
@@ -172,11 +148,11 @@ var htmlTemplate = `
                         </form>
                     </div>
                     <div v-if="entities !== null" class="row">
-                        <div class="col-md-4" v-for="entity in entities">
+                        <div class="col-md-12" v-for="entity in entities">
                             <div class="panel panel-default">
                                 <div class="panel-body">
-                                    <div v-for="(val, key) in entity">
-                                        <span v-if="val !== ''"><b>${key}</b>: ${val}</span>
+                                    <div v-for="(val, key) in entity.fields">
+                                        <span><b>${key}</b>: ${val}</span>
                                     </div>
                                 </div>
                             </div>
@@ -220,12 +196,15 @@ var htmlTemplate = `
                 },
                 tab: function() {
                     this.entities = []
-                    this.update()
+                    if (this.tab == "db") {
+                        this.update()
+                    }
                 }
             },
         methods: {
             updateWithDocID: function(GETParams, id) {this.update(GETParams + "&docID=" + id);},
             update: function(GETParams) {
+                this.msg = "Running...";
                 var params = 'type=' + this.type + '&tab=' + this.tab;
                 if (GETParams != undefined) {
                     if (GETParams[0] != '&') GETParams = "&" + GETParams;
@@ -240,10 +219,10 @@ var htmlTemplate = `
                         app.type = response.data.Type;
                         app.offset = response.data.Offset;
                         app.limit = response.data.Limit;
+                        app.docID = response.data.DocID;
                         if (app.tab == 'db') {
                             app.totalInSearchEngine = response.data.DB.TotalInSearchEngine;
                             app.totalInDB = response.data.DB.TotalInDB;
-                            app.docID = response.data.DB.DocID;
                             app.document = response.data.DB.Document;
                         } else if (app.tab == 'search') {
                             app.search.tags = response.data.Search.Tags;
@@ -276,10 +255,11 @@ var htmlTemplate = `
             },
             search: function() {
                 var params = {
-                    period: this.search.period,
-                    priceFrom: this.search.priceFrom,
-                    priceTo: this.search.priceTo,
-                    tags: this.search.selectedTag,
+                    // period: this.search.period,
+                    // priceFrom: this.search.priceFrom,
+                    // priceTo: this.search.priceTo,
+                    // tags: this.search.selectedTag,
+                    docID: this.docID
                 }
                 this.update('action=search&' + this.serialize(params))
             },

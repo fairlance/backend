@@ -22,18 +22,18 @@ func (i indexHandlerJSON) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			pageState.Message = err.Error()
 		}
 	case "get":
-		doc, err := getDocFromDB(*i.db, pageState.Type, pageState.DB.DocID)
+		doc, err := getDocFromDB(*i.db, pageState.Type, pageState.DocID)
 		if err != nil {
 			pageState.Message = err.Error()
 		}
 		pageState.DB.Document = doc
 	case "import":
-		err := importDoc(*i.db, i.options, pageState.Type, pageState.DB.DocID)
+		err := importDoc(*i.db, i.options, pageState.Type, pageState.DocID)
 		if err != nil {
 			pageState.Message = err.Error()
 		}
 	case "remove":
-		err := deleteDocFromSearchEngine(i.options, pageState.Type, pageState.DB.DocID)
+		err := deleteDocFromSearchEngine(i.options, pageState.Type, pageState.DocID)
 		if err != nil {
 			pageState.Message = err.Error()
 		}
@@ -53,9 +53,14 @@ func (i indexHandlerJSON) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			pageState.Message = err.Error()
 		}
 	case "search":
-		entities, err := doSearch(i.options, pageState)
+		entity, err := getDocFromSearchEngine(i.options, pageState.Type, pageState.DocID)
 		if err != nil {
 			pageState.Message = err.Error()
+		}
+		entities := make(map[string]interface{})
+		id, ok := entity["id"].(string)
+		if ok {
+			entities[id] = entity
 		}
 		pageState.Entities = entities
 	}
@@ -74,10 +79,7 @@ func (i indexHandlerJSON) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			pageState.Message = err.Error()
 		}
 	case "search":
-		pageState.Search.Tags, err = getSearchTags(i.options)
-		if err != nil {
-			pageState.Message = err.Error()
-		}
+
 	}
 
 	w.Header().Set("Access-Control-Allow-Origin", "*")

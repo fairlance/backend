@@ -18,10 +18,10 @@ type page struct {
 	Tab             string
 	ImporterStarted string
 	Action          string
+	DocID           string
 	DB              struct {
 		TotalInDB           int
 		TotalInSearchEngine int
-		DocID               string
 		Document            map[string]interface{}
 	}
 	Search struct {
@@ -64,7 +64,7 @@ func newPage(r *http.Request) page {
 		pageState.Tab = query.Get("tab")
 	}
 	pageState.Action = query.Get("action")
-	pageState.DB.DocID = query.Get("docID")
+	pageState.DocID = query.Get("docID")
 
 	pageState.Search.Period = query.Get("period")
 	pageState.Search.PriceFrom = query.Get("price_from")
