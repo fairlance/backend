@@ -7,8 +7,6 @@ import (
 	"net/http"
 )
 
-// var baseURL = "http://localhost:3002"
-
 func getDocFromSearchEngine(options Options, index, docID string) (map[string]interface{}, error) {
 	url := options.SearcherURL + "/api/" + index + "/" + docID
 	req, err := http.NewRequest("GET", url, nil)

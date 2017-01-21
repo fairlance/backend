@@ -24,12 +24,6 @@ type page struct {
 		TotalInSearchEngine int
 		Document            map[string]interface{}
 	}
-	Search struct {
-		Tags      []string
-		Period    string
-		PriceFrom string
-		PriceTo   string
-	}
 }
 
 func newPage(r *http.Request) page {
@@ -65,11 +59,6 @@ func newPage(r *http.Request) page {
 	}
 	pageState.Action = query.Get("action")
 	pageState.DocID = query.Get("docID")
-
-	pageState.Search.Period = query.Get("period")
-	pageState.Search.PriceFrom = query.Get("price_from")
-	pageState.Search.PriceTo = query.Get("price_to")
-	pageState.Search.Tags = query["tags"]
 
 	return pageState
 }

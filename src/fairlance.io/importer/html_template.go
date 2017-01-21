@@ -78,6 +78,7 @@ var htmlTemplate = `
                                 <tr>
                                     <th>id</th>
                                     <th>name</th>
+                                    <th>info</th>
                                     <th>updatedAt</th>
                                     <th>action</th>
                                 </tr>
@@ -87,7 +88,8 @@ var htmlTemplate = `
                                 <tr>
                                     <td>${ entity.id }</td>
                                     <td>${ entity.name }${ entity.firstName } ${ entity.lastName }</td>
-                                    <td>${ entity.updatedAt }</td>
+                                    <td>${ entity.summary }${ entity.email }</td>
+                                    <td v-bind:title="entity.updatedAt">${ timeSince(entity.updatedAt) } ago</td>
                                     <td>
                                         <button type="button" class="btn btn-default btn-sm" v-if="(document !== null && docID != entity.id) || document == null" v-on:click="updateWithDocID('action=get', entity.id)">
                                             <span class="glyphicon glyphicon-chevron-down"></span>
@@ -179,14 +181,7 @@ var htmlTemplate = `
             docID: 0,
             document: {},
             offset: 0,
-            limit: 0,
-            search: {
-                period: null,
-                selectedTag: null,
-                tags: [],
-                priceFrom: null,
-                priceTo: null
-            }
+            limit: 0
         },
         watch: {
                 type: function() {
@@ -224,8 +219,6 @@ var htmlTemplate = `
                             app.totalInSearchEngine = response.data.DB.TotalInSearchEngine;
                             app.totalInDB = response.data.DB.TotalInDB;
                             app.document = response.data.DB.Document;
-                        } else if (app.tab == 'search') {
-                            app.search.tags = response.data.Search.Tags;
                         }
                         window.setTimeout(function() {
                             app.msg = '';
@@ -254,14 +247,7 @@ var htmlTemplate = `
                 return (this.offset + 1) + "-" + (this.offset+this.limit)
             },
             search: function() {
-                var params = {
-                    // period: this.search.period,
-                    // priceFrom: this.search.priceFrom,
-                    // priceTo: this.search.priceTo,
-                    // tags: this.search.selectedTag,
-                    docID: this.docID
-                }
-                this.update('action=search&' + this.serialize(params))
+                this.update('action=search&' + this.serialize({docID: this.docID}))
             },
             serialize: function(obj) {
                 var str = [];
@@ -270,6 +256,33 @@ var htmlTemplate = `
                     str.push(encodeURIComponent(p) + "=" + encodeURIComponent(obj[p]));
                     }
                 return str.join("&");
+            },
+            timeSince: function(date) {
+                date = new Date(date)
+                var seconds = Math.floor((new Date() - date) / 1000);
+
+                var interval = Math.floor(seconds / 31536000);
+
+                if (interval > 1) {
+                    return interval + " years";
+                }
+                interval = Math.floor(seconds / 2592000);
+                if (interval > 1) {
+                    return interval + " months";
+                }
+                interval = Math.floor(seconds / 86400);
+                if (interval > 1) {
+                    return interval + " days";
+                }
+                interval = Math.floor(seconds / 3600);
+                if (interval > 1) {
+                    return interval + " hours";
+                }
+                interval = Math.floor(seconds / 60);
+                if (interval > 1) {
+                    return interval + " minutes";
+                }
+                return Math.floor(seconds) + " seconds";
             }
         }
     })
