@@ -205,9 +205,9 @@ var htmlTemplate = `
                                         </div>
                                     </form>
                                 </div>
-                                <div v-if="search.rawData != ''">
-                                    <pre>${search.rawData}</pre>
-                                </div>
+                            </div>
+                            <div v-if="search.rawData != ''">
+                                <pre>${search.rawData}</pre>
                             </div>
                         </div>
                     </div>
