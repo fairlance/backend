@@ -31,6 +31,9 @@ func NewRouter(options Options) *mux.Router {
 		options: options,
 		db:      db,
 	}).Methods("GET")
+	router.Handle("/json", searchHandler{
+		options: options,
+	}).Methods("POST", "OPTIONS")
 
 	return router
 }

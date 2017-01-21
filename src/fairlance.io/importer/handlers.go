@@ -1,9 +1,14 @@
 package importer
 
 import (
+	"fmt"
+	"io/ioutil"
+	"log"
 	"net/http"
 
 	"encoding/json"
+
+	"strings"
 
 	"github.com/jinzhu/gorm"
 )
@@ -85,4 +90,82 @@ func (i indexHandlerJSON) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(pageState)
+}
+
+type searchHandler struct {
+	options Options
+}
+
+func (handler searchHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	type responseStruct struct {
+		RawData map[string]interface{}
+		Message string
+	}
+
+	response := responseStruct{}
+
+	decoder := json.NewDecoder(r.Body)
+	var body map[string]interface{}
+	err := decoder.Decode(&body)
+	if err != nil {
+		log.Println(err)
+		response.Message = err.Error()
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	defer r.Body.Close()
+
+	url := handler.options.SearcherURL + "/api/" + body["url"].(string)
+	log.Println(url)
+	req, err := http.NewRequest(strings.ToUpper(body["method"].(string)), url, nil)
+	if err != nil {
+		log.Println(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		response.Message = err.Error()
+		json.NewEncoder(w).Encode(response)
+		return
+	}
+	log.Println(url)
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Println(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		response.Message = err.Error()
+		json.NewEncoder(w).Encode(response)
+		return
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		w.WriteHeader(http.StatusInternalServerError)
+		response.Message = fmt.Sprintf("Status %d", resp.StatusCode)
+		json.NewEncoder(w).Encode(response)
+		return
+	}
+
+	b, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Println(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		response.Message = err.Error()
+		json.NewEncoder(w).Encode(response)
+		return
+	}
+
+	var doc map[string]interface{}
+	err = json.Unmarshal(b, &doc)
+	if err != nil {
+		log.Println(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		response.Message = err.Error()
+		json.NewEncoder(w).Encode(response)
+		return
+	}
+
+	response.RawData = doc
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(response)
 }
