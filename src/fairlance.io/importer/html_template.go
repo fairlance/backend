@@ -113,7 +113,7 @@ var htmlTemplate = `
                                     </tr>
                                     <template v-if="document !== null && docID == entity.id">
                                         <tr>
-                                            <td colspan="4">
+                                            <td colspan="5">
                                                 <table class="u-full-width">
                                                     <thead></thead>
                                                     <tbody>
@@ -133,38 +133,6 @@ var htmlTemplate = `
                 </div>
                 <div class="col-sm-12" v-if="tab == 'search'">
                     <div class="row">
-                        <!--<div class="col-sm-6">
-                            <div class="well">
-                                <div class="btn-group pull-right">
-                                    <button type="button" v-bind:class="{ 'btn-warning': type == 'jobs'}" class="btn btn-default" v-on:click="type = 'jobs'">Jobs</button>
-                                    <button type="button" v-bind:class="{ 'btn-warning': type == 'freelancers'}" class="btn btn-default" v-on:click="type = 'freelancers'">Freelancers</button>
-                                </div>
-                                <h1>${type}</h1>
-                                <form class="form-horizontal">
-                                    <div class="form-group">
-                                        <div class="col-sm-12 col-md-6">
-                                            <input type="number" class="form-control" v-model="docID" placeholder="id">
-                                        </div>
-                                    </div>
-                                    <div class="form-group">
-                                        <div class="col-sm-11">
-                                            <button type="button" class="btn btn-default" v-on:click="update('action=search&docID=' + docID)">Search</button>
-                                        </div>
-                                    </div>
-                                </form>
-                            </div>
-                            <div v-if="entities !== null" class="row">
-                                <div class="col-md-12" v-for="entity in entities">
-                                    <div class="panel panel-default">
-                                        <div class="panel-body">
-                                            <div v-for="(val, key) in entity.fields">
-                                                <span><b>${key}</b>: ${val}</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>-->
                         <div class="col-sm-12">
                             <div class="well">
                                 <div class="row">
@@ -206,7 +174,7 @@ var htmlTemplate = `
                                     </form>
                                 </div>
                             </div>
-                            <div v-if="search.rawData != ''">
+                            <div class="well" v-if="search.rawData != ''">
                                 <pre>${search.rawData}</pre>
                             </div>
                         </div>
