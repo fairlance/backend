@@ -24,6 +24,24 @@ type ProjectRepositoryMock struct {
 			Error error
 		}
 	}
+	GetAllProjectsForClientCall struct {
+		Receives struct {
+			ID uint
+		}
+		Returns struct {
+			Projects []Project
+			Error    error
+		}
+	}
+	GetAllProjectsForFreelancerCall struct {
+		Receives struct {
+			ID uint
+		}
+		Returns struct {
+			Projects []Project
+			Error    error
+		}
+	}
 }
 
 func (repo *ProjectRepositoryMock) GetAllProjects() ([]Project, error) {
@@ -40,4 +58,16 @@ func (repo *ProjectRepositoryMock) GetByID(id uint) (Project, error) {
 func (repo *ProjectRepositoryMock) Add(project *Project) error {
 	repo.AddCall.Receives.Project = project
 	return repo.AddCall.Returns.Error
+}
+
+func (repo *ProjectRepositoryMock) GetAllProjectsForClient(id uint) ([]Project, error) {
+	repo.GetAllProjectsForClientCall.Receives.ID = id
+	return repo.GetAllProjectsForClientCall.Returns.Projects,
+		repo.GetAllProjectsForClientCall.Returns.Error
+}
+
+func (repo *ProjectRepositoryMock) GetAllProjectsForFreelancer(id uint) ([]Project, error) {
+	repo.GetAllProjectsForFreelancerCall.Receives.ID = id
+	return repo.GetAllProjectsForFreelancerCall.Returns.Projects,
+		repo.GetAllProjectsForFreelancerCall.Returns.Error
 }

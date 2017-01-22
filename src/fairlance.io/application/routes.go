@@ -66,7 +66,7 @@ var routes = Routes{
 		"IndexProject",
 		"GET",
 		"/project",
-		getAllProjects(),
+		authHandler(getAllProjectsForUser()),
 	},
 	Route{
 		"GetProject",

@@ -11,7 +11,7 @@ import (
 	"github.com/gorilla/context"
 )
 
-func TestIndexProject(t *testing.T) {
+func TestGetAllProjects(t *testing.T) {
 	is := isHelper.New(t)
 	projectRepositoryMock := &ProjectRepositoryMock{}
 	projectRepositoryMock.GetAllProjectsCall.Returns.Projects = []Project{
@@ -42,7 +42,7 @@ func TestIndexProject(t *testing.T) {
 	is.Equal(body[1].Model.ID, 2)
 }
 
-func TestIndexProjectWithError(t *testing.T) {
+func TestGetAllProjectsWithError(t *testing.T) {
 	is := isHelper.New(t)
 	projectRepositoryMock := &ProjectRepositoryMock{}
 	projectRepositoryMock.GetAllProjectsCall.Returns.Error = errors.New("nein")
@@ -57,6 +57,54 @@ func TestIndexProjectWithError(t *testing.T) {
 
 	is.Equal(w.Code, http.StatusInternalServerError)
 }
+
+// TODO: getAllProjectsForUser
+// func TestGetAllProjectsForUser(t *testing.T) {
+// 	is := isHelper.New(t)
+// 	projectRepositoryMock := &ProjectRepositoryMock{}
+// 	projectRepositoryMock.GetAllProjectsCall.Returns.Projects = []Project{
+// 		Project{
+// 			Model: Model{
+// 				ID: 1,
+// 			},
+// 		},
+// 		Project{
+// 			Model: Model{
+// 				ID: 2,
+// 			},
+// 		},
+// 	}
+// 	userContext := &ApplicationContext{
+// 		ProjectRepository: projectRepositoryMock,
+// 	}
+
+// 	r := getRequest(userContext, ``)
+// 	w := httptest.NewRecorder()
+
+// 	getAllProjects().ServeHTTP(w, r)
+
+// 	is.Equal(w.Code, http.StatusOK)
+// 	var body []Project
+// 	is.NoErr(json.Unmarshal(w.Body.Bytes(), &body))
+// 	is.Equal(body[0].Model.ID, 1)
+// 	is.Equal(body[1].Model.ID, 2)
+// }
+
+// func TestGetAllProjectsForUserWithError(t *testing.T) {
+// 	is := isHelper.New(t)
+// 	projectRepositoryMock := &ProjectRepositoryMock{}
+// 	projectRepositoryMock.GetAllProjectsCall.Returns.Error = errors.New("nein")
+// 	userContext := &ApplicationContext{
+// 		ProjectRepository: projectRepositoryMock,
+// 	}
+
+// 	r := getRequest(userContext, ``)
+// 	w := httptest.NewRecorder()
+
+// 	getAllProjects().ServeHTTP(w, r)
+
+// 	is.Equal(w.Code, http.StatusInternalServerError)
+// }
 
 func TestProjectGetByID(t *testing.T) {
 	projectRepositoryMock := ProjectRepositoryMock{}

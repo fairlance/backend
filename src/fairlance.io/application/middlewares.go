@@ -105,7 +105,7 @@ func authHandler(next http.Handler) http.Handler {
 		})
 
 		if err != nil {
-			respond.With(w, r, http.StatusInternalServerError, err)
+			respond.With(w, r, http.StatusBadRequest, err)
 			return
 		}
 
@@ -116,6 +116,7 @@ func authHandler(next http.Handler) http.Handler {
 		}
 
 		context.Set(r, "user", claims["user"])
+		context.Set(r, "userType", claims["userType"])
 
 		next.ServeHTTP(w, r)
 	})
