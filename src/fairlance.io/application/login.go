@@ -41,7 +41,7 @@ func login() http.Handler {
 		password, passwordOk := body["password"]
 
 		if !emailOk || !passwordOk {
-			respond.With(w, r, http.StatusBadRequest, errors.New("Provide email and password."))
+			respond.With(w, r, http.StatusBadRequest, errors.New("provide email and password"))
 			return
 		}
 
@@ -54,6 +54,7 @@ func login() http.Handler {
 
 		claims := make(map[string]interface{})
 		claims["user"] = user
+		claims["userType"] = userType
 		tokenString, err := CreateToken(claims, appContext.JwtSecret, time.Hour*8)
 		if err != nil {
 			respond.With(w, r, http.StatusInternalServerError, err)

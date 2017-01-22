@@ -9,6 +9,7 @@ import (
 
 	respond "gopkg.in/matryer/respond.v1"
 
+	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/gorilla/context"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
@@ -26,6 +27,8 @@ var upgrader = websocket.Upgrader{
 func ServeWS(hub *Hub) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		appUser := context.Get(r, "user").(*application.User)
+		claims := context.Get(r, "claims").(jwt.MapClaims)
+		userType := claims["userType"].(string)
 		room := context.Get(r, "room").(string)
 
 		conn, err := upgrader.Upgrade(w, r, nil)
@@ -39,6 +42,7 @@ func ServeWS(hub *Hub) http.Handler {
 			conn:      conn,
 			send:      make(chan message, 256),
 			username:  appUser.FirstName + " " + appUser.LastName,
+			userType:  userType,
 			projectID: room,
 			id:        appUser.ID,
 		}
@@ -50,16 +54,18 @@ func ServeWS(hub *Hub) http.Handler {
 	})
 }
 
-type hasAccessFunc func(userID uint, room string) (bool, error)
+type hasAccessFunc func(userID uint, userType, room string) (bool, error)
 
 // ValidateUser ...
 func ValidateUser(hasAccess hasAccessFunc, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		room := context.Get(r, "room").(string)
+		claims := context.Get(r, "claims").(jwt.MapClaims)
+		userType := claims["userType"].(string)
 		user := context.Get(r, "user").(*application.User)
 
 		// check if user can access the room
-		ok, err := hasAccess(user.ID, room)
+		ok, err := hasAccess(user.ID, userType, room)
 		if err != nil {
 			log.Println(err)
 			respond.With(w, r, http.StatusInternalServerError, errors.New("could not check the room"))

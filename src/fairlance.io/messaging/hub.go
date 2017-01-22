@@ -27,11 +27,11 @@ type Hub struct {
 // NewHub creates new Hub object
 func NewHub(db messageDB) *Hub {
 	return &Hub{
-		broadcast:                 make(chan message),
-		register:                  make(chan *user),
-		unregister:                make(chan *user),
-		rooms:                     make(map[string]*list.List),
-		db:                        db,
+		broadcast:  make(chan message),
+		register:   make(chan *user),
+		unregister: make(chan *user),
+		rooms:      make(map[string]*list.List),
+		db:         db,
 	}
 }
 
@@ -84,7 +84,7 @@ func (h *Hub) removeUser(userToUnregister *user) {
 
 // SendMessage ...
 func (h *Hub) SendMessage(room, name, msg string) {
-	h.broadcast <- newMessage(0, name, []byte(msg), time.Now().Unix(), room)
+	h.broadcast <- newMessage(0, "system", name, []byte(msg), time.Now().Unix(), room)
 }
 
 func (h *Hub) sendOldMessagesToUser(u *user) {

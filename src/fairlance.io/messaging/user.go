@@ -23,21 +23,16 @@ const (
 // user type
 type user struct {
 	hub *Hub
-
 	// The websocket connection.
 	conn *websocket.Conn
-
 	// Buffered channel of outbound messages.
 	send chan message
-
-	// client name
-	username string
-
 	// Room in which the client is participating
 	projectID string
-
 	// user id
-	id uint
+	id       uint
+	username string
+	userType string
 }
 
 func (u *user) startReading() {
@@ -57,7 +52,7 @@ func (u *user) startReading() {
 			break
 		}
 
-		u.hub.broadcast <- newMessage(u.id, u.username, msgBytes, time.Now().Unix(), u.projectID)
+		u.hub.broadcast <- newMessage(u.id, u.userType, u.username, msgBytes, time.Now().Unix(), u.projectID)
 	}
 }
 

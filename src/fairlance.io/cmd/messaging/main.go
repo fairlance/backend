@@ -66,7 +66,7 @@ func main() {
 		hub.SendMessage(room, username, message)
 	}))
 
-	checkAccess := func(userID uint, room string) (bool, error) {
+	checkAccess := func(userID uint, userType, room string) (bool, error) {
 		response, err := http.Get(fmt.Sprintf("%s/%s", projectURL, room))
 		if err != nil {
 			return false, err
@@ -87,10 +87,17 @@ func main() {
 		}
 
 		found := false
-		for _, user := range responseStruct.Data.Freelancers {
-			if user.ID == userID {
+		switch userType {
+		case "client":
+			if responseStruct.Data.Client.ID == userID {
 				found = true
-				break
+			}
+		case "freelancer":
+			for _, user := range responseStruct.Data.Freelancers {
+				if user.ID == userID {
+					found = true
+					break
+				}
 			}
 		}
 
