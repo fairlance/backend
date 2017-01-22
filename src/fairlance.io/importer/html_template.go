@@ -152,7 +152,7 @@ var htmlTemplate = `
                                                 <div class="col-sm-12">
                                                     <div class="input-group">
                                                         <span class="input-group-addon">/api/</span>
-                                                        <input type="text" class="form-control" v-model="search.url" placeholder="url" />
+                                                        <input type="text" class="form-control" v-on:keyup.enter="doSearch" v-model="search.url" placeholder="url" />
                                                     </div>
                                                 </div>
                                             </div>
