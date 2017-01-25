@@ -14,4 +14,4 @@ deployment:
   stage:
     branch: master
     commands:
-      - ssh ${STAGE_DEPLOY_USER}@${STAGE_DEPLOY_URL} ./deploy.sh
+      - ssh ${STAGE_DEPLOY_USER}@${STAGE_DEPLOY_URL} 'bash -s' < ./deploy.sh
