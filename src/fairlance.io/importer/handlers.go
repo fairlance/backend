@@ -102,7 +102,7 @@ func (handler searchHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		Message string
 	}
 
-	response := responseStruct{}
+	response := responseStruct{Message: "ok"}
 
 	decoder := json.NewDecoder(r.Body)
 	var body map[string]interface{}

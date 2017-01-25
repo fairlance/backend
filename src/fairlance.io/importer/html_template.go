@@ -17,9 +17,9 @@ var htmlTemplate = `
             }*/
             .alert-fixed {
                 position:fixed; 
-                top: 50px;
-                left: 30%;
-                width: 40%;
+                bottom: 50px;
+                right: 30px;
+                width: 30%;
                 z-index:9999; 
                 border-top-left-radius:0px;
                 border-top-right-radius:0px;
@@ -49,7 +49,7 @@ var htmlTemplate = `
             </div>
         </nav>
         <div class="container">
-            <div class="row">
+            <div class="rpxow">
                 <div class="col-md-3" v-if="tab == 'db'">
                     <div class="btn-group-vertical btn-block">
                         <button class="btn btn-default btn-sm" v-on:click="update('action=re_generate_test_data')" type="button">Generate test data</button>
@@ -271,6 +271,7 @@ var htmlTemplate = `
                 return (this.offset + 1) + "-" + (this.offset + this.limit)
             },
             doSearch: function () {
+                this.msg = "Running...";
                 var params = {
                     type: this.type,
                     tab: this.tab,
