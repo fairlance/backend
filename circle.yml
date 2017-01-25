@@ -10,3 +10,8 @@ test:
         - sudo cp * $CIRCLE_ARTIFACTS:
             pwd:
                 bin
+deployment:
+  stage:
+    branch: master
+    commands:
+      - ssh ${STAGE_DEPLOY_USER}@${STAGE_DEPLOY_URL} ./deploy.sh
