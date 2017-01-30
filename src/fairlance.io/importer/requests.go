@@ -132,7 +132,7 @@ func importDoc(db gorm.DB, options Options, index, docID string) error {
 	switch index {
 	case "jobs":
 		job := application.Job{}
-		if err := db.Find(&job, id).Error; err != nil {
+		if err := db.Preload("Client").Find(&job, id).Error; err != nil {
 			return err
 		}
 		doc = job
