@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	isHelper "github.com/cheekybits/is"
 	"github.com/gorilla/context"
@@ -108,6 +109,7 @@ func TestGetAllProjectsWithError(t *testing.T) {
 
 func TestProjectGetByID(t *testing.T) {
 	projectRepositoryMock := ProjectRepositoryMock{}
+	timeNow := time.Now()
 	projectRepositoryMock.GetByIDCall.Returns.Project = Project{
 		Model: Model{
 			ID: 123456789,
@@ -115,7 +117,8 @@ func TestProjectGetByID(t *testing.T) {
 		Name:        "Name1",
 		Description: "Description1",
 		ClientID:    1,
-		IsActive:    true,
+		Status:      projectStatusArchived,
+		DueDate:     timeNow,
 	}
 	var appContext = &ApplicationContext{
 		ProjectRepository: &projectRepositoryMock,
@@ -133,7 +136,8 @@ func TestProjectGetByID(t *testing.T) {
 	is.Equal(body.Model.ID, uint(123456789))
 	is.Equal(body.Name, "Name1")
 	is.Equal(body.Description, "Description1")
-	is.Equal(body.IsActive, true)
+	is.Equal(body.DueDate.Format(time.RFC3339), timeNow.Format(time.RFC3339))
+	is.Equal(body.Status, projectStatusArchived)
 	is.Equal(projectRepositoryMock.GetByIDCall.Receives.ID, uint(1))
 }
 
