@@ -1,6 +1,8 @@
 package application
 
 import (
+	"time"
+
 	"github.com/jinzhu/gorm"
 )
 
@@ -127,27 +129,48 @@ func (ac *ApplicationContext) FillTables() {
 	})
 
 	ac.db.Create(&Project{
-		Name:        "Project",
-		Description: "Description",
+		Name:        "Project Pending",
+		Description: "Description Pending",
 		ClientID:    1,
-		IsActive:    true,
+		Status:      projectStatusPending,
 		Freelancers: []Freelancer{*f1, *f2},
+		DueDate:     time.Now().Add(time.Duration(21) * time.Hour),
 	})
 
 	ac.db.Create(&Project{
-		Name:        "Project2",
-		Description: "Description2",
+		Name:        "Project Finilazing Terms",
+		Description: "Description Finilazing Terms",
 		ClientID:    2,
-		IsActive:    false,
+		Status:      projectStatusFinilazingTerms,
 		Freelancers: []Freelancer{*f1},
+		DueDate:     time.Now().Add(time.Duration(5*24+1) * time.Hour),
 	})
 
 	ac.db.Create(&Project{
-		Name:        "Project3",
-		Description: "Description3",
+		Name:        "Project Working",
+		Description: "Description Working",
 		ClientID:    1,
-		IsActive:    true,
+		Status:      projectStatusWorking,
 		Freelancers: []Freelancer{*f2},
+		DueDate:     time.Now().Add(time.Hour),
+	})
+
+	ac.db.Create(&Project{
+		Name:        "Project Archived",
+		Description: "Description Archived",
+		ClientID:    1,
+		Status:      projectStatusArchived,
+		Freelancers: []Freelancer{*f2},
+		DueDate:     time.Now().Add(time.Hour),
+	})
+
+	ac.db.Create(&Project{
+		Name:        "Project Canceled",
+		Description: "Description Canceled",
+		ClientID:    2,
+		Status:      projectStatusCanceled,
+		Freelancers: []Freelancer{*f1},
+		DueDate:     time.Now().Add(time.Hour),
 	})
 
 	ac.db.Create(&JobApplication{

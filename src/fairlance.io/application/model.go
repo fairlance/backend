@@ -58,7 +58,8 @@ type Project struct {
 	Freelancers []Freelancer `json:"freelancers" gorm:"many2many:project_freelancers;"`
 	ClientID    uint         `json:"-" valid:"required"`
 	Client      Client       `json:"client"`
-	IsActive    bool         `json:"isActive"`
+	Status      string       `json:"status"`
+	DueDate     time.Time    `json:"dueDate"`
 }
 
 type Job struct {

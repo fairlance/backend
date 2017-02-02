@@ -9,6 +9,14 @@ import (
 	"gopkg.in/matryer/respond.v1"
 )
 
+const (
+	projectStatusWorking         = "working"
+	projectStatusFinilazingTerms = "finalizing_terms"
+	projectStatusPending         = "pending"
+	projectStatusArchived        = "archived"
+	projectStatusCanceled        = "canceled"
+)
+
 func getAllProjects() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var appContext = context.Get(r, "context").(*ApplicationContext)
@@ -37,6 +45,10 @@ func getAllProjectsForUser() http.Handler {
 			projects, err = appContext.ProjectRepository.GetAllProjectsForFreelancer(userID)
 		default:
 			err = fmt.Errorf("found type '%s' unrecognized", userType)
+			if err != nil {
+				respond.With(w, r, http.StatusBadRequest, err)
+				return
+			}
 		}
 		if err != nil {
 			respond.With(w, r, http.StatusInternalServerError, err)
