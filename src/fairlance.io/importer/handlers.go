@@ -116,7 +116,7 @@ func (handler searchHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
 	url := handler.options.SearcherURL + "/api/" + body["url"].(string)
-	log.Println(url)
+	
 	req, err := http.NewRequest(strings.ToUpper(body["method"].(string)), url, nil)
 	if err != nil {
 		log.Println(err)
@@ -125,7 +125,7 @@ func (handler searchHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(response)
 		return
 	}
-	log.Println(url)
+	
 	req.Header.Set("Content-Type", "application/json")
 
 	client := &http.Client{}

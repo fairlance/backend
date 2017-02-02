@@ -17,13 +17,29 @@ func reGenerateTestData(db gorm.DB, selectedType string) error {
 	}
 	switch selectedType {
 	case "jobs":
+		clients := []application.Client{}
+		for i := 0; i < 5; i++ {
+			clients = append(clients, application.Client{
+				User: application.User{
+					FirstName: fmt.Sprintf("Clint %d", i),
+					LastName:  fmt.Sprintf("Clientwood %d", i),
+					Email:     fmt.Sprintf("email%d@email.com", i),
+				},
+				Rating: float64(i % 5),
+			})
+			if err := db.Create(&clients[i]).Error; err != nil {
+				return err
+			}
+		}
+
 		// PostgreSQL only supports 65535 parameters
 		for i := 0; i < 50; i++ {
+
 			if err := db.Create(&application.Job{
 				Name:      fmt.Sprintf("Job %d", i),
 				Summary:   fmt.Sprintf("Job Summary %d", i),
 				Details:   fmt.Sprintf("Job Description %d", i),
-				ClientID:  1,
+				ClientID:  uint(i%5 + 1),
 				Price:     123*i%200 + 200,
 				StartDate: time.Now().Add(time.Duration(i*24+1) * time.Hour),
 				Tags:      []string{fmt.Sprintf("tag_%d", i), fmt.Sprintf("tag_%d", i+i)},
@@ -55,8 +71,8 @@ func reGenerateTestData(db gorm.DB, selectedType string) error {
 func deleteAllFromDB(db gorm.DB, selectedType string) error {
 	switch selectedType {
 	case "jobs":
-		db.DropTableIfExists(&application.Job{})
-		db.CreateTable(&application.Job{})
+		db.DropTableIfExists(&application.Job{}, &application.Client{})
+		db.CreateTable(&application.Job{}, &application.Client{})
 	case "freelancers":
 		db.DropTableIfExists(&application.Freelancer{})
 		db.CreateTable(&application.Freelancer{})
@@ -98,7 +114,7 @@ func getJobsFromDB(db gorm.DB, start, limit int) (map[string]interface{}, int, e
 	if limit > 0 {
 		dbQuery = dbQuery.Limit(limit)
 	}
-	if err := dbQuery.Order("id ASC").Find(&jobs).Error; err != nil {
+	if err := dbQuery.Order("id ASC").Preload("Client").Find(&jobs).Error; err != nil {
 		return jobsMap, total, err
 	}
 
