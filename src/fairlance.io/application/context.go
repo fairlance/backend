@@ -184,8 +184,8 @@ func (ac *ApplicationContext) FillTables() {
 
 	ac.ClientRepository.AddClient(&Client{
 		User: User{
-			FirstName: "ClientName",
-			LastName:  "ClientLast",
+			FirstName: "Clint",
+			LastName:  "Clienter",
 			Password:  "123456",
 			Email:     "client@mail.com",
 		},
@@ -193,6 +193,19 @@ func (ac *ApplicationContext) FillTables() {
 		Payment:  "PayPal",
 		Industry: "Dildos",
 		Rating:   4.6,
+	})
+
+	ac.ClientRepository.AddClient(&Client{
+		User: User{
+			FirstName: "Clientoni",
+			LastName:  "Clientello",
+			Password:  "654321",
+			Email:     "clientoni@mail.com",
+		},
+		Timezone: "UTC",
+		Payment:  "Skrill",
+		Industry: "Handcufs",
+		Rating:   2.4,
 	})
 
 	ac.db.Create(&Job{
