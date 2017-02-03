@@ -10,10 +10,7 @@ installDependencies:
 	cat dependencies.txt | xargs go get
 
 test:
-	go test fairlance.io/... -v
-
-testShort:
-	go test fairlance.io/... -v -short
+	 go list fairlance.io/... | grep -v /cmd/ | xargs go test -v
 
 install:
 	go install fairlance.io/cmd/...

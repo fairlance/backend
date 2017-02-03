@@ -72,7 +72,7 @@ var routes = Routes{
 		"GetProject",
 		"GET",
 		"/project/{id}",
-		withID(getProjectByID()),
+		authHandler(withID(getProjectByID())),
 	},
 
 	Route{

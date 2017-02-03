@@ -20,7 +20,7 @@ const (
 func getAllProjects() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var appContext = context.Get(r, "context").(*ApplicationContext)
-		projects, err := appContext.ProjectRepository.GetAllProjects()
+		projects, err := appContext.ProjectRepository.getAllProjects()
 		if err != nil {
 			respond.With(w, r, http.StatusInternalServerError, err)
 			return
@@ -39,10 +39,10 @@ func getAllProjectsForUser() http.Handler {
 		var projects []Project
 		var err error
 		switch userType {
-		case "client":
-			projects, err = appContext.ProjectRepository.GetAllProjectsForClient(userID)
 		case "freelancer":
-			projects, err = appContext.ProjectRepository.GetAllProjectsForFreelancer(userID)
+			projects, err = appContext.ProjectRepository.getAllProjectsForFreelancer(userID)
+		case "client":
+			projects, err = appContext.ProjectRepository.getAllProjectsForClient(userID)
 		default:
 			err = fmt.Errorf("found type '%s' unrecognized", userType)
 			if err != nil {
@@ -63,7 +63,7 @@ func getProjectByID() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var appContext = context.Get(r, "context").(*ApplicationContext)
 		var id = context.Get(r, "id").(uint)
-		project, err := appContext.ProjectRepository.GetByID(id)
+		project, err := appContext.ProjectRepository.getByID(id)
 		if err != nil {
 			respond.With(w, r, http.StatusNotFound, err)
 			return

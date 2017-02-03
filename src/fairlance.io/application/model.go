@@ -6,30 +6,30 @@ type Model struct {
 	ID        uint       `json:"id" gorm:"primary_key"`
 	CreatedAt time.Time  `json:"createdAt"`
 	UpdatedAt time.Time  `json:"updatedAt"`
-	DeletedAt *time.Time `json:"deletedAt" sql:"index"`
+	DeletedAt *time.Time `json:"deletedAt,omitempty" sql:"index"`
 }
 
 type User struct {
 	Model
-	FirstName string `json:"firstName" valid:"required"`
-	LastName  string `json:"lastName" valid:"required"`
+	FirstName string `json:"firstName,omitempty" valid:"required"`
+	LastName  string `json:"lastName,omitempty" valid:"required"`
 	Password  string `json:"-" valid:"required"`
-	Email     string `json:"email" valid:"required,email" sql:"index" gorm:"unique"`
-	//	References      []Reference      `json:"references"`
+	Email     string `json:"email,omitempty" valid:"required,email" sql:"index" gorm:"unique"`
+	//	Reviews         []Review         `json:"reviews,omitempty"`
 }
 
 type Freelancer struct {
 	User
-	Rating          float64          `json:"rating"`
-	Timezone        string           `json:"timezone"`
-	Skills          stringList       `json:"skills" sql:"type:JSONB NOT NULL DEFAULT '{}'::JSONB"`
-	IsAvailable     bool             `json:"isAvailable"`
-	HourlyRateFrom  uint             `json:"hourlyRateFrom"`
-	HourlyRateTo    uint             `json:"hourlyRateTo"`
-	Projects        []Project        `json:"projects" gorm:"many2many:project_freelancers;"`
-	Reviews         []Review         `json:"reviews"`
-	References      []Reference      `json:"references"` // should be part of User
-	JobApplications []JobApplication `json:"jobApplications"`
+	Rating          float64          `json:"rating,omitempty"`
+	Timezone        string           `json:"timezone,omitempty"`
+	Skills          stringList       `json:"skills,omitempty" sql:"type:JSONB NOT NULL DEFAULT '{}'::JSONB"`
+	IsAvailable     bool             `json:"isAvailable,omitempty"`
+	HourlyRateFrom  uint             `json:"hourlyRateFrom,omitempty"`
+	HourlyRateTo    uint             `json:"hourlyRateTo,omitempty"`
+	Projects        []Project        `json:"projects,omitempty" gorm:"many2many:project_freelancers;"`
+	Reviews         []Review         `json:"reviews,omitempty"` // should be part of User
+	References      []Reference      `json:"references,omitempty"`
+	JobApplications []JobApplication `json:"jobApplications,omitempty"`
 }
 
 type FreelancerUpdate struct {
@@ -42,74 +42,74 @@ type FreelancerUpdate struct {
 
 type Client struct {
 	User
-	Timezone string    `json:"timezone"`
-	Payment  string    `json:"payment"`
-	Industry string    `json:"industry"`
-	Rating   float64   `json:"rating"`
-	Jobs     []Job     `json:"jobs"`
-	Projects []Project `json:"projects"`
-	Reviews  []Review  `json:"reviews"`
+	Timezone string    `json:"timezone,omitempty"`
+	Payment  string    `json:"payment,omitempty"`
+	Industry string    `json:"industry,omitempty"`
+	Rating   float64   `json:"rating,omitempty"`
+	Jobs     []Job     `json:"jobs,omitempty"`
+	Projects []Project `json:"projects,omitempty"`
+	Reviews  []Review  `json:"reviews,omitempty"`
 }
 
 type Project struct {
 	Model
-	Name        string       `json:"name" valid:"required"`
-	Description string       `json:"description" valid:"required"`
-	Freelancers []Freelancer `json:"freelancers" gorm:"many2many:project_freelancers;"`
+	Name        string       `json:"name,omitempty" valid:"required"`
+	Description string       `json:"description,omitempty" valid:"required"`
+	Freelancers []Freelancer `json:"freelancers,omitempty" gorm:"many2many:project_freelancers;"`
 	ClientID    uint         `json:"-" valid:"required"`
-	Client      Client       `json:"client"`
-	Status      string       `json:"status"`
-	DueDate     time.Time    `json:"dueDate"`
+	Client      Client       `json:"client,omitempty"`
+	Status      string       `json:"status,omitempty"`
+	DueDate     time.Time    `json:"dueDate,omitempty"`
 }
 
 type Job struct {
 	Model
-	Name            string           `json:"name" valid:"required"`
-	Summary         string           `json:"summary" valid:"required"`
-	Details         string           `json:"details" valid:"required"`
+	Name            string           `json:"name,omitempty" valid:"required"`
+	Summary         string           `json:"summary,omitempty" valid:"required"`
+	Details         string           `json:"details,omitempty" valid:"required"`
 	ClientID        uint             `json:"-" valid:"required"`
-	Client          Client           `json:"client"`
-	IsActive        bool             `json:"isActive"`
-	Price           int              `json:"price"`
-	StartDate       time.Time        `json:"startDate"`
-	Links           stringList       `json:"links" sql:"type:JSONB NOT NULL DEFAULT '{}'::JSONB"`
-	Tags            stringList       `json:"tags" sql:"type:JSONB NOT NULL DEFAULT '{}'::JSONB"`
-	JobApplications []JobApplication `json:"jobApplications"`
+	Client          Client           `json:"client,omitempty"`
+	IsActive        bool             `json:"isActive,omitempty"`
+	Price           int              `json:"price,omitempty"`
+	StartDate       time.Time        `json:"startDate,omitempty"`
+	Links           stringList       `json:"links,omitempty" sql:"type:JSONB NOT NULL DEFAULT '{}'::JSONB"`
+	Tags            stringList       `json:"tags,omitempty" sql:"type:JSONB NOT NULL DEFAULT '{}'::JSONB"`
+	JobApplications []JobApplication `json:"jobApplications,omitempty"`
 }
 
 type Review struct {
 	Model
-	Title        string  `json:"title" valid:"required"`
-	Content      string  `json:"content"`
-	Rating       float64 `json:"rating" valid:"required"`
-	JobID        uint    `json:"jobId" valid:"required"`
-	ClientID     uint    `json:"clientId" valid:"required"`
-	FreelancerID uint    `json:"freelancerId"`
+	Title        string  `json:"title,omitempty" valid:"required"`
+	Content      string  `json:"content,omitempty"`
+	Rating       float64 `json:"rating,omitempty" valid:"required"`
+	JobID        uint    `json:"jobId,omitempty" valid:"required"`
+	ClientID     uint    `json:"clientId,omitempty" valid:"required"`
+	FreelancerID uint    `json:"freelancerId,omitempty"` //should be userID
 }
 
 type Reference struct {
 	Model
-	Title        string `json:"title" valid:"required"`
-	Content      string `json:"content"`
-	Media        Media  `json:"media"`
-	FreelancerID uint   `json:"freelancerId"` //should be userID
+	Title        string `json:"title,omitempty" valid:"required"`
+	Content      string `json:"content,omitempty"`
+	Media        Media  `json:"media,omitempty"`
+	FreelancerID uint   `json:"freelancerId,omitempty"`
 }
 
 type Media struct {
 	Model
-	Image       string `json:"image"`
-	Video       string `json:"video"`
-	ReferenceID uint   `json:"referenceId"`
+	Image       string `json:"image,omitempty"`
+	Video       string `json:"video,omitempty"`
+	ReferenceID uint   `json:"referenceId,omitempty"`
 }
 
 type JobApplication struct {
 	Model
-	Message          string     `json:"message" valid:"required"`
-	Samples          uintList   `json:"samples" valid:"required" sql:"type:JSONB NOT NULL DEFAULT '{}'::JSONB"`
-	DeliveryEstimate int        `json:"deliveryEstimate" valid:"required"`
-	Milestones       stringList `json:"milestones" valid:"required" sql:"type:JSONB NOT NULL DEFAULT '{}'::JSONB"`
-	HourPrice        float64    `json:"hourPrice" valid:"required"`
-	Hours            int        `json:"hours" valid:"required"`
-	FreelancerID     uint       `json:"freelancerId" valid:"required"`
+	Message          string     `json:"message,omitempty" valid:"required"`
+	Samples          uintList   `json:"samples,omitempty" valid:"required" sql:"type:JSONB NOT NULL DEFAULT '{}'::JSONB"`
+	DeliveryEstimate int        `json:"deliveryEstimate,omitempty" valid:"required"`
+	Milestones       stringList `json:"milestones,omitempty" valid:"required" sql:"type:JSONB NOT NULL DEFAULT '{}'::JSONB"`
+	HourPrice        float64    `json:"hourPrice,omitempty" valid:"required"`
+	Hours            int        `json:"hours,omitempty" valid:"required"`
+	FreelancerID     uint       `json:"freelancerId,omitempty" valid:"required"`
 	JobID            uint       `json:"-" valid:"required"`
 }

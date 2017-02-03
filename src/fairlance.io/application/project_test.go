@@ -14,8 +14,8 @@ import (
 
 func TestGetAllProjects(t *testing.T) {
 	is := isHelper.New(t)
-	projectRepositoryMock := &ProjectRepositoryMock{}
-	projectRepositoryMock.GetAllProjectsCall.Returns.Projects = []Project{
+	projectRepoMock := &projectRepositoryMock{}
+	projectRepoMock.GetAllProjectsCall.Returns.Projects = []Project{
 		Project{
 			Model: Model{
 				ID: 1,
@@ -28,7 +28,7 @@ func TestGetAllProjects(t *testing.T) {
 		},
 	}
 	userContext := &ApplicationContext{
-		ProjectRepository: projectRepositoryMock,
+		ProjectRepository: projectRepoMock,
 	}
 
 	r := getRequest(userContext, ``)
@@ -45,10 +45,10 @@ func TestGetAllProjects(t *testing.T) {
 
 func TestGetAllProjectsWithError(t *testing.T) {
 	is := isHelper.New(t)
-	projectRepositoryMock := &ProjectRepositoryMock{}
-	projectRepositoryMock.GetAllProjectsCall.Returns.Error = errors.New("nein")
+	projectRepoMock := &projectRepositoryMock{}
+	projectRepoMock.GetAllProjectsCall.Returns.Error = errors.New("nein")
 	userContext := &ApplicationContext{
-		ProjectRepository: projectRepositoryMock,
+		ProjectRepository: projectRepoMock,
 	}
 
 	r := getRequest(userContext, ``)
@@ -59,58 +59,98 @@ func TestGetAllProjectsWithError(t *testing.T) {
 	is.Equal(w.Code, http.StatusInternalServerError)
 }
 
-// TODO: getAllProjectsForUser
-// func TestGetAllProjectsForUser(t *testing.T) {
-// 	is := isHelper.New(t)
-// 	projectRepositoryMock := &ProjectRepositoryMock{}
-// 	projectRepositoryMock.GetAllProjectsCall.Returns.Projects = []Project{
-// 		Project{
-// 			Model: Model{
-// 				ID: 1,
-// 			},
-// 		},
-// 		Project{
-// 			Model: Model{
-// 				ID: 2,
-// 			},
-// 		},
-// 	}
-// 	userContext := &ApplicationContext{
-// 		ProjectRepository: projectRepositoryMock,
-// 	}
+func TestGetAllProjectsForFreelancer(t *testing.T) {
+	is := isHelper.New(t)
+	projectRepoMock := &projectRepositoryMock{}
+	projectRepoMock.GetAllProjectsForFreelancerCall.Returns.Projects = []Project{
+		Project{
+			Model: Model{
+				ID: 1,
+			},
+		},
+		Project{
+			Model: Model{
+				ID: 2,
+			},
+		},
+	}
+	userContext := &ApplicationContext{
+		ProjectRepository: projectRepoMock,
+	}
 
-// 	r := getRequest(userContext, ``)
-// 	w := httptest.NewRecorder()
+	r := getRequest(userContext, ``)
+	w := httptest.NewRecorder()
 
-// 	getAllProjects().ServeHTTP(w, r)
+	context.Set(r, "userType", "freelancer")
+	context.Set(r, "user", map[string]interface{}{
+		"id": float64(1),
+	})
+	getAllProjectsForUser().ServeHTTP(w, r)
 
-// 	is.Equal(w.Code, http.StatusOK)
-// 	var body []Project
-// 	is.NoErr(json.Unmarshal(w.Body.Bytes(), &body))
-// 	is.Equal(body[0].Model.ID, 1)
-// 	is.Equal(body[1].Model.ID, 2)
-// }
+	is.Equal(w.Code, http.StatusOK)
+	var body []Project
+	is.NoErr(json.Unmarshal(w.Body.Bytes(), &body))
+	is.Equal(projectRepoMock.GetAllProjectsForFreelancerCall.Receives.ID, 1)
+	is.Equal(body[0].Model.ID, 1)
+	is.Equal(body[1].Model.ID, 2)
+}
 
-// func TestGetAllProjectsForUserWithError(t *testing.T) {
-// 	is := isHelper.New(t)
-// 	projectRepositoryMock := &ProjectRepositoryMock{}
-// 	projectRepositoryMock.GetAllProjectsCall.Returns.Error = errors.New("nein")
-// 	userContext := &ApplicationContext{
-// 		ProjectRepository: projectRepositoryMock,
-// 	}
+func TestGetAllProjectsForClient(t *testing.T) {
+	is := isHelper.New(t)
+	projectRepoMock := &projectRepositoryMock{}
+	projectRepoMock.GetAllProjectsForClientCall.Returns.Projects = []Project{
+		Project{
+			Model: Model{
+				ID: 1,
+			},
+		},
+		Project{
+			Model: Model{
+				ID: 2,
+			},
+		},
+	}
+	userContext := &ApplicationContext{
+		ProjectRepository: projectRepoMock,
+	}
 
-// 	r := getRequest(userContext, ``)
-// 	w := httptest.NewRecorder()
+	r := getRequest(userContext, ``)
+	w := httptest.NewRecorder()
 
-// 	getAllProjects().ServeHTTP(w, r)
+	context.Set(r, "userType", "client")
+	context.Set(r, "user", map[string]interface{}{
+		"id": float64(1),
+	})
+	getAllProjectsForUser().ServeHTTP(w, r)
 
-// 	is.Equal(w.Code, http.StatusInternalServerError)
-// }
+	is.Equal(w.Code, http.StatusOK)
+	var body []Project
+	is.NoErr(json.Unmarshal(w.Body.Bytes(), &body))
+	is.Equal(projectRepoMock.GetAllProjectsForClientCall.Receives.ID, 1)
+	is.Equal(body[0].Model.ID, 1)
+	is.Equal(body[1].Model.ID, 2)
+}
+
+func TestGetAllProjectsForUserWithError(t *testing.T) {
+	is := isHelper.New(t)
+	projectRepoMock := &projectRepositoryMock{}
+	projectRepoMock.GetAllProjectsCall.Returns.Error = errors.New("nein")
+	userContext := &ApplicationContext{
+		ProjectRepository: projectRepoMock,
+	}
+
+	r := getRequest(userContext, ``)
+	w := httptest.NewRecorder()
+
+	getAllProjects().ServeHTTP(w, r)
+
+	is.Equal(w.Code, http.StatusInternalServerError)
+}
 
 func TestProjectGetByID(t *testing.T) {
-	projectRepositoryMock := ProjectRepositoryMock{}
+	projectRepoMock := &projectRepositoryMock{}
 	timeNow := time.Now()
-	projectRepositoryMock.GetByIDCall.Returns.Project = Project{
+	projectRepoMock.GetByIDCall.Returns.Project = Project{
 		Model: Model{
 			ID: 123456789,
 		},
@@ -121,7 +161,7 @@ func TestProjectGetByID(t *testing.T) {
 		DueDate:     timeNow,
 	}
 	var appContext = &ApplicationContext{
-		ProjectRepository: &projectRepositoryMock,
+		ProjectRepository: projectRepoMock,
 	}
 	is := isHelper.New(t)
 	w := httptest.NewRecorder()
@@ -138,14 +178,14 @@ func TestProjectGetByID(t *testing.T) {
 	is.Equal(body.Description, "Description1")
 	is.Equal(body.DueDate.Format(time.RFC3339), timeNow.Format(time.RFC3339))
 	is.Equal(body.Status, projectStatusArchived)
-	is.Equal(projectRepositoryMock.GetByIDCall.Receives.ID, uint(1))
+	is.Equal(projectRepoMock.GetByIDCall.Receives.ID, uint(1))
 }
 
 func TestProjectGetByIDError(t *testing.T) {
-	projectRepositoryMock := ProjectRepositoryMock{}
-	projectRepositoryMock.GetByIDCall.Returns.Error = errors.New("Blah")
+	projectRepoMock := &projectRepositoryMock{}
+	projectRepoMock.GetByIDCall.Returns.Error = errors.New("Blah")
 	var appContext = &ApplicationContext{
-		ProjectRepository: &projectRepositoryMock,
+		ProjectRepository: projectRepoMock,
 	}
 	is := isHelper.New(t)
 	w := httptest.NewRecorder()

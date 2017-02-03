@@ -3,46 +3,50 @@ package application
 import "github.com/jinzhu/gorm"
 
 type ProjectRepository interface {
-	GetAllProjects() ([]Project, error)
-	GetByID(id uint) (Project, error)
-	Add(project *Project) error
-	GetAllProjectsForClient(id uint) ([]Project, error)
-	GetAllProjectsForFreelancer(id uint) ([]Project, error)
+	getAllProjects() ([]Project, error)
+	getByID(id uint) (Project, error)
+	add(project *Project) error
+	getAllProjectsForClient(id uint) ([]Project, error)
+	getAllProjectsForFreelancer(id uint) ([]Project, error)
 }
 
-type PostgreProjectRepository struct {
+const (
+	getAllProjectsForFreelancerQuery = "SELECT p.id, p.name, p.description, p.status, p.due_date, c.id AS client_id, c.first_name, c.last_name FROM projects p, clients c, project_freelancers pf WHERE pf.freelancer_id = ? AND p.client_id = c.id GROUP BY c.id, p.id"
+)
+
+type postgreProjectRepository struct {
 	db *gorm.DB
 }
 
 func NewProjectRepository(db *gorm.DB) (ProjectRepository, error) {
-	repo := &PostgreProjectRepository{db}
+	repo := &postgreProjectRepository{db}
 
 	return repo, nil
 }
 
-func (repo *PostgreProjectRepository) GetAllProjects() ([]Project, error) {
+func (repo *postgreProjectRepository) getAllProjects() ([]Project, error) {
 	projects := []Project{}
 	err := repo.db.Preload("Client").Preload("Freelancers").Find(&projects).Error
 	return projects, err
 }
 
-func (repo *PostgreProjectRepository) GetByID(id uint) (Project, error) {
+// todo: check if user has access to project
+func (repo *postgreProjectRepository) getByID(id uint) (Project, error) {
 	project := Project{}
 	err := repo.db.Preload("Client").Preload("Freelancers").Find(&project, id).Error
 	return project, err
 }
 
-func (repo *PostgreProjectRepository) Add(project *Project) error {
+func (repo *postgreProjectRepository) add(project *Project) error {
 	return repo.db.Create(project).Error
 }
-
-func (repo *PostgreProjectRepository) GetAllProjectsForClient(id uint) ([]Project, error) {
+func (repo *postgreProjectRepository) getAllProjectsForClient(id uint) ([]Project, error) {
 	projects := []Project{}
 	err := repo.db.Preload("Client").Preload("Freelancers").Find(&projects).Where("client_id = ?", id).Error
 	return projects, err
 }
 
-func (repo *PostgreProjectRepository) GetAllProjectsForFreelancer(id uint) ([]Project, error) {
+func (repo *postgreProjectRepository) getAllProjectsForFreelancer(id uint) ([]Project, error) {
 	projects := []Project{}
 	var projectIDs []uint
 	rows, err := repo.db.Table("project_freelancers").Select("project_id").Where("freelancer_id = ?", id).Rows()

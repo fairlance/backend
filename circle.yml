@@ -3,7 +3,7 @@ dependencies:
         - make installDependencies
 test:
     override:
-        - make testShort
+        - make test
     post:
         - make install
         - make installARM
