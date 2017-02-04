@@ -15,7 +15,6 @@ type User struct {
 	LastName  string `json:"lastName,omitempty" valid:"required"`
 	Password  string `json:"-" valid:"required"`
 	Email     string `json:"email,omitempty" valid:"required,email" sql:"index" gorm:"unique"`
-	//	Reviews         []Review         `json:"reviews,omitempty"`
 }
 
 type Freelancer struct {
@@ -27,7 +26,7 @@ type Freelancer struct {
 	HourlyRateFrom  uint             `json:"hourlyRateFrom,omitempty"`
 	HourlyRateTo    uint             `json:"hourlyRateTo,omitempty"`
 	Projects        []Project        `json:"projects,omitempty" gorm:"many2many:project_freelancers;"`
-	Reviews         []Review         `json:"reviews,omitempty"` // should be part of User
+	Reviews         []Review         `json:"reviews,omitempty"`
 	References      []Reference      `json:"references,omitempty"`
 	JobApplications []JobApplication `json:"jobApplications,omitempty"`
 }
@@ -57,7 +56,7 @@ type Project struct {
 	Description string       `json:"description,omitempty" valid:"required"`
 	Freelancers []Freelancer `json:"freelancers,omitempty" gorm:"many2many:project_freelancers;"`
 	ClientID    uint         `json:"-" valid:"required"`
-	Client      Client       `json:"client,omitempty"`
+	Client      *Client      `json:"client,omitempty"`
 	Status      string       `json:"status,omitempty"`
 	DueDate     time.Time    `json:"dueDate,omitempty"`
 }
@@ -68,7 +67,7 @@ type Job struct {
 	Summary         string           `json:"summary,omitempty" valid:"required"`
 	Details         string           `json:"details,omitempty" valid:"required"`
 	ClientID        uint             `json:"-" valid:"required"`
-	Client          Client           `json:"client,omitempty"`
+	Client          *Client          `json:"client,omitempty"`
 	IsActive        bool             `json:"isActive,omitempty"`
 	Price           int              `json:"price,omitempty"`
 	StartDate       time.Time        `json:"startDate,omitempty"`
@@ -111,5 +110,5 @@ type JobApplication struct {
 	HourPrice        float64    `json:"hourPrice,omitempty" valid:"required"`
 	Hours            int        `json:"hours,omitempty" valid:"required"`
 	FreelancerID     uint       `json:"freelancerId,omitempty" valid:"required"`
-	JobID            uint       `json:"-" valid:"required"`
+	JobID            uint       `json:"-"`
 }

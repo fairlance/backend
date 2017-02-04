@@ -73,7 +73,7 @@ func withJob(handler http.Handler) http.Handler {
 		// https://github.com/asaskevich/govalidator/issues/133
 		// https://github.com/asaskevich/govalidator/issues/112
 		if len(body.Tags) > 10 {
-			respond.With(w, r, http.StatusBadRequest, errors.New("Max of 10 tags are allowed."))
+			respond.With(w, r, http.StatusBadRequest, errors.New("max of 10 tags are allowed"))
 			return
 		}
 
@@ -104,38 +104,20 @@ func withJobApplication(handler http.Handler) http.Handler {
 		decoder := json.NewDecoder(r.Body)
 		defer r.Body.Close()
 
-		var body struct {
-			Message          string     `json:"message" valid:"required"`
-			Samples          uintList   `json:"samples" valid:"required"`
-			DeliveryEstimate int        `json:"deliveryEstimate" valid:"required"`
-			Milestones       stringList `json:"milestones" valid:"required"`
-			HourPrice        float64    `json:"hourPrice" valid:"required"`
-			Hours            int        `json:"hours" valid:"required"`
-			FreelancerID     uint       `json:"freelancerId" valid:"required"`
-		}
+		var jobApplication JobApplication
 
-		if err := decoder.Decode(&body); err != nil {
+		if err := decoder.Decode(&jobApplication); err != nil {
 			respond.With(w, r, http.StatusBadRequest, errors.New("Invalid JSON"))
 			return
 		}
 
-		if ok, err := govalidator.ValidateStruct(body); ok == false || err != nil {
+		if ok, err := govalidator.ValidateStruct(jobApplication); ok == false || err != nil {
 			errs := govalidator.ErrorsByField(err)
 			respond.With(w, r, http.StatusBadRequest, errs)
 			return
 		}
 
-		jobApplication := &JobApplication{
-			Message:          body.Message,
-			Milestones:       body.Milestones,
-			Samples:          body.Samples,
-			DeliveryEstimate: body.DeliveryEstimate,
-			Hours:            body.Hours,
-			HourPrice:        body.HourPrice,
-			FreelancerID:     body.FreelancerID,
-		}
-
-		context.Set(r, "jobApplication", jobApplication)
+		context.Set(r, "jobApplication", &jobApplication)
 
 		handler.ServeHTTP(w, r)
 	})

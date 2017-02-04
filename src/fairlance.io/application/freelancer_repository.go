@@ -28,7 +28,7 @@ func NewFreelancerRepository(db *gorm.DB) (FreelancerRepository, error) {
 
 func (repo *PostgreFreelancerRepository) GetAllFreelancers() ([]Freelancer, error) {
 	freelancers := []Freelancer{}
-	if err := repo.db.Preload("Projects").Preload("References").Preload("References.Media").Preload("Reviews").Find(&freelancers).Error; err != nil {
+	if err := repo.db.Preload("Projects").Preload("Projects.Client").Preload("References").Preload("References.Media").Preload("Reviews").Find(&freelancers).Error; err != nil {
 		return freelancers, err
 	}
 	return freelancers, nil
@@ -36,7 +36,7 @@ func (repo *PostgreFreelancerRepository) GetAllFreelancers() ([]Freelancer, erro
 
 func (repo *PostgreFreelancerRepository) GetFreelancer(id uint) (Freelancer, error) {
 	freelancer := Freelancer{}
-	if err := repo.db.Preload("Projects").Preload("References").Preload("References.Media").Preload("Reviews").Find(&freelancer, id).Error; err != nil {
+	if err := repo.db.Preload("Projects").Preload("Projects.Client").Preload("References").Preload("References.Media").Preload("Reviews").Find(&freelancer, id).Error; err != nil {
 		return freelancer, err
 	}
 	return freelancer, nil
