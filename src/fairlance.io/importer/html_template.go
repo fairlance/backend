@@ -231,7 +231,7 @@ var htmlTemplate = `
                     params = params + GETParams;
                 }
                 var app = this;
-                axios.get(location.host + '/json?' + params)
+                axios.get(location.origin + '/json?' + params)
                     .then(function (response) {
                         app.msg = response.data.Message;
                         app.entities = response.data.Entities;
@@ -280,7 +280,7 @@ var htmlTemplate = `
                     method: this.search.method,
                     body: this.search.body,
                 }
-                axios.post(location.host + '/json', params)
+                axios.post(location.origin + '/json', params)
                     .then(function (response) {
                         app.msg = response.data.Message;
                         app.search.rawData = JSON.stringify(response.data.RawData, null, 4);
