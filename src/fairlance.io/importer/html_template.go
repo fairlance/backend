@@ -231,7 +231,7 @@ var htmlTemplate = `
                     params = params + GETParams;
                 }
                 var app = this;
-                axios.get('http://local.fairlance.io:3004/json?' + params)
+                axios.get(location.host + '/json?' + params)
                     .then(function (response) {
                         app.msg = response.data.Message;
                         app.entities = response.data.Entities;
@@ -280,7 +280,7 @@ var htmlTemplate = `
                     method: this.search.method,
                     body: this.search.body,
                 }
-                axios.post('http://local.fairlance.io:3004/json', params)
+                axios.post(location.host + '/json', params)
                     .then(function (response) {
                         app.msg = response.data.Message;
                         app.search.rawData = JSON.stringify(response.data.RawData, null, 4);
