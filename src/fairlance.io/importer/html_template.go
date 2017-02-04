@@ -97,7 +97,7 @@ var htmlTemplate = `
                                         <td v-bind:title="entity.updatedAt">${ timeSince(entity.updatedAt) } ago</td>
                                         <td>
                                             <button type="button" class="btn btn-default btn-sm" v-if="(document !== null && docID != entity.id) || document == null"
-                                                v-on:click="update('action=get&docID=' + entity.id)">
+                                                v-on:click="update('action=get&docID=' + entity.id + '&offset='+ offset + '&limit=' + limit)">
                                                 <span class="glyphicon glyphicon-chevron-down"></span>
                                             </button>
                                             <button type="button" class="btn btn-default btn-sm" v-if="document !== null && docID == entity.id" v-on:click="document = null">
