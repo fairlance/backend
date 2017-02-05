@@ -67,7 +67,7 @@ func main() {
 
 func ensureMethod(method string, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		log.Println(r.Method)
+		w.Header().Set("Access-Control-Allow-Origin", "*")
 		if r.Method == "OPTIONS" {
 			// Stop here for a Preflighted OPTIONS request.
 			return
@@ -126,7 +126,7 @@ func index() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add("Content-Type", "text/html")
 		w.Write([]byte(`
-        <form enctype="multipart/form-data" action="/api/fsrv/upload" method="post">
+        <form enctype="multipart/form-data" action="/upload" method="post">
             <input type="file" name="uploadfile" />
             <input type="submit" value="upload" />
         </form>
