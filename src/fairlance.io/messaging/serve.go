@@ -54,7 +54,7 @@ func ServeWS(hub *Hub) http.Handler {
 	})
 }
 
-type hasAccessFunc func(userID uint, userType, room string) (bool, error)
+type hasAccessFunc func(userID uint, userType, token, room string) (bool, error)
 
 // ValidateUser ...
 func ValidateUser(hasAccess hasAccessFunc, next http.Handler) http.Handler {
@@ -63,9 +63,10 @@ func ValidateUser(hasAccess hasAccessFunc, next http.Handler) http.Handler {
 		claims := context.Get(r, "claims").(jwt.MapClaims)
 		userType := claims["userType"].(string)
 		user := context.Get(r, "user").(*application.User)
+		token := context.Get(r, "token").(string)
 
 		// check if user can access the room
-		ok, err := hasAccess(user.ID, userType, room)
+		ok, err := hasAccess(user.ID, userType, token, room)
 		if err != nil {
 			log.Println(err)
 			respond.With(w, r, http.StatusInternalServerError, errors.New("could not check the room"))

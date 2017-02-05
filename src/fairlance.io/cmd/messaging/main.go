@@ -66,8 +66,11 @@ func main() {
 		hub.SendMessage(room, username, message)
 	}))
 
-	checkAccess := func(userID uint, userType, room string) (bool, error) {
-		response, err := http.Get(fmt.Sprintf("%s/%s", projectURL, room))
+	checkAccess := func(userID uint, userType, token, room string) (bool, error) {
+		client := &http.Client{}
+		req, err := http.NewRequest("GET", fmt.Sprintf("%s/%s", projectURL, room), nil)
+		req.Header.Set("Authorization", "Bearer "+token)
+		response, err := client.Do(req)
 		if err != nil {
 			return false, err
 		}
