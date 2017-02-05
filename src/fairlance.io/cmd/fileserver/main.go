@@ -53,10 +53,14 @@ func main() {
 	http.Handle("/",
 		opts.Handler(ensureMethod("GET", index())))
 
+	// http.Handle("/file/",
+	// 	opts.Handler(ensureMethod("GET", app.WithTokenFromHeader(
+	// 		app.AuthenticateToken(
+	// 			*secret, http.StripPrefix("/file/", http.FileServer(http.Dir(*folderPath))))))))
+
 	http.Handle("/file/",
-		opts.Handler(ensureMethod("GET", app.WithTokenFromHeader(
-			app.AuthenticateTokenWithClaims(
-				*secret, http.StripPrefix("/file/", http.FileServer(http.Dir(*folderPath))))))))
+		opts.Handler(ensureMethod("GET",
+			http.StripPrefix("/file/", http.FileServer(http.Dir(*folderPath))))))
 
 	http.Handle("/upload",
 		opts.Handler(ensureMethod("POST", app.WithTokenFromHeader(
