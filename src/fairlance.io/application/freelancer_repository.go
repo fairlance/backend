@@ -80,20 +80,20 @@ func (repo *PostgreFreelancerRepository) DeleteFreelancer(id uint) error {
 }
 
 func (repo *PostgreFreelancerRepository) AddReview(freelancerID uint, review *Review) error {
-	freelancer := Freelancer{}
+	freelancer := &Freelancer{}
 
-	err := repo.db.Preload("Reviews").Find(&freelancer, freelancerID).Error
+	err := repo.db.Preload("Reviews").Find(freelancer, freelancerID).Error
 	if err != nil {
 		return err
 	}
 
 	freelancer.Reviews = append(freelancer.Reviews, *review)
 
-	rating := review.Rating
+	var rating float64
 	for _, review := range freelancer.Reviews {
 		rating += review.Rating
 	}
-	freelancer.Rating = rating / float64(len(freelancer.Reviews)+1)
+	freelancer.Rating = round(rating/float64(len(freelancer.Reviews)), 0.5, 1)
 
-	return repo.db.Save(&freelancer).Error
+	return repo.db.Save(freelancer).Error
 }

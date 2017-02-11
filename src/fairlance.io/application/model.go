@@ -29,6 +29,7 @@ type Freelancer struct {
 	Reviews         []Review         `json:"reviews,omitempty"`
 	References      []Reference      `json:"references,omitempty"`
 	JobApplications []JobApplication `json:"jobApplications,omitempty"`
+	About           string           `json:"about,omitempty"`
 }
 
 type FreelancerUpdate struct {

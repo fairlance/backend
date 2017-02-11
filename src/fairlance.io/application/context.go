@@ -59,6 +59,7 @@ func (ac *ApplicationContext) DropCreateFillTables() {
 
 func (ac *ApplicationContext) DropTables() {
 	ac.db.DropTableIfExists(&Freelancer{}, &Project{}, &Client{}, &Job{}, &Review{}, &Reference{}, &Media{}, &JobApplication{})
+	ac.db.DropTable("project_freelancers", "job_applications")
 }
 
 func (ac *ApplicationContext) CreateTables() {
@@ -75,7 +76,9 @@ func (ac *ApplicationContext) FillTables() {
 		},
 		HourlyRateFrom: 3,
 		HourlyRateTo:   55,
+		Skills:         stringList{"man", "dude", "boyyyy"},
 		Timezone:       "UTC",
+		About:          "Contrary to popular belief, Lorem Ipsum is not simply random text. It has roots in a piece of classical Latin literature from 45 BC, making it over 2000 years old.",
 	}
 	ac.FreelancerRepository.AddFreelancer(f1)
 
@@ -104,6 +107,7 @@ func (ac *ApplicationContext) FillTables() {
 		HourlyRateTo:   22,
 		Timezone:       "CET",
 		Skills:         stringList{"good", "bad", "ugly"},
+		About:          "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged.",
 	}
 	ac.FreelancerRepository.AddFreelancer(f2)
 
@@ -118,7 +122,7 @@ func (ac *ApplicationContext) FillTables() {
 	ac.FreelancerRepository.AddReview(2, &Review{
 		Title:    "text2",
 		Content:  "content",
-		Rating:   2.4,
+		Rating:   2.7,
 		JobID:    2,
 		ClientID: 1,
 	})
@@ -133,45 +137,40 @@ func (ac *ApplicationContext) FillTables() {
 		Description: "Description Pending",
 		ClientID:    1,
 		Status:      projectStatusPending,
-		Freelancers: []Freelancer{*f1, *f2},
 		DueDate:     time.Now().Add(time.Duration(21) * time.Hour),
-	})
+	}).Association("Freelancers").Append([]Freelancer{*f1, *f2})
 
 	ac.db.Create(&Project{
 		Name:        "Project Finilazing Terms",
 		Description: "Description Finilazing Terms",
 		ClientID:    2,
 		Status:      projectStatusFinilazingTerms,
-		Freelancers: []Freelancer{*f1},
 		DueDate:     time.Now().Add(time.Duration(5*24+1) * time.Hour),
-	})
+	}).Association("Freelancers").Replace([]Freelancer{*f1}) // just to see that there is a replace as well
 
 	ac.db.Create(&Project{
 		Name:        "Project Working",
 		Description: "Description Working",
 		ClientID:    1,
 		Status:      projectStatusWorking,
-		Freelancers: []Freelancer{*f2},
 		DueDate:     time.Now().Add(time.Hour),
-	})
+	}).Association("Freelancers").Append([]Freelancer{*f2})
 
 	ac.db.Create(&Project{
 		Name:        "Project Archived",
 		Description: "Description Archived",
 		ClientID:    1,
 		Status:      projectStatusArchived,
-		Freelancers: []Freelancer{*f2},
 		DueDate:     time.Now().Add(time.Hour),
-	})
+	}).Association("Freelancers").Append([]Freelancer{*f2})
 
 	ac.db.Create(&Project{
 		Name:        "Project Canceled",
 		Description: "Description Canceled",
 		ClientID:    2,
 		Status:      projectStatusCanceled,
-		Freelancers: []Freelancer{*f1},
 		DueDate:     time.Now().Add(time.Hour),
-	})
+	}).Association("Freelancers").Append([]Freelancer{*f1})
 
 	ac.db.Create(&JobApplication{
 		Message:          "I apply",
