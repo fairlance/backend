@@ -125,7 +125,13 @@ func upload() http.Handler {
 			return
 		}
 
-		respond.With(w, r, http.StatusOK, "file/"+handler.Filename+" sucessfully uploaded")
+		respond.With(w, r, http.StatusOK, struct {
+			Name string `json:"name"`
+			URL  string `json:"url"`
+		}{
+			Name: handler.Filename,
+			URL:  "file/" + handler.Filename,
+		})
 	})
 }
 
