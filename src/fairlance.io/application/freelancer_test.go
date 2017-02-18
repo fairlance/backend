@@ -395,84 +395,84 @@ func TestWithReview(t *testing.T) {
 	is.Equal(review.Rating, 5.6)
 }
 
-var bodyWithReview = []struct {
-	in  string
-	out int
-}{
-	{"", http.StatusBadRequest},
-	{"{bad json}", http.StatusBadRequest},
-	{`{
-		"clientID":     2,
-		"content":      "content",
-		"jobID":        4,
-		"rating":       5.6
-	}`, http.StatusBadRequest},
-	{`{
-		"title":        "title",
-		"content":      "content",
-		"jobID":        4,
-		"rating":       5.6
-	}`, http.StatusBadRequest},
-	{`{
-		"title":        "title",
-		"clientID":     2,
-		"content":      "content",
-		"rating":       5.6
-	}`, http.StatusBadRequest},
-	{`{
-		"title":        "title",
-		"clientID":     2,
-		"content":      "content",
-		"jobID":        4
-	}`, http.StatusBadRequest},
-	{`{
-		"title":        "title",
-		"clientID":     "2",
-		"content":      "content",
-		"jobID":        4,
-		"rating":       5.6
-	}`, http.StatusBadRequest},
-	{`{
-		"title":        "title",
-		"clientID":     2,
-		"content":      "content",
-		"jobID":        "4",
-		"rating":       5.6
-	}`, http.StatusBadRequest},
-	{`{
-		"title":        "title",
-		"clientID":     2,
-		"content":      "content",
-		"jobID":        4,
-		"rating":       "5.6"
-	}`, http.StatusBadRequest},
-	{`{
-		"title":      "no content",
-		"clientID":     2,
-		"jobID":        4,
-		"rating":       5.6
-	}`, http.StatusOK},
-}
-
-func TestWithReviewWithBadBody(t *testing.T) {
-	var freelancerContext = &ApplicationContext{}
-
-	for _, data := range bodyWithReview {
-		w := httptest.NewRecorder()
-		r := getRequest(freelancerContext, data.in)
-		next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if data.out != http.StatusOK {
-				t.Error("Should not be called")
-			}
-		})
-
-		withReview(next).ServeHTTP(w, r)
-
-		if w.Code != data.out {
-			t.Errorf("Bad status code %d, expected %d\nFor request body: %s\nResponse body: %s", w.Code, data.out, data.in, w.Body.String())
-		}
-	}
-}
+//var bodyWithReview = []struct {
+//	in  string
+//	out int
+//}{
+//	{"", http.StatusBadRequest},
+//	{"{bad json}", http.StatusBadRequest},
+//	{`{
+//		"clientID":     2,
+//		"content":      "content",
+//		"jobID":        4,
+//		"rating":       5.6
+//	}`, http.StatusBadRequest},
+//	{`{
+//		"title":        "title",
+//		"content":      "content",
+//		"jobID":        4,
+//		"rating":       5.6
+//	}`, http.StatusBadRequest},
+//	{`{
+//		"title":        "title",
+//		"clientID":     2,
+//		"content":      "content",
+//		"rating":       5.6
+//	}`, http.StatusBadRequest},
+//	{`{
+//		"title":        "title",
+//		"clientID":     2,
+//		"content":      "content",
+//		"jobID":        4
+//	}`, http.StatusBadRequest},
+//	{`{
+//		"title":        "title",
+//		"clientID":     "2",
+//		"content":      "content",
+//		"jobID":        4,
+//		"rating":       5.6
+//	}`, http.StatusBadRequest},
+//	{`{
+//		"title":        "title",
+//		"clientID":     2,
+//		"content":      "content",
+//		"jobID":        "4",
+//		"rating":       5.6
+//	}`, http.StatusBadRequest},
+//	{`{
+//		"title":        "title",
+//		"clientID":     2,
+//		"content":      "content",
+//		"jobID":        4,
+//		"rating":       "5.6"
+//	}`, http.StatusBadRequest},
+//	{`{
+//		"title":      "no content",
+//		"clientID":     2,
+//		"jobID":        4,
+//		"rating":       5.6
+//	}`, http.StatusOK},
+//}
+//
+//func TestWithReviewWithBadBody(t *testing.T) {
+//	var freelancerContext = &ApplicationContext{}
+//
+//	for _, data := range bodyWithReview {
+//		w := httptest.NewRecorder()
+//		r := getRequest(freelancerContext, data.in)
+//		next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+//			if data.out != http.StatusOK {
+//				t.Error("Should not be called")
+//			}
+//		})
+//
+//		withReview(next).ServeHTTP(w, r)
+//
+//		if w.Code != data.out {
+//			t.Errorf("Bad status code %d, expected %d\nFor request body: %s\nResponse body: %s", w.Code, data.out, data.in, w.Body.String())
+//		}
+//	}
+//}
 
 func TestAddFreelancerReviewByID(t *testing.T) {
 	is := isHelper.New(t)
@@ -558,48 +558,48 @@ func TestWithReference(t *testing.T) {
 	is.Equal(reference.Media.Video, "video")
 }
 
-var bodyWithReference = []struct {
-	in  string
-	out int
-}{
-	{"", http.StatusBadRequest},
-	{"{bad json}", http.StatusBadRequest},
-	{`{
-		"content":      "no title",
-		"media":		{
-			"image":	"image",
-			"video":	"video"
-		}
-	}`, http.StatusBadRequest},
-	{`{
-		"content":      "content",
-		"title":		"title"
-	}`, http.StatusOK},
-	{`{
-		"title":		"title"
-	}`, http.StatusOK},
-}
-
-func TestWithReferenceWithBadBody(t *testing.T) {
-	var freelancerContext = &ApplicationContext{}
-
-	for _, data := range bodyWithReference {
-		w := httptest.NewRecorder()
-		r := getRequest(freelancerContext, data.in)
-
-		next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if data.out != http.StatusOK {
-				t.Error("Should not be called")
-			}
-		})
-
-		withReference(next).ServeHTTP(w, r)
-
-		if w.Code != data.out {
-			t.Errorf("Bad status code %d, expected %d\nFor request body: %s\nResponse body: %s", w.Code, data.out, data.in, w.Body.String())
-		}
-	}
-}
+//var bodyWithReference = []struct {
+//	in  string
+//	out int
+//}{
+//	{"", http.StatusBadRequest},
+//	{"{bad json}", http.StatusBadRequest},
+//	{`{
+//		"content":      "no title",
+//		"media":		{
+//			"image":	"image",
+//			"video":	"video"
+//		}
+//	}`, http.StatusBadRequest},
+//	{`{
+//		"content":      "content",
+//		"title":		"title"
+//	}`, http.StatusOK},
+//	{`{
+//		"title":		"title"
+//	}`, http.StatusOK},
+//}
+//
+//func TestWithReferenceWithBadBody(t *testing.T) {
+//	var freelancerContext = &ApplicationContext{}
+//
+//	for _, data := range bodyWithReference {
+//		w := httptest.NewRecorder()
+//		r := getRequest(freelancerContext, data.in)
+//
+//		next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+//			if data.out != http.StatusOK {
+//				t.Error("Should not be called")
+//			}
+//		})
+//
+//		withReference(next).ServeHTTP(w, r)
+//
+//		if w.Code != data.out {
+//			t.Errorf("Bad status code %d, expected %d\nFor request body: %s\nResponse body: %s", w.Code, data.out, data.in, w.Body.String())
+//		}
+//	}
+//}
 
 func TestAddFreelancerReferenceByID(t *testing.T) {
 	is := isHelper.New(t)
