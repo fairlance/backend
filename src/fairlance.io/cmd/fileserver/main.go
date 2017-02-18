@@ -120,7 +120,7 @@ func upload() http.Handler {
 
 		fileType := http.DetectContentType(fileStartBuff)
 
-		file.Seek(0, io.SeekStart)
+		file.Seek(0, 0)
 		if err != nil {
 			log.Println(err)
 			respond.With(w, r, http.StatusInternalServerError, err)
