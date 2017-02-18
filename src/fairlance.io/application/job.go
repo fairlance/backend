@@ -56,13 +56,14 @@ func withJob(handler http.Handler) http.Handler {
 		defer r.Body.Close()
 
 		var body struct {
-			Name     string     `json:"name" valid:"required"`
-			Summary  string     `json:"summary" valid:"required"`
-			Details  string     `json:"details" valid:"required"`
-			ClientID uint       `json:"clientId" valid:"required"`
-			IsActive bool       `json:"isActive"`
-			Tags     stringList `json:"tags"`
-			Links    stringList `json:"links"`
+			Name        string       `json:"name" valid:"required"`
+			Summary     string       `json:"summary" valid:"required"`
+			Details     string       `json:"details" valid:"required"`
+			ClientID    uint         `json:"clientId" valid:"required"`
+			IsActive    bool         `json:"isActive"`
+			Tags        stringList   `json:"tags"`
+			Attachments []Attachment `json:"attachments"`
+			Examples    []Example `json:"examples"`
 		}
 
 		if err := decoder.Decode(&body); err != nil {
@@ -84,13 +85,14 @@ func withJob(handler http.Handler) http.Handler {
 		}
 
 		job := &Job{
-			Name:     body.Name,
-			Summary:  body.Summary,
-			Details:  body.Details,
-			ClientID: body.ClientID,
-			IsActive: body.IsActive,
-			Tags:     body.Tags,
-			Links:    body.Links,
+			Name:        body.Name,
+			Summary:     body.Summary,
+			Details:     body.Details,
+			ClientID:    body.ClientID,
+			IsActive:    body.IsActive,
+			Tags:        body.Tags,
+			Attachments: body.Attachments,
+			Examples:    body.Examples,
 		}
 
 		context.Set(r, "job", job)

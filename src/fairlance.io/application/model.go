@@ -72,9 +72,11 @@ type Job struct {
 	IsActive        bool             `json:"isActive,omitempty"`
 	Price           int              `json:"price,omitempty"`
 	StartDate       time.Time        `json:"startDate,omitempty"`
-	Links           stringList       `json:"links,omitempty" sql:"type:JSONB NOT NULL DEFAULT '{}'::JSONB"`
+	Deadline        time.Time        `json:"deadline,omitempty"`
 	Tags            stringList       `json:"tags,omitempty" sql:"type:JSONB NOT NULL DEFAULT '{}'::JSONB"`
 	JobApplications []JobApplication `json:"jobApplications,omitempty"`
+	Attachments     []Attachment     `json:"attachments,omitempty" gorm:"polymorphic:Owner;"`
+	Examples        []Example        `json:"examples,omitempty" gorm:"polymorphic:Owner;"`
 }
 
 type Review struct {
@@ -104,12 +106,30 @@ type Media struct {
 
 type JobApplication struct {
 	Model
-	Message          string     `json:"message,omitempty" valid:"required"`
-	Samples          uintList   `json:"samples,omitempty" valid:"required" sql:"type:JSONB NOT NULL DEFAULT '{}'::JSONB"`
-	DeliveryEstimate int        `json:"deliveryEstimate,omitempty" valid:"required"`
-	Milestones       stringList `json:"milestones,omitempty" valid:"required" sql:"type:JSONB NOT NULL DEFAULT '{}'::JSONB"`
-	HourPrice        float64    `json:"hourPrice,omitempty" valid:"required"`
-	Hours            int        `json:"hours,omitempty" valid:"required"`
-	FreelancerID     uint       `json:"freelancerId,omitempty" valid:"required"`
-	JobID            uint       `json:"-"`
+	Message          string       `json:"message,omitempty" valid:"required"`
+	Samples          uintList     `json:"samples,omitempty" valid:"required" sql:"type:JSONB NOT NULL DEFAULT '{}'::JSONB"`
+	DeliveryEstimate int          `json:"deliveryEstimate,omitempty" valid:"required"`
+	Milestones       stringList   `json:"milestones,omitempty" valid:"required" sql:"type:JSONB NOT NULL DEFAULT '{}'::JSONB"`
+	HourPrice        float64      `json:"hourPrice,omitempty" valid:"required"`
+	Hours            int          `json:"hours,omitempty" valid:"required"`
+	FreelancerID     uint         `json:"freelancerId,omitempty" valid:"required"`
+	JobID            uint         `json:"-"`
+	Attachments      []Attachment `json:"attachments,omitempty" gorm:"polymorphic:Owner;"`
+	Examples         []Example    `json:"examples,omitempty" gorm:"polymorphic:Owner;"`
+}
+
+type Attachment struct {
+	Model
+	Name      string `json:"name,omitempty"`
+	URL       string `json:"url,omitempty"`
+	OwnerId   int    `json:"-"`
+	OwnerType string `json:"-"`
+}
+
+type Example struct {
+	Model
+	URL         string `json:"url,omitempty"`
+	Description string `json:"description,omitempty"`
+	OwnerId     int    `json:"-"`
+	OwnerType   string `json:"-"`
 }

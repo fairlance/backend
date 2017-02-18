@@ -58,12 +58,12 @@ func (ac *ApplicationContext) DropCreateFillTables() {
 }
 
 func (ac *ApplicationContext) DropTables() {
-	ac.db.DropTableIfExists(&Freelancer{}, &Project{}, &Client{}, &Job{}, &Review{}, &Reference{}, &Media{}, &JobApplication{})
+	ac.db.DropTableIfExists(&Freelancer{}, &Project{}, &Client{}, &Job{}, &Review{}, &Reference{}, &Media{}, &JobApplication{}, &Attachment{}, &Example{})
 	ac.db.DropTable("project_freelancers", "job_applications")
 }
 
 func (ac *ApplicationContext) CreateTables() {
-	ac.db.CreateTable(&Freelancer{}, &Project{}, &Client{}, &Job{}, &Review{}, &Reference{}, &Media{}, &JobApplication{})
+	ac.db.CreateTable(&Freelancer{}, &Project{}, &Client{}, &Job{}, &Review{}, &Reference{}, &Media{}, &JobApplication{}, &Attachment{}, &Example{})
 }
 
 func (ac *ApplicationContext) FillTables() {
@@ -172,7 +172,7 @@ func (ac *ApplicationContext) FillTables() {
 		DueDate:     time.Now().Add(time.Hour),
 	}).Association("Freelancers").Append([]Freelancer{*f1})
 
-	ac.db.Create(&JobApplication{
+	jobApplication := ac.db.Create(&JobApplication{
 		Message:          "I apply",
 		JobID:            1,
 		FreelancerID:     1,
@@ -180,6 +180,8 @@ func (ac *ApplicationContext) FillTables() {
 		Samples:          uintList{1, 2},
 		DeliveryEstimate: 15,
 	})
+	jobApplication.Association("Attachments").Replace([]Attachment{{Name: "job application attachment", URL: "www.google.com"}})
+	jobApplication.Association("Examples").Replace([]Example{{Description: "Some job application example", URL: "www.google.com"}})
 
 	ac.ClientRepository.AddClient(&Client{
 		User: User{
@@ -207,14 +209,15 @@ func (ac *ApplicationContext) FillTables() {
 		Rating:   2.4,
 	})
 
-	ac.db.Create(&Job{
+	job := ac.db.Create(&Job{
 		Name:     "Job",
 		Summary:  "Summary Job",
 		Details:  "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.",
 		ClientID: 1,
 		Tags:     stringList{"tag"},
-		Links:    stringList{"http://www.google.com/"},
 	})
+	job.Association("Attachments").Replace([]Attachment{{Name: "job attachment", URL: "www.google.com"}})
+	job.Association("Examples").Replace([]Example{{Description: "Some job example", URL: "www.google.com"}})
 
 	ac.FreelancerRepository.AddFreelancer(&Freelancer{
 		User: User{
