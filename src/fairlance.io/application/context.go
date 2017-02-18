@@ -177,7 +177,6 @@ func (ac *ApplicationContext) FillTables() {
 		JobID:            1,
 		FreelancerID:     1,
 		Milestones:       stringList{"Milestone1", "Milestone2"},
-		Samples:          uintList{1, 2},
 		DeliveryEstimate: 15,
 	})
 	jobApplication.Association("Attachments").Replace([]Attachment{{Name: "job application attachment", URL: "www.google.com"}})
