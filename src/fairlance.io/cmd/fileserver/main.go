@@ -95,7 +95,7 @@ func upload() http.Handler {
 		}
 
 		r.ParseMultipartForm(32 << 20)
-		file, handler, err := r.FormFile("uploadfile")
+		file, header, err := r.FormFile("uploadfile")
 		if err != nil {
 			log.Println(err)
 			respond.With(w, r, http.StatusBadRequest, err)
@@ -103,7 +103,31 @@ func upload() http.Handler {
 		}
 		defer file.Close()
 
-		f, err := os.Create(*folderPath + "/" + handler.Filename)
+		buff := make([]byte, 512)
+		read, err := file.Read(buff)
+		if err != nil {
+			log.Println(err)
+			respond.With(w, r, http.StatusInternalServerError, err)
+			return
+		}
+
+		if read == 0 {
+			err = errors.New("0 bytes were read for content type detecting")
+			log.Println(err)
+			respond.With(w, r, http.StatusInternalServerError, err)
+			return
+		}
+
+		file.Seek(0, io.SeekStart)
+		if err != nil {
+			log.Println(err)
+			respond.With(w, r, http.StatusInternalServerError, err)
+			return
+		}
+
+		fileType := http.DetectContentType(buff)
+
+		f, err := os.Create(*folderPath + "/" + header.Filename)
 		if err != nil {
 			log.Println(err)
 			respond.With(w, r, http.StatusInternalServerError, err)
@@ -128,9 +152,11 @@ func upload() http.Handler {
 		respond.With(w, r, http.StatusOK, struct {
 			Name string `json:"name"`
 			URL  string `json:"url"`
+			Type string `json:"type"`
 		}{
-			Name: handler.Filename,
-			URL:  "file/" + handler.Filename,
+			Name: header.Filename,
+			URL:  "file/" + header.Filename,
+			Type: fileType,
 		})
 	})
 }
