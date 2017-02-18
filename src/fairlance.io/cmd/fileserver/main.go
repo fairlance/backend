@@ -103,8 +103,8 @@ func upload() http.Handler {
 		}
 		defer file.Close()
 
-		buff := make([]byte, 512)
-		read, err := file.Read(buff)
+		fileStartBuff := make([]byte, 512)
+		read, err := file.Read(fileStartBuff)
 		if err != nil {
 			log.Println(err)
 			respond.With(w, r, http.StatusInternalServerError, err)
@@ -118,14 +118,14 @@ func upload() http.Handler {
 			return
 		}
 
+		fileType := http.DetectContentType(fileStartBuff)
+
 		file.Seek(0, io.SeekStart)
 		if err != nil {
 			log.Println(err)
 			respond.With(w, r, http.StatusInternalServerError, err)
 			return
 		}
-
-		fileType := http.DetectContentType(buff)
 
 		f, err := os.Create(*folderPath + "/" + header.Filename)
 		if err != nil {
