@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -33,8 +32,7 @@ func init() {
 	flag.Parse()
 
 	if dbUser == "" || dbPass == "" {
-		fmt.Println("dbUser or dbPass empty!")
-		return
+		log.Fatalln("dbUser or dbPass empty!")
 	}
 }
 
