@@ -18,18 +18,23 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
+// Examples:
+
+// {"to":["freelancer.1"],"from":"freelancer.1","type":"notification","data":{"text":"hahahah"},"timestamp":1487627243358}
+// {"type":"read", "from":"freelancer.1", "to":["freelancer.1"], "data": {"timestamp":"1487627243358"}}
 type Message struct {
 	To        []string               `json:"to,omitempty"`
 	From      string                 `json:"from,omitempty"`
 	Type      string                 `json:"type,omitempty"`
 	Data      map[string]interface{} `json:"data,omitempty"`
 	Timestamp int64                  `json:"timestamp,omitempty"`
+	Read      bool                   `json:"read"`
 }
 
 type User struct {
-	Username string       `json:"username"`
-	ID       string       `json:"id"`
-	send     chan Message `json:"-"`
+	Username string `json:"username"`
+	ID       string `json:"id"`
+	send     chan Message
 }
 
 type Router struct {
@@ -61,7 +66,7 @@ type RouterConf struct {
 	Register     func(usr User) []Message
 	Unregister   func(usr User)
 	BuildMessage func(b []byte) *Message
-	BroadcastTo  func(msg Message) []User
+	BroadcastTo  func(msg *Message) []User
 }
 
 // Run the Hub
@@ -76,7 +81,7 @@ func (r *Router) Run() {
 		case usr := <-r.unregister:
 			r.conf.Unregister(usr)
 		case msg := <-r.broadcast:
-			users := r.conf.BroadcastTo(msg)
+			users := r.conf.BroadcastTo(&msg)
 			for _, user := range users {
 				user.send <- msg
 			}

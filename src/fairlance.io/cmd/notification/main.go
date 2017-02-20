@@ -59,7 +59,7 @@ func init() {
 
 func main() {
 	notification.Users = make(map[string]wsrouter.User)
-	db = NewMongoDatabase("notification")
+	db = newMongoDatabase("notification")
 	conf := wsrouter.RouterConf{
 		Register: func(usr wsrouter.User) []wsrouter.Message {
 			log.Println("registering", usr.Username)
@@ -78,14 +78,43 @@ func main() {
 			log.Println("unregistering", usr.Username)
 			delete(notification.Users, usr.ID)
 		},
-		BroadcastTo: func(msg wsrouter.Message) []wsrouter.User {
-			log.Println("broadcast", msg)
-			user, ok := notification.Users[msg.To[0]]
-			if !ok {
-				return []wsrouter.User{}
-			}
+		BroadcastTo: func(msg *wsrouter.Message) []wsrouter.User {
+			log.Printf("broadcast %v\n", msg)
+			switch msg.Type {
+			case "read":
+				user, ok := notification.Users[msg.From]
+				if !ok {
+					log.Printf("error: user not found [%s]", msg.From)
+					return []wsrouter.User{}
+				}
+				timestampString, ok := msg.Data["timestamp"].(string)
+				if !ok {
+					log.Printf("error: timestamp not provided [%s]", msg.Data["timestamp"])
+					return []wsrouter.User{}
+				}
+				timestamp, err := strconv.Atoi(timestampString)
+				if err != nil {
+					log.Printf("error: timestamp not an int [%s]", msg.Data["timestamp"])
+					return []wsrouter.User{}
+				}
 
-			return []wsrouter.User{user}
+				if err := db.MarkRead(user.ID, int64(timestamp)); err != nil {
+					log.Println(err)
+					return []wsrouter.User{}
+				}
+				return []wsrouter.User{}
+			default:
+				if len(msg.To) == 0 {
+					log.Println("error: message not addressed to anyone")
+					return []wsrouter.User{}
+				}
+				user, ok := notification.Users[msg.To[0]]
+				if !ok {
+					log.Printf("error: user not found [%s]", msg.To[0])
+					return []wsrouter.User{}
+				}
+				return []wsrouter.User{user}
+			}
 		},
 		CreateUser: func(r *http.Request) *wsrouter.User {
 			return newUser(r)
@@ -100,8 +129,10 @@ func main() {
 
 			msg.Timestamp = time.Now().UnixNano() / int64(time.Millisecond)
 
-			usr := notification.Users[msg.To[0]]
-			db.Save(usr.ID, *msg)
+			if msg.Type != "read" {
+				usr := notification.Users[msg.To[0]]
+				db.Save(usr.ID, *msg)
+			}
 
 			return msg
 		},
@@ -123,8 +154,7 @@ func main() {
 	http.ListenAndServe(":"+strconv.Itoa(port), nil)
 }
 
-func NewMongoDatabase(dbName string) *mongoDB {
-	// Setup mongo db connection
+func newMongoDatabase(dbName string) *mongoDB {
 	s, err := mgo.Dial("localhost")
 	if err != nil {
 		log.Fatal("cannot connect to mongo:", err.Error())
@@ -145,11 +175,17 @@ func (m mongoDB) Save(collection string, doc wsrouter.Message) error {
 	return session.DB(m.dbName).C(collection).Insert(doc)
 }
 
-func (m mongoDB) Update(collection string, doc wsrouter.Message) error {
+func (m mongoDB) MarkRead(collection string, timestamp int64) error {
 	session := m.s.Copy()
 	defer session.Close()
 
-	return session.DB(m.dbName).C(collection).Update(bson.M{"timestamp": doc.Timestamp}, doc)
+	var msg wsrouter.Message
+	if err := session.DB(m.dbName).C(collection).Find(bson.M{"timestamp": timestamp}).One(&msg); err != nil {
+		return err
+	}
+	msg.Read = true
+
+	return session.DB(m.dbName).C(collection).Update(bson.M{"timestamp": msg.Timestamp}, msg)
 }
 
 func (m mongoDB) LoadLastDocs(collection string, num int) ([]wsrouter.Message, error) {
