@@ -63,7 +63,7 @@ func withJob(handler http.Handler) http.Handler {
 			IsActive    bool         `json:"isActive"`
 			Tags        stringList   `json:"tags"`
 			Attachments []Attachment `json:"attachments"`
-			Examples    []Example `json:"examples"`
+			Examples    []Example    `json:"examples"`
 		}
 
 		if err := decoder.Decode(&body); err != nil {
