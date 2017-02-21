@@ -18,6 +18,8 @@ import (
 	"flag"
 	"os"
 
+	"fmt"
+
 	"fairlance.io/application"
 	"fairlance.io/messaging"
 	"fairlance.io/wsrouter"
@@ -29,12 +31,19 @@ func newUser(r *http.Request) *wsrouter.User {
 	claims := context.Get(r, "claims").(jwt.MapClaims)
 	userType := claims["userType"].(string)
 
-	id := strconv.Itoa(int(user.ID))
-
 	return &wsrouter.User{
 		Username: user.FirstName + " " + user.LastName,
-		ID:       userType + "." + id,
+		Type:     userType,
+		ID:       user.ID,
 	}
+}
+
+func userUniqueID(user wsrouter.User) string {
+	return fmt.Sprintf("%s.%d", user.Type, user.ID)
+}
+
+func uniqueID(id uint, userType string) string {
+	return fmt.Sprintf("%s.%d", userType, id)
 }
 
 var notification struct {
@@ -63,10 +72,10 @@ func main() {
 	conf := wsrouter.RouterConf{
 		Register: func(usr wsrouter.User) []wsrouter.Message {
 			log.Println("registering", usr.Username)
-			notification.Users[usr.ID] = usr
+			notification.Users[userUniqueID(usr)] = usr
 			var messages = []wsrouter.Message{}
 
-			messages, err := db.LoadLastDocs(usr.ID, 5)
+			messages, err := db.LoadLastDocs(userUniqueID(usr), 5)
 			if err != nil {
 				log.Println(err)
 				return messages
@@ -76,29 +85,24 @@ func main() {
 		},
 		Unregister: func(usr wsrouter.User) {
 			log.Println("unregistering", usr.Username)
-			delete(notification.Users, usr.ID)
+			delete(notification.Users, userUniqueID(usr))
 		},
 		BroadcastTo: func(msg *wsrouter.Message) []wsrouter.User {
 			log.Printf("broadcast %v\n", msg)
 			switch msg.Type {
 			case "read":
-				user, ok := notification.Users[msg.From]
-				if !ok {
-					log.Printf("error: user not found [%s]", msg.From)
+				uniqueIDFrom := uniqueID(msg.From.ID, msg.From.Type)
+				if _, ok := notification.Users[uniqueIDFrom]; !ok {
+					log.Printf("error: user not found [%v]", msg.From)
 					return []wsrouter.User{}
 				}
-				timestampString, ok := msg.Data["timestamp"].(string)
+				timestampFloat, ok := msg.Data["timestamp"].(float64)
 				if !ok {
 					log.Printf("error: timestamp not provided [%s]", msg.Data["timestamp"])
 					return []wsrouter.User{}
 				}
-				timestamp, err := strconv.Atoi(timestampString)
-				if err != nil {
-					log.Printf("error: timestamp not an int [%s]", msg.Data["timestamp"])
-					return []wsrouter.User{}
-				}
 
-				if err := db.MarkRead(user.ID, int64(timestamp)); err != nil {
+				if err := db.MarkRead(uniqueIDFrom, int64(timestampFloat)); err != nil {
 					log.Println(err)
 					return []wsrouter.User{}
 				}
@@ -108,12 +112,16 @@ func main() {
 					log.Println("error: message not addressed to anyone")
 					return []wsrouter.User{}
 				}
-				user, ok := notification.Users[msg.To[0]]
-				if !ok {
-					log.Printf("error: user not found [%s]", msg.To[0])
-					return []wsrouter.User{}
+				users := []wsrouter.User{}
+				for _, userConf := range msg.To {
+					user, ok := notification.Users[uniqueID(userConf.ID, userConf.Type)]
+					if !ok {
+						log.Printf("error: user not found [%v]", userConf)
+					} else {
+						users = append(users, user)
+					}
 				}
-				return []wsrouter.User{user}
+				return users
 			}
 		},
 		CreateUser: func(r *http.Request) *wsrouter.User {
@@ -130,8 +138,9 @@ func main() {
 			msg.Timestamp = time.Now().UnixNano() / int64(time.Millisecond)
 
 			if msg.Type != "read" {
-				usr := notification.Users[msg.To[0]]
-				db.Save(usr.ID, *msg)
+				for _, userConf := range msg.To {
+					db.Save(uniqueID(userConf.ID, userConf.Type), *msg)
+				}
 			}
 
 			return msg
@@ -155,9 +164,11 @@ func main() {
 			}
 			defer r.Body.Close()
 
+			msg.Timestamp = time.Now().UnixNano() / int64(time.Millisecond)
 			if msg.Type != "read" {
-				usr := notification.Users[msg.To[0]]
-				db.Save(usr.ID, msg)
+				for _, userConf := range msg.To {
+					db.Save(uniqueID(userConf.ID, userConf.Type), msg)
+				}
 			}
 
 			router.BroadcastMessage(msg)
