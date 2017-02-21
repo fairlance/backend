@@ -155,6 +155,11 @@ func main() {
 			}
 			defer r.Body.Close()
 
+			if msg.Type != "read" {
+				usr := notification.Users[msg.To[0]]
+				db.Save(usr.ID, msg)
+			}
+
 			router.BroadcastMessage(msg)
 			w.WriteHeader(http.StatusOK)
 			return
