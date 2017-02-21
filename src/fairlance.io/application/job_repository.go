@@ -23,7 +23,7 @@ func NewJobRepository(db *gorm.DB) (JobRepository, error) {
 
 func (repo *PostgreJobRepository) GetAllJobs() ([]Job, error) {
 	jobs := []Job{}
-	repo.db.Preload("JobApplications").Preload("JobApplications.Examples").Preload("JobApplications.Attachments").Preload("Examples").Preload("Attachments").Preload("Client").Find(&jobs)
+	repo.db.Preload("JobApplications").Preload("JobApplications.Freelancer").Preload("JobApplications.Examples").Preload("JobApplications.Attachments").Preload("Examples").Preload("Attachments").Preload("Client").Find(&jobs)
 	return jobs, nil
 }
 
@@ -33,7 +33,7 @@ func (repo *PostgreJobRepository) AddJob(job *Job) error {
 
 func (repo *PostgreJobRepository) GetJob(id uint) (Job, error) {
 	job := Job{}
-	if err := repo.db.Preload("JobApplications").Preload("JobApplications.Examples").Preload("JobApplications.Attachments").Preload("Examples").Preload("Attachments").Preload("Client").Find(&job, id).Error; err != nil {
+	if err := repo.db.Preload("JobApplications").Preload("JobApplications.Freelancer").Preload("JobApplications.Examples").Preload("JobApplications.Attachments").Preload("Examples").Preload("Attachments").Preload("Client").Find(&job, id).Error; err != nil {
 		return job, err
 	}
 	return job, nil

@@ -111,7 +111,8 @@ type JobApplication struct {
 	Milestones       stringList   `json:"milestones,omitempty" sql:"type:JSONB NOT NULL DEFAULT '{}'::JSONB"`
 	HourPrice        float64      `json:"hourPrice,omitempty"`
 	Hours            int          `json:"hours,omitempty"`
-	FreelancerID     uint         `json:"freelancerId,omitempty"`
+	Freelancer       Freelancer   `json:"freelancer,omitempty"`
+	FreelancerID     uint         `json:"-"`
 	JobID            uint         `json:"-"`
 	Attachments      []Attachment `json:"attachments,omitempty" gorm:"polymorphic:Owner;"`
 	Examples         []Example    `json:"examples,omitempty" gorm:"polymorphic:Owner;"`
@@ -121,7 +122,7 @@ type Attachment struct {
 	Model
 	Name      string `json:"name,omitempty"`
 	URL       string `json:"url,omitempty"`
-	OwnerId   int    `json:"-"`
+	OwnerID   int    `json:"-"`
 	OwnerType string `json:"-"`
 }
 
@@ -129,6 +130,6 @@ type Example struct {
 	Model
 	URL         string `json:"url,omitempty"`
 	Description string `json:"description,omitempty"`
-	OwnerId     int    `json:"-"`
+	OwnerID     int    `json:"-"`
 	OwnerType   string `json:"-"`
 }
