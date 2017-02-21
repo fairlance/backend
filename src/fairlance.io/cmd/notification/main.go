@@ -144,8 +144,24 @@ func main() {
 			application.WithUserFromClaims(router.ServeWS()))))
 
 	http.HandleFunc("/send", func(w http.ResponseWriter, r *http.Request) {
-		msg := wsrouter.Message{}
-		router.BroadcastMessage(msg)
+		if r.Method == "PUT" {
+			var msg wsrouter.Message
+
+			decoder := json.NewDecoder(r.Body)
+			if err := decoder.Decode(&msg); err != nil {
+				w.Write([]byte(err.Error()))
+				w.WriteHeader(http.StatusBadRequest)
+				return
+			}
+			defer r.Body.Close()
+
+			router.BroadcastMessage(msg)
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+
+		w.Write([]byte("method not allowed"))
+		w.WriteHeader(http.StatusMethodNotAllowed)
 	})
 
 	go router.Run()

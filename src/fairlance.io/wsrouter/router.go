@@ -20,7 +20,7 @@ var upgrader = websocket.Upgrader{
 
 // Examples:
 
-// {"to":["freelancer.1"],"from":"freelancer.1","type":"notification","data":{"text":"hahahah"},"timestamp":1487627243358}
+// {"to":["freelancer.1"],"from":"freelancer.1","type":"notification","data":{"text":"hahahah"}}
 // {"type":"read", "from":"freelancer.1", "to":["freelancer.1"], "data": {"timestamp":"1487627243358"}}
 type Message struct {
 	To        []string               `json:"to,omitempty"`
