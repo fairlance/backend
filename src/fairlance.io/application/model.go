@@ -86,7 +86,7 @@ type Review struct {
 	Rating       float64 `json:"rating,omitempty"`
 	JobID        uint    `json:"jobId,omitempty"`
 	ClientID     uint    `json:"clientId,omitempty"`
-	FreelancerID uint    `json:"freelancerId,omitempty"` //should be userID
+	FreelancerID uint    `json:"freelancerId,omitempty"`
 }
 
 type Reference struct {
@@ -111,7 +111,7 @@ type JobApplication struct {
 	Milestones       stringList   `json:"milestones,omitempty" sql:"type:JSONB NOT NULL DEFAULT '{}'::JSONB"`
 	HourPrice        float64      `json:"hourPrice,omitempty"`
 	Hours            int          `json:"hours,omitempty"`
-	Freelancer       Freelancer   `json:"freelancer,omitempty"`
+	Freelancer       *Freelancer  `json:"freelancer,omitempty"`
 	FreelancerID     uint         `json:"freelancerId,omitempty"`
 	JobID            uint         `json:"-"`
 	Attachments      []Attachment `json:"attachments,omitempty" gorm:"polymorphic:Owner;"`
