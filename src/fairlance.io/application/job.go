@@ -3,6 +3,7 @@ package application
 import (
 	"encoding/json"
 	"errors"
+	"log"
 	"net/http"
 
 	"github.com/asaskevich/govalidator"
@@ -138,5 +139,40 @@ func addJobApplicationByID() http.Handler {
 		}
 
 		respond.With(w, r, http.StatusOK, jobApplication)
+	})
+}
+
+func deleteJobApplicationByID() http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var appContext = context.Get(r, "context").(*ApplicationContext)
+		var id = context.Get(r, "id").(uint)
+		user := context.Get(r, "user").(*User)
+		userType := context.Get(r, "userType")
+
+		if userType != "freelancer" {
+			err := errors.New("user not a freelancer")
+			respond.With(w, r, http.StatusBadRequest, err)
+			return
+		}
+
+		jobApplication, err := appContext.JobRepository.GetJobApplication(id)
+		if err != nil {
+			respond.With(w, r, http.StatusBadRequest, err)
+			return
+		}
+
+		if jobApplication.FreelancerID != user.ID {
+			err := errors.New("user not the owner")
+			respond.With(w, r, http.StatusBadRequest, err)
+			return
+		}
+
+		if err := appContext.JobRepository.DeleteJobApplication(jobApplication); err != nil {
+			log.Println("delete job application:", err)
+			respond.With(w, r, http.StatusInternalServerError, err)
+			return
+		}
+
+		respond.With(w, r, http.StatusOK, nil)
 	})
 }

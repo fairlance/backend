@@ -32,6 +32,23 @@ type JobRepositoryMock struct {
 			Error error
 		}
 	}
+	GetJobApplicationCall struct {
+		Receives struct {
+			ID uint
+		}
+		Returns struct {
+			JobApplication *JobApplication
+			Error          error
+		}
+	}
+	DeleteJobApplicationCall struct {
+		Receives struct {
+			JobApplication *JobApplication
+		}
+		Returns struct {
+			Error error
+		}
+	}
 }
 
 func (repo *JobRepositoryMock) GetAllJobs() ([]Job, error) {
@@ -53,4 +70,15 @@ func (repo *JobRepositoryMock) GetJob(id uint) (Job, error) {
 func (repo *JobRepositoryMock) AddJobApplication(jobApplication *JobApplication) error {
 	repo.AddJobApplicationCall.Receives.JobApplication = jobApplication
 	return repo.AddJobApplicationCall.Returns.Error
+}
+
+func (repo *JobRepositoryMock) GetJobApplication(id uint) (*JobApplication, error) {
+	repo.GetJobApplicationCall.Receives.ID = id
+	return repo.GetJobApplicationCall.Returns.JobApplication,
+		repo.GetJobApplicationCall.Returns.Error
+}
+
+func (repo *JobRepositoryMock) DeleteJobApplication(jobApplication *JobApplication) error {
+	repo.DeleteJobApplicationCall.Receives.JobApplication = jobApplication
+	return repo.DeleteJobApplicationCall.Returns.Error
 }

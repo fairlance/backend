@@ -3,9 +3,14 @@ package application
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	respond "gopkg.in/matryer/respond.v1"
+
+	"strings"
 
 	isHelper "github.com/cheekybits/is"
 	"github.com/gorilla/context"
@@ -444,4 +449,150 @@ func TestJobWithJobApplicationErrorBadJSON(t *testing.T) {
 	withJobApplication(handler).ServeHTTP(w, r)
 
 	is.Equal(w.Code, http.StatusBadRequest)
+}
+
+func TestDeleteJobApplicationByID(t *testing.T) {
+	jobRepositoryMock := &JobRepositoryMock{}
+	jobRepositoryMock.GetJobApplicationCall.Returns.JobApplication = &JobApplication{
+		Model: Model{
+			ID: 1,
+		},
+		FreelancerID: 2,
+	}
+	var jobContext = &ApplicationContext{
+		JobRepository: jobRepositoryMock,
+	}
+	is := isHelper.New(t)
+	w := httptest.NewRecorder()
+	r := getRequest(jobContext, "")
+
+	context.Set(r, "id", uint(1))
+	context.Set(r, "userType", "freelancer")
+	context.Set(r, "user", &User{
+		Model: Model{
+			ID: 2,
+		},
+	})
+	deleteJobApplicationByID().ServeHTTP(w, r)
+
+	is.Equal(w.Code, http.StatusOK)
+	is.Equal(jobRepositoryMock.GetJobApplicationCall.Receives.ID, 1)
+	is.Equal(jobRepositoryMock.DeleteJobApplicationCall.Receives.JobApplication.ID, 1)
+}
+
+var deleteJobApplicationByIDData = []struct {
+	inID             uint
+	inJobApplication *JobApplication
+	inGetError       error
+	inDeleteError    error
+	inUserType       string
+	inUser           *User
+	outStatus        int
+	out              string
+}{
+	{
+		uint(1),
+		&JobApplication{
+			Model: Model{
+				ID: 1,
+			},
+			FreelancerID: 2,
+		},
+		nil,
+		nil,
+		"client",
+		&User{
+			Model: Model{
+				ID: 2,
+			},
+		},
+		http.StatusBadRequest,
+		"user not a freelancer",
+	},
+	{
+		uint(1),
+		&JobApplication{
+			Model: Model{
+				ID: 1,
+			},
+			FreelancerID: 2,
+		},
+		nil,
+		nil,
+		"freelancer",
+		&User{
+			Model: Model{
+				ID: 3,
+			},
+		},
+		http.StatusBadRequest,
+		"user not the owner",
+	},
+	{
+		uint(5),
+		&JobApplication{
+			Model: Model{
+				ID: 1,
+			},
+			FreelancerID: 2,
+		},
+		errors.New("bad id"),
+		nil,
+		"freelancer",
+		&User{
+			Model: Model{
+				ID: 2,
+			},
+		},
+		http.StatusBadRequest,
+		"bad id",
+	},
+	{
+		uint(1),
+		&JobApplication{
+			Model: Model{
+				ID: 1,
+			},
+			FreelancerID: 2,
+		},
+		nil,
+		errors.New("cannot delete"),
+		"freelancer",
+		&User{
+			Model: Model{
+				ID: 2,
+			},
+		},
+		http.StatusInternalServerError,
+		"cannot delete",
+	},
+}
+
+func TestDeleteJobApplicationByIDWithError(t *testing.T) {
+	jobRepositoryMock := &JobRepositoryMock{}
+	for _, testCase := range deleteJobApplicationByIDData {
+		jobRepositoryMock.GetJobApplicationCall.Returns.JobApplication = testCase.inJobApplication
+		jobRepositoryMock.GetJobApplicationCall.Returns.Error = testCase.inGetError
+		jobRepositoryMock.DeleteJobApplicationCall.Returns.Error = testCase.inDeleteError
+		var jobContext = &ApplicationContext{
+			JobRepository: jobRepositoryMock,
+		}
+		is := isHelper.New(t)
+		w := httptest.NewRecorder()
+		r := getRequest(jobContext, "")
+
+		context.Set(r, "id", testCase.inID)
+		context.Set(r, "userType", testCase.inUserType)
+		context.Set(r, "user", testCase.inUser)
+
+		opts := &respond.Options{
+			Before: func(w http.ResponseWriter, r *http.Request, status int, data interface{}) (int, interface{}) {
+				return status, data.(error).Error()
+			},
+		}
+		opts.Handler(deleteJobApplicationByID()).ServeHTTP(w, r)
+
+		is.Equal(w.Code, testCase.outStatus)
+		is.Equal(strings.TrimSpace(w.Body.String()), fmt.Sprintf(`"%s"`, testCase.out))
+	}
 }

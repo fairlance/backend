@@ -115,7 +115,14 @@ func authHandler(next http.Handler) http.Handler {
 			return
 		}
 
-		context.Set(r, "user", claims["user"])
+		user, err := getUserFomClaims(claims)
+		if err != nil {
+			log.Println("auth, get user from claims:", err)
+			respond.With(w, r, http.StatusInternalServerError, err)
+			return
+		}
+
+		context.Set(r, "user", user)
 		context.Set(r, "userType", claims["userType"])
 
 		next.ServeHTTP(w, r)

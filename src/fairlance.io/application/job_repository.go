@@ -8,7 +8,9 @@ type JobRepository interface {
 	GetAllJobs() ([]Job, error)
 	AddJob(job *Job) error
 	GetJob(id uint) (Job, error)
+	GetJobApplication(id uint) (*JobApplication, error)
 	AddJobApplication(jobApplication *JobApplication) error
+	DeleteJobApplication(jobApplication *JobApplication) error
 }
 
 type PostgreJobRepository struct {
@@ -39,6 +41,17 @@ func (repo *PostgreJobRepository) GetJob(id uint) (Job, error) {
 	return job, nil
 }
 
+func (repo *PostgreJobRepository) GetJobApplication(id uint) (*JobApplication, error) {
+	var jobApplication JobApplication
+	err := repo.db.Find(&jobApplication, id).Error
+
+	return &jobApplication, err
+}
+
 func (repo *PostgreJobRepository) AddJobApplication(jobApplication *JobApplication) error {
 	return repo.db.Save(jobApplication).Error
+}
+
+func (repo *PostgreJobRepository) DeleteJobApplication(jobApplication *JobApplication) error {
+	return repo.db.Delete(jobApplication).Error
 }

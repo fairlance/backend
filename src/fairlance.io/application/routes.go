@@ -124,4 +124,10 @@ var routes = Routes{
 		"/job/{id}/apply",
 		withID(withJobApplication(addJobApplicationByID())),
 	},
+	Route{
+		"DeleteJobApplication",
+		"DELETE",
+		"/job_application/{id}",
+		authHandler(withID(deleteJobApplicationByID())),
+	},
 }
