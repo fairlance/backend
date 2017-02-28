@@ -15,13 +15,15 @@ type ApplicationContext struct {
 	JobRepository        JobRepository
 	UserRepository       UserRepository
 	JwtSecret            string
+	Notifier             notifier
 }
 
 type ContextOptions struct {
-	DbName string
-	DbUser string
-	DbPass string
-	Secret string
+	DbName          string
+	DbUser          string
+	DbPass          string
+	Secret          string
+	NotificationURL string
 }
 
 func NewContext(options ContextOptions) (*ApplicationContext, error) {
@@ -46,6 +48,7 @@ func NewContext(options ContextOptions) (*ApplicationContext, error) {
 		ProjectRepository:    projectRepository,
 		ReferenceRepository:  referenceRepository,
 		JwtSecret:            options.Secret, //base64.StdEncoding.EncodeToString([]byte(options.Secret)),
+		Notifier:             newHTTPNotifier(options.NotificationURL),
 	}
 
 	return context, nil

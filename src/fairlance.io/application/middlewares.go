@@ -221,6 +221,23 @@ func WithUserFromClaims(handler http.Handler) http.Handler {
 	})
 }
 
+func withClientFromJobID(handler http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var appContext = context.Get(r, "context").(*ApplicationContext)
+		var jobID = context.Get(r, "id").(uint)
+
+		job, err := appContext.JobRepository.GetJob(jobID)
+		if err != nil {
+			respond.With(w, r, http.StatusInternalServerError, err)
+			return
+		}
+
+		context.Set(r, "client", job.Client)
+
+		handler.ServeHTTP(w, r)
+	})
+}
+
 // func HTTPAuthHandler(next http.Handler) http.Handler {
 // 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 // 		user := "fairlance"

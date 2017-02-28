@@ -11,11 +11,14 @@ import (
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 )
 
-var port int
-var dbName string
-var dbUser string
-var dbPass string
-var secret string
+var (
+	port            int
+	dbName          string
+	dbUser          string
+	dbPass          string
+	secret          string
+	notificationURL string
+)
 
 func init() {
 	f, err := os.OpenFile("/var/log/fairlance/application.log", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
@@ -29,6 +32,7 @@ func init() {
 	flag.StringVar(&dbUser, "dbUser", "", "DB user.")
 	flag.StringVar(&dbPass, "dbPass", "", "Db user's password.")
 	flag.StringVar(&secret, "secret", "secret", "Secret string used for JWS.")
+	flag.StringVar(&notificationURL, "notificationUrl", "localhost:3007", "Notification endpoint.")
 	flag.Parse()
 
 	if dbUser == "" || dbPass == "" {
@@ -37,7 +41,13 @@ func init() {
 }
 
 func main() {
-	options := application.ContextOptions{dbName, dbUser, dbPass, secret}
+	options := application.ContextOptions{
+		DbName:          dbName,
+		DbUser:          dbUser,
+		DbPass:          dbPass,
+		Secret:          secret,
+		NotificationURL: notificationURL,
+	}
 
 	var appContext, err = application.NewContext(options)
 	if err != nil {

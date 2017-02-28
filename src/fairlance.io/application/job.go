@@ -110,7 +110,7 @@ func withJobApplication(handler http.Handler) http.Handler {
 		var jobApplication JobApplication
 
 		if err := decoder.Decode(&jobApplication); err != nil {
-			respond.With(w, r, http.StatusBadRequest, errors.New("Invalid JSON"))
+			respond.With(w, r, http.StatusBadRequest, err)
 			return
 		}
 
@@ -136,6 +136,17 @@ func addJobApplicationByID() http.Handler {
 		if err := appContext.JobRepository.AddJobApplication(jobApplication); err != nil {
 			respond.With(w, r, http.StatusBadRequest, err)
 			return
+		}
+
+		client, ok := context.Get(r, "client").(*Client)
+		if ok && client != nil {
+			// get full job application with freelancer and e'rythang
+			jobApplication, err := appContext.JobRepository.GetJobApplication(jobApplication.ID)
+			if err != nil {
+				respond.With(w, r, http.StatusInternalServerError, err)
+				return
+			}
+			notifyJobApplicationAdded(appContext.Notifier, jobApplication, client.ID)
 		}
 
 		respond.With(w, r, http.StatusOK, jobApplication)

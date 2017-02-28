@@ -122,7 +122,7 @@ var routes = Routes{
 		"ApplyForJob",
 		"PUT",
 		"/job/{id}/apply",
-		withID(withJobApplication(addJobApplicationByID())),
+		withID(withClientFromJobID(withJobApplication(addJobApplicationByID()))),
 	},
 	Route{
 		"DeleteJobApplication",

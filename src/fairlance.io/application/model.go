@@ -112,7 +112,7 @@ type JobApplication struct {
 	HourPrice        float64      `json:"hourPrice,omitempty"`
 	Hours            int          `json:"hours,omitempty"`
 	Freelancer       *Freelancer  `json:"freelancer,omitempty"`
-	FreelancerID     uint         `json:"freelancerId,omitempty"`
+	FreelancerID     uint         `json:"freelancerId,omitempty" valid:"required"`
 	JobID            uint         `json:"-"`
 	Attachments      []Attachment `json:"attachments,omitempty" gorm:"polymorphic:Owner;"`
 	Examples         []Example    `json:"examples,omitempty" gorm:"polymorphic:Owner;"`

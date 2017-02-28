@@ -43,7 +43,7 @@ func (repo *PostgreJobRepository) GetJob(id uint) (Job, error) {
 
 func (repo *PostgreJobRepository) GetJobApplication(id uint) (*JobApplication, error) {
 	var jobApplication JobApplication
-	err := repo.db.Find(&jobApplication, id).Error
+	err := repo.db.Preload("Freelancer").Find(&jobApplication, id).Error
 
 	return &jobApplication, err
 }
