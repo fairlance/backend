@@ -42,8 +42,8 @@ func userUniqueID(user wsrouter.User) string {
 	return fmt.Sprintf("%s.%d", user.Type, user.ID)
 }
 
-func uniqueID(id uint, userType string) string {
-	return fmt.Sprintf("%s.%d", userType, id)
+func uniqueID(u wsrouter.MessageUser) string {
+	return fmt.Sprintf("%s.%d", u.Type, u.ID)
 }
 
 var notification struct {
@@ -91,7 +91,7 @@ func main() {
 			log.Printf("broadcast %v\n", msg)
 			switch msg.Type {
 			case "read":
-				uniqueIDFrom := uniqueID(msg.From.ID, msg.From.Type)
+				uniqueIDFrom := uniqueID(msg.From)
 				if _, ok := notification.Users[uniqueIDFrom]; !ok {
 					log.Printf("error: user not found [%v]", msg.From)
 					return []wsrouter.User{}
@@ -114,7 +114,7 @@ func main() {
 				}
 				users := []wsrouter.User{}
 				for _, userConf := range msg.To {
-					user, ok := notification.Users[uniqueID(userConf.ID, userConf.Type)]
+					user, ok := notification.Users[uniqueID(userConf)]
 					if !ok {
 						log.Printf("error: user not found [%v]", userConf)
 					} else {
@@ -139,7 +139,7 @@ func main() {
 
 			if msg.Type != "read" {
 				for _, userConf := range msg.To {
-					db.Save(uniqueID(userConf.ID, userConf.Type), *msg)
+					db.Save(uniqueID(userConf), *msg)
 				}
 			}
 
@@ -147,38 +147,44 @@ func main() {
 		},
 	}
 	router := wsrouter.NewRouter(conf)
-	http.Handle("/", messaging.WithTokenFromParams(
-		application.AuthenticateTokenWithClaims(
-			secret,
-			application.WithUserFromClaims(router.ServeWS()))))
+	http.Handle("/",
+		application.RecoverHandler(
+			application.LoggerHandler(
+				messaging.WithTokenFromParams(
+					application.AuthenticateTokenWithClaims(
+						secret, application.WithUserFromClaims(
+							router.ServeWS()))))))
 
-	http.HandleFunc("/send", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == "PUT" {
-			var msg wsrouter.Message
+	http.Handle("/send",
+		application.RecoverHandler(
+			application.LoggerHandler(
+				http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					if r.Method == "PUT" {
+						var msg wsrouter.Message
 
-			decoder := json.NewDecoder(r.Body)
-			if err := decoder.Decode(&msg); err != nil {
-				w.Write([]byte(err.Error()))
-				w.WriteHeader(http.StatusBadRequest)
-				return
-			}
-			defer r.Body.Close()
+						decoder := json.NewDecoder(r.Body)
+						if err := decoder.Decode(&msg); err != nil {
+							w.Write([]byte(err.Error()))
+							w.WriteHeader(http.StatusBadRequest)
+							return
+						}
+						defer r.Body.Close()
 
-			msg.Timestamp = time.Now().UnixNano() / int64(time.Millisecond)
-			if msg.Type != "read" {
-				for _, userConf := range msg.To {
-					db.Save(uniqueID(userConf.ID, userConf.Type), msg)
-				}
-			}
+						msg.Timestamp = time.Now().UnixNano() / int64(time.Millisecond)
+						if msg.Type != "read" {
+							for _, userConf := range msg.To {
+								db.Save(uniqueID(userConf), msg)
+							}
+						}
 
-			router.BroadcastMessage(msg)
-			w.WriteHeader(http.StatusOK)
-			return
-		}
+						router.BroadcastMessage(msg)
+						w.WriteHeader(http.StatusOK)
+						return
+					}
 
-		w.Write([]byte("method not allowed"))
-		w.WriteHeader(http.StatusMethodNotAllowed)
-	})
+					w.Write([]byte("method not allowed"))
+					w.WriteHeader(http.StatusMethodNotAllowed)
+				}))))
 
 	go router.Run()
 

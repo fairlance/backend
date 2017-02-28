@@ -18,7 +18,7 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
-type messageUser struct {
+type MessageUser struct {
 	ID   uint   `json:"id"`
 	Type string `json:"type"`
 }
@@ -27,8 +27,8 @@ type messageUser struct {
 // {"to":[{"type": "freelancer", "id": 1}],"from":{"type": "freelancer", "id": 1},"type":"notification","data":{"text":"hahahah", "projectId": 2}}
 // {"type":"read", "from":{"type": "freelancer", "id": 1}, "to":[{"type": "freelancer", "id": 1}], "data": {"timestamp":1487717547735}}
 type Message struct {
-	To        []messageUser          `json:"to,omitempty"`
-	From      messageUser            `json:"from,omitempty"`
+	To        []MessageUser          `json:"to,omitempty"`
+	From      MessageUser            `json:"from,omitempty"`
 	Type      string                 `json:"type,omitempty"`
 	Data      map[string]interface{} `json:"data,omitempty"`
 	Timestamp int64                  `json:"timestamp,omitempty"`
