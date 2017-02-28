@@ -10,6 +10,9 @@ import (
 	"github.com/gorilla/websocket"
 )
 
+var writeWait = 10 * time.Second
+var readWait = 30 * time.Minute
+
 func (router *Router) StartReading(u User, conn *websocket.Conn) {
 	defer func() {
 		router.unregister <- u
@@ -26,7 +29,10 @@ func (router *Router) StartReading(u User, conn *websocket.Conn) {
 			break
 		}
 
-		router.broadcast <- *router.conf.BuildMessage(msgBytes)
+		msg := router.conf.BuildMessage(msgBytes)
+		if msg != nil {
+			router.broadcast <- *msg
+		}
 	}
 }
 

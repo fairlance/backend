@@ -2,13 +2,9 @@ package wsrouter
 
 import (
 	"net/http"
-	"time"
 
 	"github.com/gorilla/websocket"
 )
-
-var writeWait = 10 * time.Second
-var readWait = 15 * time.Minute
 
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
@@ -23,9 +19,6 @@ type MessageUser struct {
 	Type string `json:"type"`
 }
 
-// Examples:
-// {"to":[{"type": "freelancer", "id": 1}],"from":{"type": "freelancer", "id": 1},"type":"notification","data":{"text":"hahahah", "projectId": 2}}
-// {"type":"read", "from":{"type": "freelancer", "id": 1}, "to":[{"type": "freelancer", "id": 1}], "data": {"timestamp":1487717547735}}
 type Message struct {
 	To        []MessageUser          `json:"to,omitempty"`
 	From      MessageUser            `json:"from,omitempty"`

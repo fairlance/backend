@@ -54,6 +54,10 @@ var port int
 var secret string
 var db *mongoDB
 
+// Examples:
+// {"to":[{"type": "freelancer", "id": 1}],"from":{"type": "freelancer", "id": 1},"type":"notification","data":{"text":"hahahah", "projectId": 2}}
+// {"type":"read", "from":{"type": "freelancer", "id": 1}, "to":[{"type": "freelancer", "id": 1}], "data": {"timestamp":1487717547735}}
+
 func init() {
 	flag.IntVar(&port, "port", 3007, "Specify the port to listen on.")
 	flag.StringVar(&secret, "secret", "secret", "Secret string used for JWS.")
@@ -89,40 +93,21 @@ func main() {
 		},
 		BroadcastTo: func(msg *wsrouter.Message) []wsrouter.User {
 			log.Printf("broadcast %v\n", msg)
-			switch msg.Type {
-			case "read":
-				uniqueIDFrom := uniqueID(msg.From)
-				if _, ok := notification.Users[uniqueIDFrom]; !ok {
-					log.Printf("error: user not found [%v]", msg.From)
-					return []wsrouter.User{}
-				}
-				timestampFloat, ok := msg.Data["timestamp"].(float64)
-				if !ok {
-					log.Printf("error: timestamp not provided [%s]", msg.Data["timestamp"])
-					return []wsrouter.User{}
-				}
 
-				if err := db.MarkRead(uniqueIDFrom, int64(timestampFloat)); err != nil {
-					log.Println(err)
-					return []wsrouter.User{}
-				}
+			if len(msg.To) == 0 {
+				log.Println("error: message not addressed to anyone")
 				return []wsrouter.User{}
-			default:
-				if len(msg.To) == 0 {
-					log.Println("error: message not addressed to anyone")
-					return []wsrouter.User{}
-				}
-				users := []wsrouter.User{}
-				for _, userConf := range msg.To {
-					user, ok := notification.Users[uniqueID(userConf)]
-					if !ok {
-						log.Printf("error: user not found [%v]", userConf)
-					} else {
-						users = append(users, user)
-					}
-				}
-				return users
 			}
+			users := []wsrouter.User{}
+			for _, userConf := range msg.To {
+				user, ok := notification.Users[uniqueID(userConf)]
+				if !ok {
+					log.Printf("error: user not found [%v]", userConf)
+				} else {
+					users = append(users, user)
+				}
+			}
+			return users
 		},
 		CreateUser: func(r *http.Request) *wsrouter.User {
 			return newUser(r)
@@ -132,12 +117,31 @@ func main() {
 
 			err := json.Unmarshal(b, msg)
 			if err != nil {
-				panic(err)
+				log.Println(err)
+				return nil
 			}
 
 			msg.Timestamp = time.Now().UnixNano() / int64(time.Millisecond)
 
-			if msg.Type != "read" {
+			switch msg.Type {
+			case "read":
+				uniqueIDFrom := uniqueID(msg.From)
+				if _, ok := notification.Users[uniqueIDFrom]; !ok {
+					log.Printf("error: user not found [%v]", msg.From)
+					return nil
+				}
+				timestampFloat, ok := msg.Data["timestamp"].(float64)
+				if !ok {
+					log.Printf("error: timestamp not provided [%s]", msg.Data["timestamp"])
+					return nil
+				}
+
+				if err := db.MarkRead(uniqueIDFrom, int64(timestampFloat)); err != nil {
+					log.Println(err)
+					return nil
+				}
+				return nil
+			default:
 				for _, userConf := range msg.To {
 					db.Save(uniqueID(userConf), *msg)
 				}
