@@ -13,7 +13,7 @@ func notifyJobApplicationAdded(n notifier, jobApplication *JobApplication, clien
 		},
 		Type: "jobApplicationAdded",
 		Data: map[string]interface{}{
-			"freelancer": jobApplication.Freelancer,
+			"jobApplication": jobApplication,
 		},
 	}
 	if err := n.Notify(not); err != nil {
