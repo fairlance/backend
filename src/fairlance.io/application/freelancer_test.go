@@ -82,6 +82,7 @@ func TestAddFreelancer(t *testing.T) {
 		FirstName: "first",
 		LastName:  "last",
 		Email:     "email@mail.com",
+		Image:     "http://url.to/image",
 	}
 	context.Set(r, "user", user)
 
@@ -92,6 +93,7 @@ func TestAddFreelancer(t *testing.T) {
 	is.Equal(freelancerRepositoryMock.AddFreelancerCall.Receives.Freelancer.User.FirstName, "first")
 	is.Equal(freelancerRepositoryMock.AddFreelancerCall.Receives.Freelancer.User.LastName, "last")
 	is.Equal(freelancerRepositoryMock.AddFreelancerCall.Receives.Freelancer.User.Email, "email@mail.com")
+	is.Equal(freelancerRepositoryMock.AddFreelancerCall.Receives.Freelancer.User.Image, "http://url.to/image")
 }
 
 func TestAddFreelancerWithError(t *testing.T) {

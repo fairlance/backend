@@ -15,6 +15,7 @@ type User struct {
 	LastName  string `json:"lastName,omitempty"`
 	Password  string `json:"-"`
 	Email     string `json:"email,omitempty" valid:"required,email" sql:"index" gorm:"unique"`
+	Image     string `json:"image,omitempty"`
 }
 
 type Freelancer struct {

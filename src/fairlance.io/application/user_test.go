@@ -18,7 +18,8 @@ func TestWithUser(t *testing.T) {
             "firstName": "firstname",
             "lastName": "lastname",
 			"email": "email@mail.com",
-			"password": "password"
+			"password": "password",
+			"image": "http://url.for/image"
 		}
 	`)
 	w := httptest.NewRecorder()
@@ -37,6 +38,7 @@ func TestWithUser(t *testing.T) {
 	is.Equal(u.LastName, "lastname")
 	is.Equal(u.Email, "email@mail.com")
 	is.Equal(u.Password, "password")
+	is.Equal(u.Image, "http://url.for/image")
 }
 
 var badBodyWithUserTestData = []struct {
@@ -82,4 +84,5 @@ func TestWithUserWithNotAllDataInBody(t *testing.T) {
 	is.Nil(body["lastName"])
 	is.Nil(body["password"])
 	is.Nil(body["email"])
+	is.Nil(body["image"])
 }
