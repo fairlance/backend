@@ -29,17 +29,17 @@ func GetJobs() []application.Job {
 	jobs := []application.Job{}
 
 	doc.Find(".opportunities-item").Each(func(i int, s *goquery.Selection) {
-		category := s.Find(".category-head .name").Text()
+		category := strings.TrimSpace(s.Find(".category-head .name").Text())
 		link, _ := s.Find("a.basic-link").Attr("href")
-		linkText := s.Find("a.basic-link").Text()
+		linkText := strings.TrimSpace(s.Find("a.basic-link").Text())
 		context := s.Find(".opportunity-content-wrapper")
-		title := context.Find(".title h2").Text()
-		body := context.Find(".body p").Text()
+		title := strings.TrimSpace(context.Find(".title h2").Text())
+		body := strings.TrimSpace(context.Find(".body p").Text())
 		description := s.Find(".description-block")
-		time := description.Find(".time .number").Text()
-		country := description.Find(".country").Text()
+		time := strings.TrimSpace(description.Find(".time .number").Text())
+		country := strings.TrimSpace(description.Find(".country").Text())
 		tags := []string{strings.ToLower(strings.TrimSpace(country))}
-		expertise := description.Find(".area-of-expertise").Text()
+		expertise := strings.TrimSpace(description.Find(".area-of-expertise").Text())
 		expertise = strings.ToLower(strings.TrimSpace(expertise))
 		expertiseSlice := strings.Split(expertise, " and ")
 		if len(expertiseSlice) == 2 {

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"strconv"
+	"time"
 
 	"fairlance.io/application"
 	"fairlance.io/importer/onlinevolunteering"
@@ -36,6 +37,8 @@ func reGenerateTestData(db gorm.DB, selectedType string) error {
 		for i := 0; i < len(jobs); i++ {
 			job := &jobs[i]
 			job.ClientID = uint(i%5 + 1)
+			job.StartDate = time.Now().Add(time.Duration(i*24+1) * time.Hour)
+			job.Deadline = time.Now().Add(time.Duration(i*24*i+1) * time.Hour)
 			if err := db.Create(job).Error; err != nil {
 				return err
 			}
