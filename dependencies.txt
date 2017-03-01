@@ -11,3 +11,4 @@ gopkg.in/matryer/respond.v1
 github.com/cheekybits/is
 github.com/blevesearch/bleve/...
 github.com/gorilla/websocket
+github.com/PuerkitoBio/goquery

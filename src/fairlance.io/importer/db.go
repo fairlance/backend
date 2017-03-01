@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"log"
 	"strconv"
-	"time"
 
 	"fairlance.io/application"
+	"fairlance.io/importer/onlinevolunteering"
 	"github.com/jinzhu/gorm"
 )
 
@@ -32,21 +32,11 @@ func reGenerateTestData(db gorm.DB, selectedType string) error {
 			}
 		}
 
-		// PostgreSQL only supports 65535 parameters
-		for i := 0; i < 50; i++ {
-
-			if err := db.Create(&application.Job{
-				Name:        fmt.Sprintf("Job %d", i),
-				Summary:     fmt.Sprintf("Job Summary %d", i),
-				Details:     fmt.Sprintf("%d There are many variations of passages of Lorem Ipsum available, but the majority have suffered alteration in some form, by injected humour, or randomised words which don't look even slightly believable. If you are going to use a passage of Lorem Ipsum, you need to be sure there isn't anything embarrassing hidden in the middle of text.", i),
-				Deadline:    time.Now().Add(time.Duration(i*24*i+1) * time.Hour),
-				ClientID:    uint(i%5 + 1),
-				Price:       123*i%200 + 200,
-				StartDate:   time.Now().Add(time.Duration(i*24+1) * time.Hour),
-				Tags:        []string{fmt.Sprintf("tag_%d", i), fmt.Sprintf("tag_%d", i+i)},
-				Attachments: []application.Attachment{{Name: fmt.Sprintf("Amazon %d", i), URL: fmt.Sprintf("www.amazon.de/%d", i)}},
-				Examples:    []application.Example{{Description: fmt.Sprintf("Google %d", i), URL: fmt.Sprintf("www.google.com/%d", i)}},
-			}).Error; err != nil {
+		jobs := onlinevolunteering.GetJobs()
+		for i := 0; i < len(jobs); i++ {
+			job := &jobs[i]
+			job.ClientID = uint(i%5 + 1)
+			if err := db.Create(job).Error; err != nil {
 				return err
 			}
 		}
