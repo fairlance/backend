@@ -33,16 +33,15 @@ func getAllProjects() http.Handler {
 func getAllProjectsForUser() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var appContext = context.Get(r, "context").(*ApplicationContext)
-		var user = context.Get(r, "user").(map[string]interface{})
-		var userID = uint(user["id"].(float64))
+		var user = context.Get(r, "user").(*User)
 		var userType = context.Get(r, "userType").(string)
 		var projects []Project
 		var err error
 		switch userType {
 		case "freelancer":
-			projects, err = appContext.ProjectRepository.getAllProjectsForFreelancer(userID)
+			projects, err = appContext.ProjectRepository.getAllProjectsForFreelancer(user.ID)
 		case "client":
-			projects, err = appContext.ProjectRepository.getAllProjectsForClient(userID)
+			projects, err = appContext.ProjectRepository.getAllProjectsForClient(user.ID)
 		default:
 			err = fmt.Errorf("found type '%s' unrecognized", userType)
 			if err != nil {

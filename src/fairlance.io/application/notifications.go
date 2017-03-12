@@ -1,12 +1,16 @@
 package application
 
-import "log"
+import (
+	"log"
 
-func notifyJobApplicationAdded(n notifier, jobApplication *JobApplication, clientID uint) {
-	not := &notification{
-		From: notificationSystemUser,
-		To: []notificationUser{
-			notificationUser{
+	"fairlance.io/notifier"
+)
+
+func notifyJobApplicationAdded(n notifier.Notifier, jobApplication *JobApplication, clientID uint) {
+	not := &notifier.Notification{
+		From: notifier.NotificationSystemUser,
+		To: []notifier.NotificationUser{
+			notifier.NotificationUser{
 				ID:   clientID,
 				Type: "client",
 			},

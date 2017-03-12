@@ -1,4 +1,4 @@
-package application
+package notifier
 
 import (
 	"bytes"
@@ -8,36 +8,36 @@ import (
 	"net/http"
 )
 
-type notifier interface {
-	Notify(n *notification) error
+type Notifier interface {
+	Notify(n *Notification) error
 }
 
-type notificationUser struct {
+type NotificationUser struct {
 	ID   uint   `json:"id"`
 	Type string `json:"type"`
 }
 
-var notificationSystemUser = notificationUser{
+var NotificationSystemUser = NotificationUser{
 	ID:   0,
 	Type: "system",
 }
 
-type notification struct {
-	From notificationUser       `json:"from,omitempty"`
-	To   []notificationUser     `json:"to,omitempty"`
+type Notification struct {
+	From NotificationUser       `json:"from,omitempty"`
+	To   []NotificationUser     `json:"to,omitempty"`
 	Type string                 `json:"type,omitempty"`
 	Data map[string]interface{} `json:"data,omitempty"`
 }
 
-type httpNotifier struct {
+type HTTPNotifier struct {
 	NotificationURL string
 }
 
-func newHTTPNotifier(notificationURL string) *httpNotifier {
-	return &httpNotifier{notificationURL}
+func NewHTTPNotifier(notificationURL string) *HTTPNotifier {
+	return &HTTPNotifier{notificationURL}
 }
 
-func (notifier *httpNotifier) Notify(n *notification) error {
+func (notifier *HTTPNotifier) Notify(n *Notification) error {
 	url := "http://" + notifier.NotificationURL + "/send"
 	body, err := json.Marshal(&n)
 	if err != nil {

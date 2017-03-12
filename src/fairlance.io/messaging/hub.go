@@ -1,37 +1,42 @@
 package messaging
 
 import (
-	"container/list"
+	"fmt"
 	"log"
-
 	"time"
+
+	"fairlance.io/notifier"
 )
 
 // Hub ...
 type Hub struct {
 	// Registered users.
-	rooms map[string]*list.List
+	rooms map[string]*Room
 
 	// Inbound messages from the users.
-	broadcast chan message
+	broadcast chan Message
 
 	// Register requests from the users.
-	register chan *user
+	register chan *userConn
 
 	// Unregister requests from users.
-	unregister chan *user
+	unregister chan *User
 
-	db messageDB
+	db       messageDB
+	notifier notifier.Notifier
+	getARoom func(id string) (*Room, error)
 }
 
 // NewHub creates new Hub object
-func NewHub(db messageDB) *Hub {
+func NewHub(db messageDB, getARoomFunc func(id string) (*Room, error)) *Hub {
 	return &Hub{
-		broadcast:  make(chan message),
-		register:   make(chan *user),
-		unregister: make(chan *user),
-		rooms:      make(map[string]*list.List),
+		broadcast:  make(chan Message),
+		register:   make(chan *userConn),
+		unregister: make(chan *User),
+		rooms:      make(map[string]*Room),
 		db:         db,
+		notifier:   notifier.NewHTTPNotifier("localhost:3007"),
+		getARoom:   getARoomFunc,
 	}
 }
 
@@ -39,56 +44,88 @@ func NewHub(db messageDB) *Hub {
 func (h *Hub) Run() {
 	for {
 		select {
-		case userToRegister := <-h.register:
-			log.Println("registering", userToRegister.username, "to room:", userToRegister.projectID)
-			if h.rooms[userToRegister.projectID] == nil {
-				h.rooms[userToRegister.projectID] = list.New()
+		case newConnection := <-h.register:
+			if h.rooms[newConnection.room] == nil {
+				log.Println("room does not exist", newConnection.room)
+				break
 			}
-			h.sendOldMessagesToUser(userToRegister)
-			h.rooms[userToRegister.projectID].PushFront(userToRegister)
+			user, err := h.rooms[newConnection.room].ActivateUser(newConnection)
+			if err != nil {
+				log.Println(err)
+				break
+			}
+			log.Println("registering", user.username, "to room:", user.room)
+			h.sendOldMessagesToUser(user)
 		case user := <-h.unregister:
-			log.Println("unregistering", user.username, "from room:", user.projectID)
+			log.Println("unregistering", user.username, "from room:", user.room)
 			h.removeUser(user)
-		case message := <-h.broadcast:
-			h.db.save(message)
-			if h.rooms[message.ProjectID] == nil {
+		case msg := <-h.broadcast:
+			log.Println("broadcasting message", msg)
+			h.db.save(msg)
+			if h.rooms[msg.ProjectID] == nil {
+				log.Println("sending to unknown room", msg.ProjectID)
 				continue
 			}
 
-			log.Println("broadcasting message", message)
-			for el := h.rooms[message.ProjectID].Front(); el != nil; el = el.Next() {
-				userInRoom := el.Value.(*user)
-				select {
-				case userInRoom.send <- message:
-				default:
-					h.rooms[userInRoom.projectID].Remove(el)
-					close(userInRoom.send)
+			for _, usr := range h.rooms[msg.ProjectID].Users {
+				if usr.online {
+					select {
+					case usr.send <- msg:
+					default:
+						h.rooms[msg.ProjectID].CloseUser(usr)
+					}
+				} else {
+					h.notifyUser(usr, msg)
 				}
 			}
 		}
 	}
 }
 
-func (h *Hub) removeUser(userToUnregister *user) {
-	for el := h.rooms[userToUnregister.projectID].Front(); el != nil; el = el.Next() {
-		u := el.Value.(*user)
-		if userToUnregister.username == u.username {
-			h.rooms[userToUnregister.projectID].Remove(el)
+func (h *Hub) removeUser(userToUnregister *User) {
+	for _, usr := range h.rooms[userToUnregister.room].Users {
+		if userToUnregister.username == usr.username {
+			h.rooms[userToUnregister.room].CloseUser(usr)
 		}
 	}
 
-	if h.rooms[userToUnregister.projectID].Len() == 0 {
-		delete(h.rooms, userToUnregister.projectID)
+	if !h.rooms[userToUnregister.room].HasReasonToExist() {
+		h.rooms[userToUnregister.room].Close()
+		delete(h.rooms, userToUnregister.room)
 	}
 }
 
 // SendMessage ...
 func (h *Hub) SendMessage(room, name, msg string) {
-	h.broadcast <- newMessage(0, "system", name, []byte(msg), time.Now().Unix(), room)
+	h.broadcast <- NewMessage(0, "system", name, []byte(msg), room)
 }
 
-func (h *Hub) sendOldMessagesToUser(u *user) {
-	messages, err := h.db.loadLastMessagesForUser(u)
+func (h *Hub) notifyUser(u *User, msg Message) {
+	log.Println("notifying", u.username, "with message", msg.Text)
+	h.notifier.Notify(&notifier.Notification{
+		To: []notifier.NotificationUser{
+			notifier.NotificationUser{
+				ID:   u.id,
+				Type: u.userType,
+			},
+		},
+		From: notifier.NotificationUser{
+			ID:   msg.UserID,
+			Type: msg.UserType,
+		},
+		Type: "new_message",
+		Data: map[string]interface{}{
+			"message":   msg.Text,
+			"username":  msg.Username,
+			"timestamp": fmt.Sprintf("%d", msg.Timestamp),
+			"time":      time.Unix(msg.Timestamp, 0),
+			"projectId": msg.ProjectID,
+		},
+	})
+}
+
+func (h *Hub) sendOldMessagesToUser(u *User) {
+	messages, err := h.db.loadLastMessagesForUser(u, 20)
 	if err != nil {
 		log.Println(err)
 		return
@@ -102,10 +139,9 @@ func (h *Hub) sendOldMessagesToUser(u *user) {
 func (h *Hub) printRooms() {
 	log.Println("no of rooms", len(h.rooms))
 	for _, room := range h.rooms {
-		log.Printf("in room %s", room.Front().Value.(*user).projectID)
-		for el := room.Front(); el != nil; el = el.Next() {
-			c := el.Value.(*user)
-			log.Printf("    %s", c.username)
+		log.Printf("in room %s", room.ID)
+		for _, usr := range room.Users {
+			log.Printf("    %s, online: %b ", usr.username, usr.online)
 		}
 	}
 }

@@ -5,12 +5,14 @@ import (
 	"log"
 	"net/http"
 
+	"fairlance.io/notifier"
+
 	"github.com/gorilla/context"
 )
 
 type testNotifier struct{}
 
-func (n *testNotifier) Notify(not *notification) error { return nil }
+func (n *testNotifier) Notify(not *notifier.Notification) error { return nil }
 
 func getRequest(appContext *ApplicationContext, requestBody string) *http.Request {
 	req, err := http.NewRequest("GET", "http://fairlance.io/", bytes.NewBuffer([]byte(requestBody)))

@@ -2,6 +2,7 @@ package messaging
 
 import (
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
 
@@ -37,45 +38,38 @@ func ServeWS(hub *Hub) http.Handler {
 			return
 		}
 
-		user := &user{
-			hub:       hub,
-			conn:      conn,
-			send:      make(chan message, 256),
-			username:  appUser.FirstName + " " + appUser.LastName,
-			userType:  userType,
-			projectID: room,
-			id:        appUser.ID,
+		newConnection := &userConn{
+			id:   fmt.Sprintf("%s.%d", userType, appUser.ID),
+			conn: conn,
+			room: room,
+			hub:  hub,
 		}
 
-		hub.register <- user
-
-		go user.startWriting()
-		user.startReading()
+		hub.register <- newConnection
 	})
 }
 
 type hasAccessFunc func(userID uint, userType, token, room string) (bool, error)
 
 // ValidateUser ...
-func ValidateUser(hasAccess hasAccessFunc, next http.Handler) http.Handler {
+func ValidateUser(hub *Hub, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		room := context.Get(r, "room").(string)
+		roomName := context.Get(r, "room").(string)
 		claims := context.Get(r, "claims").(jwt.MapClaims)
 		userType := claims["userType"].(string)
 		user := context.Get(r, "user").(*application.User)
-		token := context.Get(r, "token").(string)
+		// token := context.Get(r, "token").(string)
 
-		// check if user can access the room
-		ok, err := hasAccess(user.ID, userType, token, room)
-		if err != nil {
-			log.Println(err)
-			respond.With(w, r, http.StatusInternalServerError, errors.New("could not check the room"))
+		room, ok := hub.rooms[roomName]
+		if !ok {
+			log.Println("room not found")
+			respond.With(w, r, http.StatusNotFound, errors.New("room not found"))
 			return
 		}
 
-		if !ok {
-			log.Printf("room not allowed\n")
-			respond.With(w, r, http.StatusUnauthorized, errors.New("room not allowed"))
+		if !room.HasUser(user.ID, userType) {
+			log.Println("unauthorized")
+			respond.With(w, r, http.StatusUnauthorized, errors.New("unauthorized"))
 			return
 		}
 
@@ -98,16 +92,27 @@ func WithTokenFromParams(next http.Handler) http.Handler {
 	})
 }
 
-func WithRoom(next http.Handler) http.Handler {
+func WithRoom(hub *Hub, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 
-		if vars["room"] == "" {
+		roomID := vars["room"]
+
+		if roomID == "" {
 			respond.With(w, r, http.StatusBadRequest, "Room not provided.")
 			return
 		}
 
-		context.Set(r, "room", vars["room"])
+		if hub.rooms[roomID] == nil {
+			room, err := hub.getARoom(roomID)
+			if err != nil {
+				log.Println(err)
+				return
+			}
+			hub.rooms[roomID] = room
+		}
+
+		context.Set(r, "room", roomID)
 
 		next.ServeHTTP(w, r)
 	})

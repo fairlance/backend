@@ -3,6 +3,7 @@ package application
 import (
 	"time"
 
+	"fairlance.io/notifier"
 	"github.com/jinzhu/gorm"
 )
 
@@ -15,7 +16,7 @@ type ApplicationContext struct {
 	JobRepository        JobRepository
 	UserRepository       UserRepository
 	JwtSecret            string
-	Notifier             notifier
+	Notifier             notifier.Notifier
 }
 
 type ContextOptions struct {
@@ -48,7 +49,7 @@ func NewContext(options ContextOptions) (*ApplicationContext, error) {
 		ProjectRepository:    projectRepository,
 		ReferenceRepository:  referenceRepository,
 		JwtSecret:            options.Secret, //base64.StdEncoding.EncodeToString([]byte(options.Secret)),
-		Notifier:             newHTTPNotifier(options.NotificationURL),
+		Notifier:             notifier.NewHTTPNotifier(options.NotificationURL),
 	}
 
 	return context, nil

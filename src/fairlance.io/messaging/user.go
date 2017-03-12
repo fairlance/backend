@@ -1,6 +1,7 @@
 package messaging
 
 import (
+	"fmt"
 	"log"
 	"time"
 
@@ -21,21 +22,34 @@ const (
 )
 
 // user type
-type user struct {
+type User struct {
 	hub *Hub
 	// The websocket connection.
 	conn *websocket.Conn
 	// Buffered channel of outbound messages.
-	send chan message
+	send chan Message
 	// Room in which the client is participating
-	projectID string
+	room string
 	// user id
 	id       uint
 	username string
 	userType string
+	online   bool
 }
 
-func (u *user) startReading() {
+func NewUser(id uint, firstName, lastName, userType, room string) *User {
+	return &User{
+		id:       id,
+		username: firstName + " " + lastName,
+		userType: userType,
+		room:     room,
+	}
+}
+
+func (u *User) UniqueID() string {
+	return fmt.Sprintf("%s.%d", u.userType, u.id)
+}
+func (u *User) startReading() {
 	defer func() {
 		u.hub.unregister <- u
 		u.conn.Close()
@@ -52,11 +66,11 @@ func (u *user) startReading() {
 			break
 		}
 
-		u.hub.broadcast <- newMessage(u.id, u.userType, u.username, msgBytes, time.Now().Unix(), u.projectID)
+		u.hub.broadcast <- NewMessage(u.id, u.userType, u.username, msgBytes, u.room)
 	}
 }
 
-func (u *user) startWriting() {
+func (u *User) startWriting() {
 	defer func() {
 		u.conn.Close()
 	}()
@@ -75,7 +89,7 @@ func (u *user) startWriting() {
 				return
 			}
 
-			messages := []message{msg}
+			messages := []Message{msg}
 			// Add queued chat messages to the current websocket message.
 			n := len(u.send)
 			for i := 0; i < n; i++ {

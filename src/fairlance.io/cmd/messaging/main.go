@@ -1,10 +1,8 @@
 package main
 
 import (
-	"encoding/json"
 	"flag"
 	"log"
-	"math/rand"
 	"net/http"
 	"os"
 	"strconv"
@@ -12,20 +10,25 @@ import (
 	app "fairlance.io/application"
 	"fairlance.io/messaging"
 
-	"fmt"
-
-	"github.com/gorilla/context"
 	"github.com/gorilla/mux"
+	"github.com/jinzhu/gorm"
+	_ "github.com/jinzhu/gorm/dialects/postgres"
 )
 
 var (
 	port       int
 	secret     string
+	dbName     string
+	dbUser     string
+	dbPass     string
 	projectURL string
 )
 
 func init() {
 	flag.IntVar(&port, "port", 3005, "Specify the port to listen to.")
+	flag.StringVar(&dbName, "dbName", "application", "DB name.")
+	flag.StringVar(&dbUser, "dbUser", "fairlance", "DB user.")
+	flag.StringVar(&dbPass, "dbPass", "fairlance", "Db user's password.")
 	flag.StringVar(&secret, "secret", "secret", "Secret string used for JWS.")
 	flag.StringVar(&projectURL, "projectURL", "", "Project url to check for user access rights.")
 	flag.Parse()
@@ -38,27 +41,45 @@ func init() {
 }
 
 func main() {
+	db, err := gorm.Open("postgres", "user="+dbUser+" password="+dbPass+" dbname="+dbName+" sslmode=disable")
+	if err != nil {
+		log.Fatal(err)
+	}
 	router := mux.NewRouter()
 
-	hub := messaging.NewHub(messaging.NewMessageDB())
+	getARoom := func(id string) (*messaging.Room, error) {
+		users := make(map[string]*messaging.User)
+
+		project := app.Project{}
+		err := db.Preload("Client").Preload("Freelancers").Find(&project, id).Error
+		if err != nil {
+			return nil, err
+		}
+
+		client := messaging.NewUser(
+			project.ClientID,
+			project.Client.FirstName,
+			project.Client.LastName,
+			"client",
+			id)
+		users[client.UniqueID()] = client
+		for _, freelancer := range project.Freelancers {
+			f := messaging.NewUser(
+				freelancer.ID,
+				freelancer.FirstName,
+				freelancer.LastName,
+				"freelancer",
+				id)
+			users[f.UniqueID()] = f
+		}
+
+		return messaging.NewRoom(id, users), nil
+	}
+
+	hub := messaging.NewHub(messaging.NewMessageDB(), getARoom)
 	go hub.Run()
 
-	router.Handle("/{name}/{room}/ws", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		roomID := mux.Vars(r)["room"]
-		user := mux.Vars(r)["name"]
-
-		context.Set(r, "roomID", roomID)
-		context.Set(r, "user", &app.User{
-			Model: app.Model{
-				ID: uint(rand.Intn(100)),
-			},
-			FirstName: "User",
-			LastName:  user,
-		})
-
-		messaging.ServeWS(hub).ServeHTTP(w, r)
-	}))
-
+	// todo: make safe
 	router.Handle("/{username}/{room}/send", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		room := mux.Vars(r)["room"]
 		username := mux.Vars(r)["username"]
@@ -66,92 +87,14 @@ func main() {
 		hub.SendMessage(room, username, message)
 	}))
 
-	checkAccess := func(userID uint, userType, token, room string) (bool, error) {
-		client := &http.Client{}
-		req, err := http.NewRequest("GET", fmt.Sprintf("%s/%s", projectURL, room), nil)
-		req.Header.Set("Authorization", "Bearer "+token)
-		response, err := client.Do(req)
-		if err != nil {
-			return false, err
-		}
-
-		var responseStruct struct {
-			Code    int         `json:"code"`
-			Data    app.Project `json:"data"`
-			Success bool        `json:"success"`
-		}
-		err = json.NewDecoder(response.Body).Decode(&responseStruct)
-		if err != nil {
-			return false, err
-		}
-
-		if responseStruct.Code != http.StatusOK || responseStruct.Success == false {
-			return false, fmt.Errorf("failed request Code=%d, Success=%v", responseStruct.Code, responseStruct.Success)
-		}
-
-		found := false
-		switch userType {
-		case "client":
-			if responseStruct.Data.Client.ID == userID {
-				found = true
-			}
-		case "freelancer":
-			for _, user := range responseStruct.Data.Freelancers {
-				if user.ID == userID {
-					found = true
-					break
-				}
-			}
-		}
-
-		return found, nil
-	}
-
 	// requires a GET 'token' parameter
 	router.Handle("/{room}/ws", messaging.WithRoom(
-		messaging.WithTokenFromParams(
+		hub, messaging.WithTokenFromParams(
 			app.AuthenticateTokenWithClaims(
 				secret, app.WithUserFromClaims(
 					messaging.ValidateUser(
-						checkAccess, messaging.ServeWS(hub)))))))
+						hub, messaging.ServeWS(hub)))))))
 
-	// opts := &respond.Options{
-	// 	Before: func(w http.ResponseWriter, r *http.Request, status int, data interface{}) (int, interface{}) {
-	// 		dataEnvelope := map[string]interface{}{"code": status}
-	// 		if err, ok := data.(error); ok {
-	// 			dataEnvelope["error"] = err.Error()
-	// 			dataEnvelope["success"] = false
-	// 		} else {
-	// 			dataEnvelope["data"] = data
-	// 			dataEnvelope["success"] = true
-	// 		}
-	// 		return status, dataEnvelope
-	// 	},
-	// }
-
-	// // generates temporary token for certain room to be used for openening ws (not used)
-	// // to be used with /{token}/ws
-	// router.Handle("/{room}/token", opts.Handler(application.NewWithTokenFromHeader(func(token string) http.Handler {
-	// 	return application.NewAuthenticateWithClaims(secret, token, func(claims map[string]interface{}) http.Handler {
-	// 		return application.NewWithUserFromClaims(claims, func(user *application.User) http.Handler {
-	// 			return messaging.NewValidatedWithRoom(user, func(room string) http.Handler {
-	// 				return messaging.NewGenerateToken(secret, room, user)
-	// 			})
-	// 		})
-	// 	})
-	// })))
-
-	// router.Handle("/ws", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-	// 	messaging.NewWithTokenFromParams(func(token string) http.Handler {
-	// 		return application.NewAuthenticateWithClaims(secret, token, func(claims map[string]interface{}) http.Handler {
-	// 			return messaging.NewWithRoomFromClaims(claims, func(room string) http.Handler {
-	// 				return application.NewWithUserFromClaims(claims, func(user *application.User) http.Handler {
-	// 					return messaging.NewServeWS(hub, user, room)
-	// 				})
-	// 			})
-	// 		})
-	// 	}).ServeHTTP(w, r)
-	// }))
 	http.Handle("/", router)
 
 	log.Fatal(http.ListenAndServe(":"+strconv.Itoa(port), nil))
