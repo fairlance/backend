@@ -46,6 +46,7 @@ func uniqueID(u wsrouter.MessageUser) string {
 	return fmt.Sprintf("%s.%d", u.Type, u.ID)
 }
 
+// todo: addd getter/setter funcs with locking
 var notification struct {
 	Users map[string]wsrouter.User
 }
@@ -79,7 +80,7 @@ func main() {
 			notification.Users[userUniqueID(usr)] = usr
 			var messages = []wsrouter.Message{}
 
-			messages, err := db.LoadLastDocs(userUniqueID(usr), 5)
+			messages, err := db.LoadLastDocs(userUniqueID(usr), 20)
 			if err != nil {
 				log.Println(err)
 				return messages
@@ -140,7 +141,6 @@ func main() {
 					log.Println(err)
 					return nil
 				}
-				return nil
 			default:
 				for _, userConf := range msg.To {
 					db.Save(uniqueID(userConf), *msg)
