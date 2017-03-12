@@ -80,7 +80,7 @@ func main() {
 	go hub.Run()
 
 	// todo: make safe
-	router.Handle("/{username}/{room}/send", application.RecoverHandler(
+	router.Handle("/{username}/{room}/send", app.RecoverHandler(
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			room := mux.Vars(r)["room"]
 			username := mux.Vars(r)["username"]
@@ -90,7 +90,7 @@ func main() {
 
 	// requires a GET 'token' parameter
 	router.Handle("/{room}/ws",
-		application.RecoverHandler(
+		app.RecoverHandler(
 			messaging.WithRoom(
 				hub, messaging.WithTokenFromParams(
 					app.AuthenticateTokenWithClaims(
