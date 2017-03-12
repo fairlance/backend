@@ -82,8 +82,10 @@ func TestGetAllProjectsForFreelancer(t *testing.T) {
 	w := httptest.NewRecorder()
 
 	context.Set(r, "userType", "freelancer")
-	context.Set(r, "user", map[string]interface{}{
-		"id": float64(1),
+	context.Set(r, "user", &User{
+		Model: Model{
+			ID: 1,
+		},
 	})
 	getAllProjectsForUser().ServeHTTP(w, r)
 
@@ -118,8 +120,10 @@ func TestGetAllProjectsForClient(t *testing.T) {
 	w := httptest.NewRecorder()
 
 	context.Set(r, "userType", "client")
-	context.Set(r, "user", map[string]interface{}{
-		"id": float64(1),
+	context.Set(r, "user", &User{
+		Model: Model{
+			ID: 1,
+		},
 	})
 	getAllProjectsForUser().ServeHTTP(w, r)
 
