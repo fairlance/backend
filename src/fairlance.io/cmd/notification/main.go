@@ -141,6 +141,7 @@ func main() {
 					log.Println(err)
 					return nil
 				}
+				return nil
 			default:
 				for _, userConf := range msg.To {
 					db.Save(uniqueID(userConf), *msg)
