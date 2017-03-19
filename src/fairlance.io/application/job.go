@@ -3,6 +3,7 @@ package application
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
 
@@ -17,6 +18,28 @@ func getAllJobs() http.Handler {
 		jobs, err := appContext.JobRepository.GetAllJobs()
 		if err != nil {
 			respond.With(w, r, http.StatusBadRequest, err)
+			return
+		}
+
+		respond.With(w, r, http.StatusOK, jobs)
+	})
+}
+
+func getAllJobsForUser() http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var appContext = context.Get(r, "context").(*ApplicationContext)
+		var user = context.Get(r, "user").(*User)
+		var userType = context.Get(r, "userType").(string)
+		var jobs []Job
+
+		if userType != "client" {
+			respond.With(w, r, http.StatusBadRequest, fmt.Errorf("user of type '%s' is not a client", userType))
+			return
+		}
+
+		jobs, err := appContext.JobRepository.GetAllJobsForClient(user.ID)
+		if err != nil {
+			respond.With(w, r, http.StatusInternalServerError, err)
 			return
 		}
 
@@ -72,16 +95,13 @@ func withJob(handler http.Handler) http.Handler {
 			return
 		}
 
-		// https://github.com/asaskevich/govalidator/issues/133
-		// https://github.com/asaskevich/govalidator/issues/112
 		if len(body.Tags) > 10 {
 			respond.With(w, r, http.StatusBadRequest, errors.New("max of 10 tags are allowed"))
 			return
 		}
 
 		if ok, err := govalidator.ValidateStruct(body); ok == false || err != nil {
-			errs := govalidator.ErrorsByField(err)
-			respond.With(w, r, http.StatusBadRequest, errs)
+			respond.With(w, r, http.StatusBadRequest, govalidator.ErrorsByField(err))
 			return
 		}
 

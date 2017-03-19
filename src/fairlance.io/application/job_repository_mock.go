@@ -7,6 +7,15 @@ type JobRepositoryMock struct {
 			Error error
 		}
 	}
+	GetAllJobsForClientCall struct {
+		Receives struct {
+			ID uint
+		}
+		Returns struct {
+			Jobs  []Job
+			Error error
+		}
+	}
 	AddJobCall struct {
 		Receives struct {
 			Job *Job
@@ -54,6 +63,12 @@ type JobRepositoryMock struct {
 func (repo *JobRepositoryMock) GetAllJobs() ([]Job, error) {
 	return repo.GettAllJobsCall.Returns.Jobs,
 		repo.GettAllJobsCall.Returns.Error
+}
+
+func (repo *JobRepositoryMock) GetAllJobsForClient(id uint) ([]Job, error) {
+	repo.GetAllJobsForClientCall.Receives.ID = id
+	return repo.GetAllJobsForClientCall.Returns.Jobs,
+		repo.GetAllJobsForClientCall.Returns.Error
 }
 
 func (repo *JobRepositoryMock) AddJob(job *Job) error {

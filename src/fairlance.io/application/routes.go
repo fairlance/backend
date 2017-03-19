@@ -104,7 +104,7 @@ var routes = Routes{
 		"IndexJob",
 		"GET",
 		"/job",
-		authHandler(getAllJobs()),
+		authHandler(getAllJobsForUser()),
 	},
 	Route{
 		"NewJob",

@@ -6,6 +6,7 @@ import (
 
 type JobRepository interface {
 	GetAllJobs() ([]Job, error)
+	GetAllJobsForClient(id uint) ([]Job, error)
 	AddJob(job *Job) error
 	GetJob(id uint) (Job, error)
 	GetJobApplication(id uint) (*JobApplication, error)
@@ -25,8 +26,14 @@ func NewJobRepository(db *gorm.DB) (JobRepository, error) {
 
 func (repo *PostgreJobRepository) GetAllJobs() ([]Job, error) {
 	jobs := []Job{}
-	repo.db.Preload("JobApplications").Preload("JobApplications.Freelancer").Preload("JobApplications.Examples").Preload("JobApplications.Attachments").Preload("Examples").Preload("Attachments").Preload("Client").Find(&jobs)
-	return jobs, nil
+	err := repo.db.Preload("JobApplications").Preload("JobApplications.Freelancer").Preload("JobApplications.Examples").Preload("JobApplications.Attachments").Preload("Examples").Preload("Attachments").Preload("Client").Find(&jobs).Error
+	return jobs, err
+}
+
+func (repo *PostgreJobRepository) GetAllJobsForClient(id uint) ([]Job, error) {
+	jobs := []Job{}
+	err := repo.db.Preload("JobApplications").Preload("JobApplications.Freelancer").Preload("JobApplications.Examples").Preload("JobApplications.Attachments").Preload("Examples").Preload("Attachments").Preload("Client").Find(&jobs).Where("client_id = ?", id).Error
+	return jobs, err
 }
 
 func (repo *PostgreJobRepository) AddJob(job *Job) error {

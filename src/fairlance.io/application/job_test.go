@@ -72,6 +72,51 @@ func TestJobIndexJob(t *testing.T) {
 	is.Equal(body[0].Attachments[0].URL, "www.attachment.com")
 }
 
+func TestGetJobsForClient(t *testing.T) {
+	jobRepositoryMock := JobRepositoryMock{}
+	var jobContext = &ApplicationContext{
+		JobRepository: &jobRepositoryMock,
+	}
+
+	is := isHelper.New(t)
+	w := httptest.NewRecorder()
+	r := getRequest(jobContext, "")
+
+	context.Set(r, "userType", "client")
+	context.Set(r, "user", &User{
+		Model: Model{
+			ID: 1,
+		},
+	})
+
+	getAllJobsForUser().ServeHTTP(w, r)
+
+	is.Equal(w.Code, http.StatusOK)
+	is.Equal(jobRepositoryMock.GetAllJobsForClientCall.Receives.ID, 1)
+}
+
+func TestGetJobsForClientError(t *testing.T) {
+	jobRepositoryMock := JobRepositoryMock{}
+	var jobContext = &ApplicationContext{
+		JobRepository: &jobRepositoryMock,
+	}
+
+	is := isHelper.New(t)
+	w := httptest.NewRecorder()
+	r := getRequest(jobContext, "")
+
+	context.Set(r, "userType", "freelancer")
+	context.Set(r, "user", &User{
+		Model: Model{
+			ID: 1,
+		},
+	})
+
+	getAllJobsForUser().ServeHTTP(w, r)
+
+	is.Equal(w.Code, http.StatusBadRequest)
+}
+
 func TestJobIndexJobError(t *testing.T) {
 	jobRepositoryMock := JobRepositoryMock{}
 	jobRepositoryMock.GettAllJobsCall.Returns.Error = errors.New("error")
