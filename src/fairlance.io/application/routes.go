@@ -23,7 +23,7 @@ var routes = Routes{
 		"IndexFreelancer",
 		"GET",
 		"/freelancer",
-		getAllFreelancers(),
+		authHandler(getAllFreelancers()),
 	},
 	Route{
 		"RegisterFreelancer",
@@ -35,13 +35,13 @@ var routes = Routes{
 		"GetFreelancer",
 		"GET",
 		"/freelancer/{id}",
-		withID(getFreelancerByID()),
+		authHandler(withID(getFreelancerByID())),
 	},
 	Route{
 		"UpdateFreelancer",
 		"POST",
 		"/freelancer/{id}",
-		withID(withFreelancerUpdate(updateFreelancerByID())),
+		authHandler(withID(withFreelancerUpdate(updateFreelancerByID()))),
 	},
 	Route{
 		"DeleteFreelancer",
@@ -53,13 +53,13 @@ var routes = Routes{
 		"AddFreelancerReference",
 		"PUT",
 		"/freelancer/{id}/reference",
-		withID(withReference(addFreelancerReferenceByID())),
+		authHandler(withID(withReference(addFreelancerReferenceByID()))),
 	},
 	Route{
 		"AddFreelancerReview",
 		"PUT",
 		"/freelancer/{id}/review",
-		withID(withReview(addFreelancerReviewByID())),
+		authHandler(withID(withReview(addFreelancerReviewByID()))),
 	},
 
 	Route{
@@ -79,7 +79,7 @@ var routes = Routes{
 		"IndexClient",
 		"GET",
 		"/client",
-		getAllClients(),
+		authHandler(getAllClients()),
 	},
 	Route{
 		"RegisterClient",
@@ -91,38 +91,38 @@ var routes = Routes{
 		"GetClient",
 		"GET",
 		"/client/{id}",
-		withID(getClientByID()),
+		authHandler(withID(getClientByID())),
 	},
 	Route{
 		"UpdateClient",
 		"POST",
 		"/client/{id}",
-		withID(updateClientByID()),
+		authHandler(withID(updateClientByID())),
 	},
 
 	Route{
 		"IndexJob",
 		"GET",
 		"/job",
-		getAllJobs(),
+		authHandler(getAllJobs()),
 	},
 	Route{
 		"NewJob",
 		"PUT",
 		"/job/new",
-		withID(addJob()),
+		authHandler(withID(addJob())),
 	},
 	Route{
 		"GetJob",
 		"GET",
 		"/job/{id}",
-		withID(getJob()),
+		authHandler(withID(getJob())),
 	},
 	Route{
 		"ApplyForJob",
 		"PUT",
 		"/job/{id}/apply",
-		withID(withClientFromJobID(withJobApplication(addJobApplicationByID()))),
+		authHandler(withID(withClientFromJobID(withJobApplication(addJobApplicationByID())))),
 	},
 	Route{
 		"DeleteJobApplication",
