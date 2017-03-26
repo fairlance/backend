@@ -55,10 +55,19 @@ type hasAccessFunc func(userID uint, userType, token, room string) (bool, error)
 func ValidateUser(hub *Hub, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		roomName := context.Get(r, "room").(string)
-		claims := context.Get(r, "claims").(jwt.MapClaims)
+		claims, ok := context.Get(r, "claims").(jwt.MapClaims)
+		if !ok {
+			log.Println("validate user: claims not of type jwt.MapClaims")
+			respond.With(w, r, http.StatusInternalServerError, errors.New("could not validate user"))
+			return
+		}
 		userType := claims["userType"].(string)
-		user := context.Get(r, "user").(*application.User)
-		// token := context.Get(r, "token").(string)
+		user, ok := context.Get(r, "user").(*application.User)
+		if !ok {
+			log.Println("validate user: user not of type application.User")
+			respond.With(w, r, http.StatusInternalServerError, errors.New("could not validate user"))
+			return
+		}
 
 		room, ok := hub.rooms[roomName]
 		if !ok {

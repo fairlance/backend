@@ -15,7 +15,7 @@ func NewMessageDB() messageDB {
 	// Setup mongo db connection
 	s, err := mgo.Dial("localhost")
 	if err != nil {
-		log.Fatalf(err.Error())
+		log.Fatalf("open mongo db: %v", err)
 	}
 
 	s.DB("messaging").DropDatabase()
