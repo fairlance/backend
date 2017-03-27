@@ -24,4 +24,9 @@ _testmain.go
 *.prof
 
 .idea
-.vscode
+
+bin/
+pkg/
+src/*
+!src/fairlance.io/
+!src/fairlance.io/*
