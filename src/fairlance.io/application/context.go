@@ -141,39 +141,49 @@ func (ac *ApplicationContext) FillTables() {
 		Description: "Description Pending",
 		ClientID:    1,
 		Status:      projectStatusPending,
-		DueDate:     time.Now().Add(time.Duration(21) * time.Hour),
+		Deadline:    time.Now().Add(time.Duration(21) * time.Hour),
 	}).Association("Freelancers").Append([]Freelancer{*f1, *f2})
 
 	ac.db.Create(&Project{
-		Name:        "Project Finilazing Terms",
-		Description: "Description Finilazing Terms",
-		ClientID:    2,
-		Status:      projectStatusFinilazingTerms,
-		DueDate:     time.Now().Add(time.Duration(5*24+1) * time.Hour),
+		Name:            "Project Finilazing Terms",
+		Description:     "Description Finilazing Terms",
+		ClientID:        2,
+		Status:          projectStatusFinilazingTerms,
+		Deadline:        time.Now().Add(time.Duration(5*24+1) * time.Hour),
+		WorkhoursPerDay: 6,
+		PerHour:         8,
 	}).Association("Freelancers").Replace([]Freelancer{*f1}) // just to see that there is a replace as well
 
 	ac.db.Create(&Project{
-		Name:        "Project Working",
-		Description: "Description Working",
-		ClientID:    1,
-		Status:      projectStatusWorking,
-		DueDate:     time.Now().Add(time.Hour),
+		Name:                "Project Working",
+		Description:         "Description Working",
+		ClientID:            1,
+		Status:              projectStatusWorking,
+		Deadline:            time.Now().Add(time.Hour),
+		DeadlineFlexibility: 1,
+		WorkhoursPerDay:     4,
+		PerHour:             9.5,
 	}).Association("Freelancers").Append([]Freelancer{*f2})
 
 	ac.db.Create(&Project{
-		Name:        "Project Archived",
-		Description: "Description Archived",
-		ClientID:    1,
-		Status:      projectStatusArchived,
-		DueDate:     time.Now().Add(time.Hour),
+		Name:                "Project Archived",
+		Description:         "Description Archived",
+		ClientID:            1,
+		Status:              projectStatusArchived,
+		Deadline:            time.Now().Add(time.Hour),
+		DeadlineFlexibility: 4,
+		WorkhoursPerDay:     2,
+		PerHour:             10,
 	}).Association("Freelancers").Append([]Freelancer{*f2})
 
 	ac.db.Create(&Project{
-		Name:        "Project Canceled",
-		Description: "Description Canceled",
-		ClientID:    2,
-		Status:      projectStatusCanceled,
-		DueDate:     time.Now().Add(time.Hour),
+		Name:            "Project Canceled",
+		Description:     "Description Canceled",
+		ClientID:        2,
+		Status:          projectStatusCanceled,
+		Deadline:        time.Now().Add(time.Hour),
+		WorkhoursPerDay: 8,
+		PerHour:         7.85,
 	}).Association("Freelancers").Append([]Freelancer{*f1})
 
 	jobApplication := ac.db.Create(&JobApplication{
@@ -182,6 +192,8 @@ func (ac *ApplicationContext) FillTables() {
 		FreelancerID:     1,
 		Milestones:       stringList{"Milestone1", "Milestone2"},
 		DeliveryEstimate: 15,
+		HourPrice:        9.5,
+		Hours:            6,
 	})
 	jobApplication.Association("Attachments").Replace([]Attachment{{Name: "job application attachment", URL: "www.google.com"}})
 	jobApplication.Association("Examples").Replace([]Example{{Description: "Some job application example", URL: "www.google.com"}})
@@ -218,6 +230,7 @@ func (ac *ApplicationContext) FillTables() {
 		Details:  "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.",
 		ClientID: 1,
 		Tags:     stringList{"tag"},
+		Deadline: time.Now().Add(time.Hour * 24 * 5),
 	})
 	job.Association("Attachments").Replace([]Attachment{{Name: "job attachment", URL: "www.google.com"}})
 	job.Association("Examples").Replace([]Example{{Description: "Some job example", URL: "www.google.com"}})

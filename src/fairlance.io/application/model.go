@@ -54,13 +54,16 @@ type Client struct {
 
 type Project struct {
 	Model
-	Name        string       `json:"name,omitempty"`
-	Description string       `json:"description,omitempty"`
-	Freelancers []Freelancer `json:"freelancers,omitempty" gorm:"many2many:project_freelancers;"`
-	ClientID    uint         `json:"-"`
-	Client      *Client      `json:"client,omitempty"`
-	Status      string       `json:"status,omitempty"`
-	DueDate     time.Time    `json:"dueDate,omitempty"`
+	Name                string       `json:"name,omitempty"`
+	Description         string       `json:"description,omitempty"`
+	Freelancers         []Freelancer `json:"freelancers,omitempty" gorm:"many2many:project_freelancers;"`
+	ClientID            uint         `json:"-"`
+	Client              *Client      `json:"client,omitempty"`
+	Status              string       `json:"status,omitempty"`
+	Deadline            time.Time    `json:"deadline,omitempty"`
+	DeadlineFlexibility int          `json:"deadlineFlexibility,omitempty"`
+	WorkhoursPerDay     int          `json:"workhoursPerDay,omitempty"`
+	PerHour             float64      `json:"perHour,omitempty"`
 }
 
 type Job struct {
@@ -78,6 +81,20 @@ type Job struct {
 	JobApplications []JobApplication `json:"jobApplications,omitempty"`
 	Attachments     []Attachment     `json:"attachments,omitempty" gorm:"polymorphic:Owner;"`
 	Examples        []Example        `json:"examples,omitempty" gorm:"polymorphic:Owner;"`
+}
+
+type JobApplication struct {
+	Model
+	Message          string       `json:"message,omitempty"`
+	DeliveryEstimate int          `json:"deliveryEstimate,omitempty"`
+	Milestones       stringList   `json:"milestones,omitempty" sql:"type:JSONB NOT NULL DEFAULT '{}'::JSONB"`
+	HourPrice        float64      `json:"hourPrice,omitempty"`
+	Hours            int          `json:"hours,omitempty"`
+	Freelancer       *Freelancer  `json:"freelancer,omitempty"`
+	FreelancerID     uint         `json:"freelancerId,omitempty" valid:"required"`
+	JobID            uint         `json:"-"`
+	Attachments      []Attachment `json:"attachments,omitempty" gorm:"polymorphic:Owner;"`
+	Examples         []Example    `json:"examples,omitempty" gorm:"polymorphic:Owner;"`
 }
 
 type Review struct {
@@ -103,20 +120,6 @@ type Media struct {
 	Image       string `json:"image,omitempty"`
 	Video       string `json:"video,omitempty"`
 	ReferenceID uint   `json:"referenceId,omitempty"`
-}
-
-type JobApplication struct {
-	Model
-	Message          string       `json:"message,omitempty"`
-	DeliveryEstimate int          `json:"deliveryEstimate,omitempty"`
-	Milestones       stringList   `json:"milestones,omitempty" sql:"type:JSONB NOT NULL DEFAULT '{}'::JSONB"`
-	HourPrice        float64      `json:"hourPrice,omitempty"`
-	Hours            int          `json:"hours,omitempty"`
-	Freelancer       *Freelancer  `json:"freelancer,omitempty"`
-	FreelancerID     uint         `json:"freelancerId,omitempty" valid:"required"`
-	JobID            uint         `json:"-"`
-	Attachments      []Attachment `json:"attachments,omitempty" gorm:"polymorphic:Owner;"`
-	Examples         []Example    `json:"examples,omitempty" gorm:"polymorphic:Owner;"`
 }
 
 type Attachment struct {

@@ -14,6 +14,26 @@ import (
 	"gopkg.in/matryer/respond.v1"
 )
 
+func withUINT(param string, handler http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+
+		if vars[param] == "" {
+			respond.With(w, r, http.StatusBadRequest, "Id not provided.")
+			return
+		}
+
+		value, err := strconv.ParseUint(vars[param], 10, 32)
+		if err != nil {
+			respond.With(w, r, http.StatusBadRequest, err)
+			return
+		}
+		context.Set(r, param, uint(value))
+
+		handler.ServeHTTP(w, r)
+	})
+}
+
 func withID(handler http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)

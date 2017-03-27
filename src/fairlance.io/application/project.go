@@ -1,6 +1,7 @@
 package application
 
 import (
+	"log"
 	"net/http"
 
 	"fmt"
@@ -65,6 +66,46 @@ func getProjectByID() http.Handler {
 		project, err := appContext.ProjectRepository.getByID(id)
 		if err != nil {
 			respond.With(w, r, http.StatusNotFound, err)
+			return
+		}
+
+		respond.With(w, r, http.StatusOK, project)
+	})
+}
+
+func createProjectFromJobApplication() http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var appContext = context.Get(r, "context").(*ApplicationContext)
+		var jobApplicationID = context.Get(r, "job_application_id").(uint)
+		jobApplication, err := appContext.JobRepository.GetJobApplication(jobApplicationID)
+		if err != nil {
+			respond.With(w, r, http.StatusNotFound, err)
+			return
+		}
+
+		job, err := appContext.JobRepository.GetJob(jobApplication.JobID)
+		if err != nil {
+			respond.With(w, r, http.StatusNotFound, err)
+			return
+		}
+
+		project := Project{
+			Name:            job.Name,
+			Description:     job.Details,
+			ClientID:        job.ClientID,
+			Status:          projectStatusPending,
+			Deadline:        job.Deadline, // todo: ?
+			WorkhoursPerDay: jobApplication.Hours,
+			PerHour:         jobApplication.HourPrice,
+			Freelancers: []Freelancer{
+				*jobApplication.Freelancer,
+			},
+		}
+
+		err = appContext.ProjectRepository.add(&project)
+		if err != nil {
+			log.Printf("create project: %v\n", err)
+			respond.With(w, r, http.StatusInternalServerError, err)
 			return
 		}
 

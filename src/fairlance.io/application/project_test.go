@@ -158,11 +158,14 @@ func TestProjectGetByID(t *testing.T) {
 		Model: Model{
 			ID: 123456789,
 		},
-		Name:        "Name1",
-		Description: "Description1",
-		ClientID:    1,
-		Status:      projectStatusArchived,
-		DueDate:     timeNow,
+		Name:                "Name1",
+		Description:         "Description1",
+		ClientID:            1,
+		Status:              projectStatusArchived,
+		Deadline:            timeNow,
+		PerHour:             2,
+		WorkhoursPerDay:     3,
+		DeadlineFlexibility: 4,
 	}
 	var appContext = &ApplicationContext{
 		ProjectRepository: projectRepoMock,
@@ -180,8 +183,11 @@ func TestProjectGetByID(t *testing.T) {
 	is.Equal(body.Model.ID, uint(123456789))
 	is.Equal(body.Name, "Name1")
 	is.Equal(body.Description, "Description1")
-	is.Equal(body.DueDate.Format(time.RFC3339), timeNow.Format(time.RFC3339))
+	is.Equal(body.Deadline.Format(time.RFC3339), timeNow.Format(time.RFC3339))
 	is.Equal(body.Status, projectStatusArchived)
+	is.Equal(body.PerHour, 2)
+	is.Equal(body.WorkhoursPerDay, 3)
+	is.Equal(body.DeadlineFlexibility, 4)
 	is.Equal(projectRepoMock.GetByIDCall.Receives.ID, uint(1))
 }
 
@@ -199,4 +205,47 @@ func TestProjectGetByIDError(t *testing.T) {
 	getProjectByID().ServeHTTP(w, r)
 
 	is.Equal(w.Code, http.StatusNotFound)
+}
+
+func TestCreateProjectFromJobApplication(t *testing.T) {
+	projectRepoMock := &projectRepositoryMock{}
+	jobRepoMock := &JobRepositoryMock{}
+	jobRepoMock.GetJobApplicationCall.Returns.JobApplication = &JobApplication{
+		Freelancer: &Freelancer{
+			User: User{
+				Model: Model{
+					ID: 22,
+				},
+			},
+		},
+		Hours:     62,
+		HourPrice: 8,
+	}
+	deadline := time.Now()
+	jobRepoMock.GetJobCall.Returns.Job = Job{
+		Name:     "jobName",
+		Details:  "jobDetails",
+		ClientID: uint(33),
+		Deadline: deadline,
+	}
+	var appContext = &ApplicationContext{
+		ProjectRepository: projectRepoMock,
+		JobRepository:     jobRepoMock,
+	}
+	is := isHelper.New(t)
+	w := httptest.NewRecorder()
+	r := getRequest(appContext, "")
+	context.Set(r, "job_application_id", uint(2))
+
+	createProjectFromJobApplication().ServeHTTP(w, r)
+
+	is.Equal(w.Code, http.StatusOK)
+	is.Equal(projectRepoMock.AddCall.Receives.Project.Name, "jobName")
+	is.Equal(projectRepoMock.AddCall.Receives.Project.Description, "jobDetails")
+	is.Equal(projectRepoMock.AddCall.Receives.Project.ClientID, uint(33))
+	is.Equal(projectRepoMock.AddCall.Receives.Project.Deadline, deadline)
+	is.Equal(projectRepoMock.AddCall.Receives.Project.Freelancers[0].ID, uint(22))
+	is.Equal(projectRepoMock.AddCall.Receives.Project.WorkhoursPerDay, 62)
+	is.Equal(projectRepoMock.AddCall.Receives.Project.PerHour, 8)
+	is.Equal(projectRepoMock.AddCall.Receives.Project.Status, projectStatusPending)
 }

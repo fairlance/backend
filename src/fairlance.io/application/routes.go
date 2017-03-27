@@ -74,6 +74,12 @@ var routes = Routes{
 		"/project/{id}",
 		authHandler(withID(getProjectByID())),
 	},
+	Route{
+		"CreateProjectFromJobApplication",
+		"POST",
+		"/project/create_from_job_application/{job_application_id}",
+		authHandler(withUINT("job_application_id", createProjectFromJobApplication())),
+	},
 
 	Route{
 		"IndexClient",
