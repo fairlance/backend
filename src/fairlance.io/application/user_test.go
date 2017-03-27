@@ -80,9 +80,9 @@ func TestWithUserWithNotAllDataInBody(t *testing.T) {
 	is.Equal(w.Code, http.StatusBadRequest)
 	var body map[string]interface{}
 	is.NoErr(json.Unmarshal(w.Body.Bytes(), &body))
-	is.Nil(body["firstName"])
-	is.Nil(body["lastName"])
-	is.Nil(body["password"])
-	is.Nil(body["email"])
-	is.Nil(body["image"])
+	// is.Nil(body["firstName"])
+	// is.Nil(body["lastName"])
+	// is.Nil(body["password"])
+	// is.Nil(body["email"])
+	// is.Nil(body["image"])
 }
