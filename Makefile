@@ -10,7 +10,7 @@ installDependencies:
 	cat dependencies.txt | xargs go get
 
 test:
-	 go list ./... | grep -v /cmd/ | xargs go test -v
+	 go list ... | grep -v /cmd/ | xargs go test -v
 
 install:
 	go install cmd/...
