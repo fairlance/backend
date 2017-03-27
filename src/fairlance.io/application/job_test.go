@@ -372,10 +372,10 @@ func TestJobWithJobError(t *testing.T) {
 	var body map[string]string
 	is.NoErr(json.Unmarshal(w.Body.Bytes(), &body))
 	is.Equal(len(body), 4)
-	is.Equal(body["ClientID"], "non zero value required")
-	is.Equal(body["Details"], "non zero value required")
-	is.Equal(body["Name"], "non zero value required")
-	is.Equal(body["Summary"], "non zero value required")
+	is.Equal(body["clientId"], "non zero value required")
+	is.Equal(body["details"], "non zero value required")
+	is.Equal(body["name"], "non zero value required")
+	is.Equal(body["summary"], "non zero value required")
 }
 
 func TestJobWithJobErrorBadTooManyTags(t *testing.T) {
