@@ -218,15 +218,16 @@ func TestCreateProjectFromJobApplication(t *testing.T) {
 				},
 			},
 		},
-		Hours:     62,
-		HourPrice: 8,
+		Hours:            62,
+		HourPrice:        8,
+		DeliveryEstimate: 2,
 	}
-	deadline := time.Now()
+	deadline := time.Now().Add(time.Hour * 24 * 2)
+	expectedDeadline := time.Date(deadline.Year(), deadline.Month(), deadline.Day()+1, 0, 0, 0, 0, deadline.Location())
 	jobRepoMock.GetJobCall.Returns.Job = Job{
 		Name:     "jobName",
 		Details:  "jobDetails",
 		ClientID: uint(33),
-		Deadline: deadline,
 	}
 	var appContext = &ApplicationContext{
 		ProjectRepository: projectRepoMock,
@@ -243,7 +244,7 @@ func TestCreateProjectFromJobApplication(t *testing.T) {
 	is.Equal(projectRepoMock.AddCall.Receives.Project.Name, "jobName")
 	is.Equal(projectRepoMock.AddCall.Receives.Project.Description, "jobDetails")
 	is.Equal(projectRepoMock.AddCall.Receives.Project.ClientID, uint(33))
-	is.Equal(projectRepoMock.AddCall.Receives.Project.Deadline, deadline)
+	is.Equal(projectRepoMock.AddCall.Receives.Project.Deadline, expectedDeadline)
 	is.Equal(projectRepoMock.AddCall.Receives.Project.Freelancers[0].ID, uint(22))
 	is.Equal(projectRepoMock.AddCall.Receives.Project.WorkhoursPerDay, 62)
 	is.Equal(projectRepoMock.AddCall.Receives.Project.PerHour, 8)

@@ -3,11 +3,12 @@ package application
 import (
 	"log"
 	"net/http"
-
-	"fmt"
+	"time"
 
 	"github.com/gorilla/context"
-	"gopkg.in/matryer/respond.v1"
+	respond "gopkg.in/matryer/respond.v1"
+
+	"fmt"
 )
 
 const (
@@ -89,12 +90,15 @@ func createProjectFromJobApplication() http.Handler {
 			return
 		}
 
+		deadlineWithTime := time.Now().Add(time.Hour * 24 * time.Duration(jobApplication.DeliveryEstimate))
+		deadline := time.Date(deadlineWithTime.Year(), deadlineWithTime.Month(), deadlineWithTime.Day()+1, 0, 0, 0, 0, deadlineWithTime.Location())
+
 		project := Project{
 			Name:            job.Name,
 			Description:     job.Details,
 			ClientID:        job.ClientID,
 			Status:          projectStatusPending,
-			Deadline:        job.Deadline, // todo: ?
+			Deadline:        deadline,
 			WorkhoursPerDay: jobApplication.Hours,
 			PerHour:         jobApplication.HourPrice,
 			Freelancers: []Freelancer{
@@ -105,6 +109,13 @@ func createProjectFromJobApplication() http.Handler {
 		err = appContext.ProjectRepository.add(&project)
 		if err != nil {
 			log.Printf("create project: %v\n", err)
+			respond.With(w, r, http.StatusInternalServerError, err)
+			return
+		}
+
+		err = appContext.JobRepository.DeleteJobApplication(jobApplication)
+		if err != nil {
+			log.Printf("delete job application: %v\n", err)
 			respond.With(w, r, http.StatusInternalServerError, err)
 			return
 		}
