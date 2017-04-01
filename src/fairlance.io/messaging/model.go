@@ -15,7 +15,7 @@ func NewMessage(userID uint, userType string, username string, text []byte, proj
 		UserType:  userType,
 		Username:  username,
 		Text:      string(bytes.TrimSpace(text)),
-		Timestamp: time.Now().UnixNano() / int64(time.Millisecond),
+		Timestamp: time.Now().Unix(),
 		ProjectID: projectID,
 	}
 }

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 )
 
@@ -39,22 +40,26 @@ func NewHTTPNotifier(notificationURL string) *HTTPNotifier {
 
 func (notifier *HTTPNotifier) Notify(n *Notification) error {
 	url := "http://" + notifier.NotificationURL + "/send"
-	body, err := json.Marshal(&n)
+	body, err := json.Marshal(n)
 	if err != nil {
+		log.Println(err)
 		return err
 	}
 	client := &http.Client{}
 	request, err := http.NewRequest("POST", url, bytes.NewReader(body))
 	if err != nil {
+		log.Println(err)
 		return err
 	}
 	response, err := client.Do(request)
 	if err != nil {
+		log.Println(err)
 		return err
 	}
-	if response.StatusCode != http.StatusAccepted {
+	if response.StatusCode != http.StatusOK {
 		contents, err := ioutil.ReadAll(response.Body)
 		if err != nil {
+			log.Println(err)
 			return err
 		}
 		err = fmt.Errorf(
@@ -64,6 +69,7 @@ func (notifier *HTTPNotifier) Notify(n *Notification) error {
 			url,
 			body)
 		response.Body.Close()
+		log.Println(err)
 		return err
 	}
 

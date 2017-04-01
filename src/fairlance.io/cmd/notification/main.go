@@ -100,15 +100,15 @@ func main() {
 			}
 		},
 		BuildMessage: func(b []byte) *wsrouter.Message {
-			var msg = wsrouter.Message{}
+			var msg = &wsrouter.Message{}
 
-			err := json.Unmarshal(b, &msg)
+			err := json.Unmarshal(b, msg)
 			if err != nil {
 				log.Println(err)
 				return nil
 			}
 
-			msg.Timestamp = time.Now().UnixNano() / int64(time.Millisecond)
+			msg.Timestamp = time.Now().Unix()
 
 			switch msg.Type {
 			case "read":
@@ -135,11 +135,11 @@ func main() {
 				return nil
 			default:
 				for _, userConf := range msg.To {
-					db.Save(userConf.UniqueID(), msg)
+					db.Save(userConf.UniqueID(), *msg)
 				}
 			}
 
-			return &msg
+			return msg
 		},
 	}
 	router := wsrouter.NewRouter(conf)
@@ -167,7 +167,7 @@ func main() {
 							}
 							defer r.Body.Close()
 
-							msg.Timestamp = time.Now().UnixNano() / int64(time.Millisecond)
+							msg.Timestamp = time.Now().Unix()
 
 							switch msg.Type {
 							case "read":
