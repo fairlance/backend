@@ -18,33 +18,11 @@ import (
 	"flag"
 	"os"
 
-	"fmt"
-
 	"fairlance.io/application"
 	"fairlance.io/messaging"
 	"fairlance.io/wsrouter"
 	"github.com/dgrijalva/jwt-go"
 )
-
-func newUser(r *http.Request) *wsrouter.User {
-	user := context.Get(r, "user").(*application.User)
-	claims := context.Get(r, "claims").(jwt.MapClaims)
-	userType := claims["userType"].(string)
-
-	return &wsrouter.User{
-		Username: user.FirstName + " " + user.LastName,
-		Type:     userType,
-		ID:       user.ID,
-	}
-}
-
-func userUniqueID(user wsrouter.User) string {
-	return fmt.Sprintf("%s.%d", user.Type, user.ID)
-}
-
-func uniqueID(u wsrouter.MessageUser) string {
-	return fmt.Sprintf("%s.%d", u.Type, u.ID)
-}
 
 // todo: addd getter/setter funcs with locking
 var notification struct {
@@ -71,16 +49,16 @@ func init() {
 	log.SetOutput(f)
 }
 
-func main() {
+func main1() {
 	notification.Users = make(map[string]wsrouter.User)
 	db = newMongoDatabase("notification")
 	conf := wsrouter.RouterConf{
 		Register: func(usr wsrouter.User) []wsrouter.Message {
 			log.Println("registering", usr.Username)
-			notification.Users[userUniqueID(usr)] = usr
+			notification.Users[usr.UniqueID()] = usr
 			var messages = []wsrouter.Message{}
 
-			messages, err := db.LoadLastDocs(userUniqueID(usr), 20)
+			messages, err := db.LoadLastDocs(usr.UniqueID(), 20)
 			if err != nil {
 				log.Println(err)
 				return messages
@@ -90,7 +68,7 @@ func main() {
 		},
 		Unregister: func(usr wsrouter.User) {
 			log.Println("unregistering", usr.Username)
-			delete(notification.Users, userUniqueID(usr))
+			delete(notification.Users, usr.UniqueID())
 		},
 		BroadcastTo: func(msg *wsrouter.Message) []wsrouter.User {
 			log.Printf("broadcast %v\n", msg)
@@ -101,7 +79,7 @@ func main() {
 			}
 			users := []wsrouter.User{}
 			for _, userConf := range msg.To {
-				user, ok := notification.Users[uniqueID(userConf)]
+				user, ok := notification.Users[userConf.UniqueID()]
 				if !ok {
 					log.Printf("error: user not found [%v]", userConf)
 				} else {
@@ -111,7 +89,15 @@ func main() {
 			return users
 		},
 		CreateUser: func(r *http.Request) *wsrouter.User {
-			return newUser(r)
+			user := context.Get(r, "user").(*application.User)
+			claims := context.Get(r, "claims").(jwt.MapClaims)
+			userType := claims["userType"].(string)
+
+			return &wsrouter.User{
+				Username: user.FirstName + " " + user.LastName,
+				Type:     userType,
+				ID:       user.ID,
+			}
 		},
 		BuildMessage: func(b []byte) *wsrouter.Message {
 			var msg = &wsrouter.Message{}
@@ -126,7 +112,7 @@ func main() {
 
 			switch msg.Type {
 			case "read":
-				uniqueIDFrom := uniqueID(msg.From)
+				uniqueIDFrom := msg.From.UniqueID()
 				if _, ok := notification.Users[uniqueIDFrom]; !ok {
 					log.Printf("error: user not found [%v]", msg.From)
 					return nil
@@ -144,7 +130,7 @@ func main() {
 				return nil
 			default:
 				for _, userConf := range msg.To {
-					db.Save(uniqueID(userConf), *msg)
+					db.Save(userConf.UniqueID(), *msg)
 				}
 			}
 
@@ -178,7 +164,7 @@ func main() {
 						msg.Timestamp = time.Now().UnixNano() / int64(time.Millisecond)
 						if msg.Type != "read" {
 							for _, userConf := range msg.To {
-								db.Save(uniqueID(userConf), msg)
+								db.Save(userConf.UniqueID(), msg)
 							}
 						}
 

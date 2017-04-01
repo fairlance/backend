@@ -1,6 +1,7 @@
 package wsrouter
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/gorilla/websocket"
@@ -19,6 +20,10 @@ type MessageUser struct {
 	Type string `json:"type"`
 }
 
+func (user *MessageUser) UniqueID() string {
+	return fmt.Sprintf("%s.%d", user.Type, user.ID)
+}
+
 type Message struct {
 	To        []MessageUser          `json:"to,omitempty"`
 	From      MessageUser            `json:"from,omitempty"`
@@ -33,6 +38,10 @@ type User struct {
 	ID       uint   `json:"id"`
 	Type     string `json:"type"`
 	send     chan Message
+}
+
+func (user *User) UniqueID() string {
+	return fmt.Sprintf("%s.%d", user.Type, user.ID)
 }
 
 type Router struct {
