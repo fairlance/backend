@@ -100,9 +100,9 @@ func main() {
 			}
 		},
 		BuildMessage: func(b []byte) *wsrouter.Message {
-			var msg = &wsrouter.Message{}
+			var msg = wsrouter.Message{}
 
-			err := json.Unmarshal(b, msg)
+			err := json.Unmarshal(b, &msg)
 			if err != nil {
 				log.Println(err)
 				return nil
@@ -117,24 +117,29 @@ func main() {
 					log.Printf("error: user not found [%v]", msg.From)
 					return nil
 				}
-				timestampFloat, ok := msg.Data["timestamp"].(float64)
+				timestampString, ok := msg.Data["timestamp"].(string)
 				if !ok {
 					log.Printf("error: timestamp not provided [%s]", msg.Data["timestamp"])
 					return nil
 				}
 
-				if err := db.MarkRead(uniqueIDFrom, int64(timestampFloat)); err != nil {
+				timestampInt, err := strconv.ParseInt(timestampString, 10, 0)
+				if err != nil {
+					log.Println(err)
+					return nil
+				}
+				if err := db.MarkRead(uniqueIDFrom, timestampInt); err != nil {
 					log.Println(err)
 					return nil
 				}
 				return nil
 			default:
 				for _, userConf := range msg.To {
-					db.Save(userConf.UniqueID(), *msg)
+					db.Save(userConf.UniqueID(), msg)
 				}
 			}
 
-			return msg
+			return &msg
 		},
 	}
 	router := wsrouter.NewRouter(conf)
@@ -149,33 +154,58 @@ func main() {
 	http.Handle("/send",
 		application.RecoverHandler(
 			application.LoggerHandler(
-				http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-					if r.Method == "PUT" {
-						var msg wsrouter.Message
+				application.CORSHandler(
+					http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+						if r.Method == "POST" {
+							var msg wsrouter.Message
 
-						decoder := json.NewDecoder(r.Body)
-						if err := decoder.Decode(&msg); err != nil {
-							w.Write([]byte(err.Error()))
-							w.WriteHeader(http.StatusBadRequest)
+							decoder := json.NewDecoder(r.Body)
+							if err := decoder.Decode(&msg); err != nil {
+								w.WriteHeader(http.StatusBadRequest)
+								w.Write([]byte(err.Error()))
+								return
+							}
+							defer r.Body.Close()
+
+							msg.Timestamp = time.Now().UnixNano() / int64(time.Millisecond)
+
+							switch msg.Type {
+							case "read":
+								uniqueIDFrom := msg.From.UniqueID()
+								if _, ok := notification.Users[uniqueIDFrom]; !ok {
+									log.Printf("error: user not found [%v]", msg.From)
+									return
+								}
+								timestampString, ok := msg.Data["timestamp"].(string)
+								if !ok {
+									log.Printf("error: timestamp not provided [%s]", msg.Data["timestamp"])
+									return
+								}
+
+								timestampInt, err := strconv.ParseInt(timestampString, 10, 0)
+								if err != nil {
+									log.Println(err)
+									return
+								}
+								if err := db.MarkRead(uniqueIDFrom, timestampInt); err != nil {
+									log.Println(err)
+									return
+								}
+								return
+							default:
+								for _, userConf := range msg.To {
+									db.Save(userConf.UniqueID(), msg)
+								}
+							}
+
+							router.BroadcastMessage(msg)
+							w.WriteHeader(http.StatusOK)
 							return
 						}
-						defer r.Body.Close()
 
-						msg.Timestamp = time.Now().UnixNano() / int64(time.Millisecond)
-						if msg.Type != "read" {
-							for _, userConf := range msg.To {
-								db.Save(userConf.UniqueID(), msg)
-							}
-						}
-
-						router.BroadcastMessage(msg)
-						w.WriteHeader(http.StatusOK)
-						return
-					}
-
-					w.Write([]byte("method not allowed"))
-					w.WriteHeader(http.StatusMethodNotAllowed)
-				}))))
+						w.WriteHeader(http.StatusMethodNotAllowed)
+						w.Write([]byte("method not allowed"))
+					})))))
 
 	go router.Run()
 
@@ -188,6 +218,7 @@ func newMongoDatabase(dbName string) *mongoDB {
 	if err != nil {
 		log.Fatal("cannot connect to mongo:", err.Error())
 	}
+	s.DB(dbName).DropDatabase()
 
 	return &mongoDB{s, dbName}
 }

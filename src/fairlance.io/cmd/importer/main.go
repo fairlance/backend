@@ -43,5 +43,6 @@ func main() {
 		DBPass:      dbPass,
 		SearcherURL: searcherURL,
 	}))
+	http.Handle("/messages", importer.NewMessagesHandler())
 	log.Fatal(http.ListenAndServe(":"+*port, nil))
 }

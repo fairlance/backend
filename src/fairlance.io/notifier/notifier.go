@@ -44,7 +44,7 @@ func (notifier *HTTPNotifier) Notify(n *Notification) error {
 		return err
 	}
 	client := &http.Client{}
-	request, err := http.NewRequest("PUT", url, bytes.NewReader(body))
+	request, err := http.NewRequest("POST", url, bytes.NewReader(body))
 	if err != nil {
 		return err
 	}

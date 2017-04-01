@@ -75,9 +75,11 @@ func (r *Room) Close() {
 
 func (r *Room) CloseUser(u *User) {
 	user, ok := r.Users[fmt.Sprintf("%s.%d", u.userType, u.id)]
-	if ok {
+	if ok && user.online == true {
 		user.hub = nil
-		close(user.send)
+		if user.send != nil {
+			close(user.send)
+		}
 		user.online = false
 	}
 }
