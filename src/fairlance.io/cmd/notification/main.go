@@ -49,7 +49,7 @@ func init() {
 	log.SetOutput(f)
 }
 
-func main1() {
+func main() {
 	notification.Users = make(map[string]wsrouter.User)
 	db = newMongoDatabase("notification")
 	conf := wsrouter.RouterConf{
