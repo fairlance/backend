@@ -118,7 +118,7 @@ func (h *Hub) notifyUser(u *User, msg Message) {
 			"message":   msg.Text,
 			"username":  msg.Username,
 			"timestamp": fmt.Sprintf("%d", msg.Timestamp),
-			"time":      time.Unix(msg.Timestamp, 0),
+			"time":      time.Unix(0, msg.Timestamp*1000000),
 			"projectId": msg.ProjectID,
 		},
 	})

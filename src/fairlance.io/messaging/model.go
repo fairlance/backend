@@ -15,9 +15,13 @@ func NewMessage(userID uint, userType string, username string, text []byte, proj
 		UserType:  userType,
 		Username:  username,
 		Text:      string(bytes.TrimSpace(text)),
-		Timestamp: time.Now().Unix(),
+		Timestamp: timeToMillis(time.Now()),
 		ProjectID: projectID,
 	}
+}
+
+func timeToMillis(t time.Time) int64 {
+	return t.UnixNano() / 1000000
 }
 
 type Message struct {

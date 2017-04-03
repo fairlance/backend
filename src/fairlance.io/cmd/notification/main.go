@@ -108,7 +108,7 @@ func main() {
 				return nil
 			}
 
-			msg.Timestamp = time.Now().Unix()
+			msg.Timestamp = timeToMillis(time.Now())
 
 			switch msg.Type {
 			case "read":
@@ -167,7 +167,7 @@ func main() {
 							}
 							defer r.Body.Close()
 
-							msg.Timestamp = time.Now().Unix()
+							msg.Timestamp = timeToMillis(time.Now())
 
 							switch msg.Type {
 							case "read":
@@ -211,6 +211,10 @@ func main() {
 
 	log.Println("Started...")
 	http.ListenAndServe(":"+strconv.Itoa(port), nil)
+}
+
+func timeToMillis(t time.Time) int64 {
+	return t.UnixNano() / 1000000
 }
 
 func newMongoDatabase(dbName string) *mongoDB {
