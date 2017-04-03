@@ -13,7 +13,7 @@ func NewMessagesHandler() *MessagesHandler {
 }
 
 func (handler *MessagesHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	main := MustAsset("templates/messages.html")
+	main := MustAsset("templates/websockettest.html")
 
 	tmpl, err := template.New("messages").Parse(string(main))
 	if err != nil {

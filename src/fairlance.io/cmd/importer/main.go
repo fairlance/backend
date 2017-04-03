@@ -43,6 +43,6 @@ func main() {
 		DBPass:      dbPass,
 		SearcherURL: searcherURL,
 	}))
-	http.Handle("/messages", importer.NewMessagesHandler())
+	http.Handle("/websockettest", importer.NewMessagesHandler())
 	log.Fatal(http.ListenAndServe(":"+*port, nil))
 }

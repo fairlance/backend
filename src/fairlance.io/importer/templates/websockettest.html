@@ -12,9 +12,13 @@
 <body>
     <div id="app">
         <div>
-            <h2>Login</h2>
-            <p>url:<input v-model="applicationUrl"></input>
+            <p><a href="/">Home</a> | url:<input v-model="baseUrl"></input>
             </p>
+        </div>
+        <hr>
+        <div>
+            <h2>Login</h2>
+            <p>port:${applicationPort}</p>
             <label>Email:
                 <input v-model="email">
                 <select v-model="selectedEmail">
@@ -30,6 +34,7 @@
             <button v-on:click="login">Login</button>
             <p>Token:<textarea cols="100" rows="3">${token}</textarea></p>
         </div>
+
         <div>
             <h2>Send Notification <button v-on:click="showSendNotification = !showSendNotification">toggle</button></h2>
             <div v-show="showSendNotification">
@@ -57,7 +62,7 @@
         <div>
             <h2>Messaging<span v-if="messagingWs != null"> - OPEN</span></h2>
             <p>
-                URL:<input v-model="messagingUrl"></input>
+                port:${messagingPort}
                 <button v-on:click="openMessagingWS">Open</button>
                 <button v-on:click="closeMessagingWS">Close</button>
             </p>
@@ -90,7 +95,7 @@
         <div>
             <h2>Notification<span v-if="notificationWs != null"> - OPEN</span></h2>
             <p>
-                URL:<input v-model="notificationUrl"></input>
+                port:${notificationPort}
                 <button v-on:click="openNotificationWS">Open</button>
                 <button v-on:click="closeNotificationWS">Close</button>
             </p>
@@ -128,6 +133,7 @@
         delimiters: ['${', '}'],
         el: '#app',
         data: {
+            baseUrl: 'local.fairlance.io',
             // login
             emails: ['first@mail.com', 'second@mail.com', 'client@mail.com'],
             passwords: ['Pass', '123456'],
@@ -136,15 +142,15 @@
             email: 'first@mail.com',
             password: 'Pass',
             token: '',
-            applicationUrl: 'http://local.fairlance.io:3001',
+            applicationPort: '3001',
             // messaging
-            messagingUrl: 'ws://local.fairlance.io:3005',
+            messagingPort: '3005',
             messagingMessages: [],
             messagingWs: null,
             messagingMessage: '',
             project_id: 1,
             // notification
-            notificationUrl: 'ws://local.fairlance.io:3007',
+            notificationPort: '3007',
             notificationMessages: [],
             notificationWs: null,
             notificationMessage: '',
@@ -175,7 +181,7 @@
         methods: {
             login: function (event) {
                 var self = this;
-                axios.post(this.applicationUrl + '/login', {
+                axios.post('http://' + this.baseUrl + ':' + this.applicationPort + '/login', {
                     email: this.email,
                     password: this.password,
                 })
@@ -195,7 +201,7 @@
                     return;
                 }
                 var self = this;
-                this.messagingWs = new WebSocket(this.messagingUrl + "/" + this.project_id + "/ws?token=" + this.token);
+                this.messagingWs = new WebSocket('ws://' + this.baseUrl + ':' + this.messagingPort + "/" + this.project_id + "/ws?token=" + this.token);
                 this.messagingWs.onopen = function (event) {
                     console.log("messagingWs.onopen:", event.data);
                 };
@@ -220,7 +226,7 @@
                     return;
                 }
                 var self = this;
-                this.notificationWs = new WebSocket(this.notificationUrl + "/ws?token=" + this.token);
+                this.notificationWs = new WebSocket('ws://' + this.baseUrl + ':' + this.notificationPort + "/ws?token=" + this.token);
                 this.notificationWs.onopen = function (event) {
                     console.log("notificationWs.onopen:", event.data);
                 };

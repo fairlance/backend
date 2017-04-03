@@ -45,6 +45,9 @@ var htmlTemplate = `
                     <li v-bind:class="{ 'active': tab == 'search' }">
                         <a href="#" v-on:click="tab = 'search'">Search</a>
                     </li>
+                    <li>
+                        <a href="/websockettest">Websocket Test</a>
+                    </li>
                 </ul>
             </div>
         </nav>
