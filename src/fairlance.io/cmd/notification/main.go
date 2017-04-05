@@ -123,7 +123,7 @@ func main() {
 					return nil
 				}
 
-				timestampInt, err := strconv.ParseInt(timestampString, 10, 0)
+				timestampInt, err := strconv.ParseInt(timestampString, 10, 64)
 				if err != nil {
 					log.Println(err)
 					return nil
@@ -182,7 +182,7 @@ func main() {
 									return
 								}
 
-								timestampInt, err := strconv.ParseInt(timestampString, 10, 0)
+								timestampInt, err := strconv.ParseInt(timestampString, 10, 64)
 								if err != nil {
 									log.Println(err)
 									return
