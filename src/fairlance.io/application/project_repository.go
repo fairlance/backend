@@ -42,7 +42,7 @@ func (repo *postgreProjectRepository) add(project *Project) error {
 }
 func (repo *postgreProjectRepository) getAllProjectsForClient(id uint) ([]Project, error) {
 	projects := []Project{}
-	err := repo.db.Preload("Client").Preload("Freelancers").Find(&projects).Where("client_id = ?", id).Error
+	err := repo.db.Preload("Client").Preload("Freelancers").Where("client_id = ?", id).Find(&projects).Error
 	return projects, err
 }
 
