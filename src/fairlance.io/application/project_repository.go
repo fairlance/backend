@@ -4,10 +4,13 @@ import "github.com/jinzhu/gorm"
 
 type ProjectRepository interface {
 	getAllProjects() ([]Project, error)
-	getByID(id uint) (Project, error)
+	getByID(id uint) (*Project, error)
 	add(project *Project) error
 	getAllProjectsForClient(id uint) ([]Project, error)
 	getAllProjectsForFreelancer(id uint) ([]Project, error)
+	projectBelongsToUser(id uint, userType string, userID uint) (bool, error)
+	addContract(contract *Contract) error
+	addExtension(extension *Extension) error
 }
 
 const (
@@ -26,23 +29,53 @@ func NewProjectRepository(db *gorm.DB) (ProjectRepository, error) {
 
 func (repo *postgreProjectRepository) getAllProjects() ([]Project, error) {
 	projects := []Project{}
-	err := repo.db.Preload("Client").Preload("Freelancers").Find(&projects).Error
+	err := repo.db.Preload("Contract").Preload("Contract.Extensions").Preload("Client").Preload("Freelancers").Find(&projects).Error
 	return projects, err
 }
 
-// todo: check if user has access to project
-func (repo *postgreProjectRepository) getByID(id uint) (Project, error) {
-	project := Project{}
-	err := repo.db.Preload("Client").Preload("Freelancers").Find(&project, id).Error
+func (repo *postgreProjectRepository) getByID(id uint) (*Project, error) {
+	project := &Project{}
+	err := repo.db.Preload("Contract").Preload("Contract.Extensions").Preload("Client").Preload("Freelancers").Find(project, id).Error
 	return project, err
 }
 
 func (repo *postgreProjectRepository) add(project *Project) error {
 	return repo.db.Create(project).Error
 }
+
+func (repo *postgreProjectRepository) addContract(contract *Contract) error {
+	return repo.db.Create(contract).Error
+}
+
+func (repo *postgreProjectRepository) addExtension(extension *Extension) error {
+	return repo.db.Create(extension).Error
+}
+
+func (repo *postgreProjectRepository) projectBelongsToUser(id uint, userType string, userID uint) (bool, error) {
+	var project Project
+	err := repo.db.Preload("Client").Preload("Freelancers").Find(&project, id).Error
+	if err != nil {
+		return false, err
+	}
+
+	if userType == "client" && project.ClientID == userID {
+		return true, nil
+	}
+
+	if userType == "freelancer" {
+		for _, frelancer := range project.Freelancers {
+			if frelancer.ID == userID {
+				return true, nil
+			}
+		}
+	}
+
+	return false, nil
+}
+
 func (repo *postgreProjectRepository) getAllProjectsForClient(id uint) ([]Project, error) {
 	projects := []Project{}
-	err := repo.db.Preload("Client").Preload("Freelancers").Where("client_id = ?", id).Find(&projects).Error
+	err := repo.db.Preload("Contract").Preload("Contract.Extensions").Preload("Client").Preload("Freelancers").Where("client_id = ?", id).Find(&projects).Error
 	return projects, err
 }
 
@@ -60,5 +93,5 @@ func (repo *postgreProjectRepository) getAllProjectsForFreelancer(id uint) ([]Pr
 		projectIDs = append(projectIDs, projectID)
 	}
 
-	return projects, repo.db.Preload("Client").Preload("Freelancers").Where("id IN (?)", projectIDs).Find(&projects).Error
+	return projects, repo.db.Preload("Contract").Preload("Contract.Extensions").Preload("Client").Preload("Freelancers").Where("id IN (?)", projectIDs).Find(&projects).Error
 }

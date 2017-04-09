@@ -62,12 +62,12 @@ func (ac *ApplicationContext) DropCreateFillTables() {
 }
 
 func (ac *ApplicationContext) DropTables() {
-	ac.db.DropTableIfExists(&Freelancer{}, &Project{}, &Client{}, &Job{}, &Review{}, &Reference{}, &Media{}, &JobApplication{}, &Attachment{}, &Example{})
+	ac.db.DropTableIfExists(&Freelancer{}, &Extension{}, &Contract{}, &Project{}, &Client{}, &Job{}, &Review{}, &Reference{}, &Media{}, &JobApplication{}, &Attachment{}, &Example{})
 	ac.db.DropTable("project_freelancers", "job_applications")
 }
 
 func (ac *ApplicationContext) CreateTables() {
-	ac.db.CreateTable(&Freelancer{}, &Project{}, &Client{}, &Job{}, &Review{}, &Reference{}, &Media{}, &JobApplication{}, &Attachment{}, &Example{})
+	ac.db.CreateTable(&Freelancer{}, &Extension{}, &Contract{}, &Project{}, &Client{}, &Job{}, &Review{}, &Reference{}, &Media{}, &JobApplication{}, &Attachment{}, &Example{})
 }
 
 func (ac *ApplicationContext) FillTables() {
@@ -136,13 +136,36 @@ func (ac *ApplicationContext) FillTables() {
 		Media:   Media{Image: "image", Video: "video"},
 	})
 
+	ac.db.Create(&Contract{
+		Deadline:            time.Now().Add(24 * time.Hour * 2),
+		PerHour:             5,
+		WorkhoursPerDay:     6,
+		DeadlineFlexibility: 1,
+	})
+
 	ac.db.Create(&Project{
 		Name:        "Project Pending",
 		Description: "Description Pending",
 		ClientID:    1,
 		Status:      projectStatusPending,
 		Deadline:    time.Now().Add(time.Duration(21) * time.Hour),
+		ContractID:  1,
 	}).Association("Freelancers").Append([]Freelancer{*f1, *f2})
+
+	extension := Extension{
+		Deadline:            time.Now().Add(24 * time.Hour * 6),
+		PerHour:             15,
+		WorkhoursPerDay:     4,
+		DeadlineFlexibility: 0,
+	}
+	ac.db.Create(&extension)
+
+	ac.db.Create(&Contract{
+		Deadline:            time.Now().Add(24 * time.Hour * 5),
+		PerHour:             15,
+		WorkhoursPerDay:     6,
+		DeadlineFlexibility: 1,
+	}).Association("Extensions").Replace([]Extension{extension})
 
 	ac.db.Create(&Project{
 		Name:            "Project Finilazing Terms",
@@ -151,8 +174,9 @@ func (ac *ApplicationContext) FillTables() {
 		Status:          projectStatusFinilazingTerms,
 		Deadline:        time.Now().Add(time.Duration(5*24+1) * time.Hour),
 		WorkhoursPerDay: 6,
-		PerHour:         8,
-	}).Association("Freelancers").Replace([]Freelancer{*f1}) // just to see that there is a replace as well
+		PerHour:         15,
+		ContractID:      2,
+	}).Association("Freelancers").Replace([]Freelancer{*f1})
 
 	ac.db.Create(&Project{
 		Name:                "Project Working",
@@ -231,6 +255,7 @@ func (ac *ApplicationContext) FillTables() {
 		ClientID: 1,
 		Tags:     stringList{"tag"},
 		Deadline: time.Now().Add(time.Hour * 24 * 5),
+		IsActive: true,
 	})
 	job.Association("Attachments").Replace([]Attachment{{Name: "job attachment", URL: "www.google.com"}})
 	job.Association("Examples").Replace([]Example{{Description: "Some job example", URL: "www.google.com"}})

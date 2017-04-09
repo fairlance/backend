@@ -8,6 +8,8 @@ import (
 	"testing"
 	"time"
 
+	"fairlance.io/notifier"
+
 	isHelper "github.com/cheekybits/is"
 	"github.com/gorilla/context"
 )
@@ -154,7 +156,7 @@ func TestGetAllProjectsForUserWithError(t *testing.T) {
 func TestProjectGetByID(t *testing.T) {
 	projectRepoMock := &projectRepositoryMock{}
 	timeNow := time.Now()
-	projectRepoMock.GetByIDCall.Returns.Project = Project{
+	projectRepoMock.GetByIDCall.Returns.Project = &Project{
 		Model: Model{
 			ID: 123456789,
 		},
@@ -224,19 +226,30 @@ func TestCreateProjectFromJobApplication(t *testing.T) {
 	}
 	deadline := time.Now().Add(time.Hour * 24 * 2)
 	expectedDeadline := time.Date(deadline.Year(), deadline.Month(), deadline.Day()+1, 0, 0, 0, 0, deadline.Location())
-	jobRepoMock.GetJobCall.Returns.Job = Job{
+	jobRepoMock.GetJobCall.Returns.Job = &Job{
 		Name:     "jobName",
 		Details:  "jobDetails",
 		ClientID: uint(33),
 	}
+
+	var notifiedFreelancerID uint
+	var notificationType string
+
 	var appContext = &ApplicationContext{
 		ProjectRepository: projectRepoMock,
 		JobRepository:     jobRepoMock,
+		Notifier: &testNotifier{
+			callback: func(notification *notifier.Notification) error {
+				notifiedFreelancerID = notification.To[0].ID
+				notificationType = notification.Type
+				return nil
+			},
+		},
 	}
 	is := isHelper.New(t)
 	w := httptest.NewRecorder()
 	r := getRequest(appContext, "")
-	context.Set(r, "job_application_id", uint(2))
+	context.Set(r, "id", uint(2))
 
 	createProjectFromJobApplication().ServeHTTP(w, r)
 
@@ -249,4 +262,98 @@ func TestCreateProjectFromJobApplication(t *testing.T) {
 	is.Equal(projectRepoMock.AddCall.Receives.Project.WorkhoursPerDay, 62)
 	is.Equal(projectRepoMock.AddCall.Receives.Project.PerHour, 8)
 	is.Equal(projectRepoMock.AddCall.Receives.Project.Status, projectStatusPending)
+	is.Equal(projectRepoMock.AddContractCall.Receives.Contract.Deadline, expectedDeadline)
+	is.Equal(projectRepoMock.AddContractCall.Receives.Contract.WorkhoursPerDay, 62)
+	is.Equal(projectRepoMock.AddContractCall.Receives.Contract.PerHour, 8)
+	is.Equal(jobRepoMock.DeactivateJobCall.Receives.Job.Name, "jobName")
+	is.Equal(notifiedFreelancerID, uint(22))
+	is.Equal(notificationType, "job_application_accepted")
+}
+
+var whenProjectBelongsToUserData = []struct {
+	clientID      uint
+	freelancerIDs []uint
+	userType      string
+	userID        uint
+	isNextCalled  bool
+	status        int
+}{
+	{
+		clientID:      11,
+		freelancerIDs: []uint{21, 22},
+		userType:      "client",
+		userID:        11,
+		isNextCalled:  true,
+		status:        http.StatusOK,
+	},
+	{
+		clientID:      11,
+		freelancerIDs: []uint{21, 22},
+		userType:      "freelancer",
+		userID:        22,
+		isNextCalled:  true,
+		status:        http.StatusOK,
+	},
+	{
+		clientID:      11,
+		freelancerIDs: []uint{21, 22},
+		userType:      "client",
+		userID:        12,
+		isNextCalled:  false,
+		status:        http.StatusForbidden,
+	},
+	{
+		clientID:      11,
+		freelancerIDs: []uint{21, 22},
+		userType:      "freelancer",
+		userID:        23,
+		isNextCalled:  false,
+		status:        http.StatusForbidden,
+	},
+	{
+		clientID:      11,
+		freelancerIDs: []uint{},
+		userType:      "freelancer",
+		userID:        23,
+		isNextCalled:  false,
+		status:        http.StatusForbidden,
+	},
+}
+
+func TestWhenProjectBelongsToUser(t *testing.T) {
+	projectRepoMock := &projectRepositoryMock{}
+
+	for _, testCase := range whenProjectBelongsToUserData {
+		var freelancers []Freelancer
+		for _, fid := range testCase.freelancerIDs {
+			freelancers = append(freelancers, Freelancer{User: User{Model: Model{ID: fid}}})
+		}
+
+		projectRepoMock.GetByIDCall.Returns.Project = &Project{
+			Model:       Model{ID: 1},
+			ClientID:    testCase.clientID,
+			Freelancers: freelancers,
+		}
+		var appContext = &ApplicationContext{
+			ProjectRepository: projectRepoMock,
+		}
+
+		is := isHelper.New(t)
+		w := httptest.NewRecorder()
+		r := getRequest(appContext, "")
+		context.Set(r, "id", uint(2))
+		context.Set(r, "userType", testCase.userType)
+		context.Set(r, "user", &User{Model: Model{ID: testCase.userID}})
+
+		isNextCalled := false
+		next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			isNextCalled = true
+		})
+
+		whenProjectBelongsToUser(next).ServeHTTP(w, r)
+
+		is.Equal(projectRepoMock.GetByIDCall.Receives.ID, uint(2))
+		is.Equal(isNextCalled, testCase.isNextCalled)
+		is.Equal(w.Code, testCase.status)
+	}
 }

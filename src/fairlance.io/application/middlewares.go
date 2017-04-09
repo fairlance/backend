@@ -101,7 +101,27 @@ func RecoverHandler(next http.Handler) http.Handler {
 	})
 }
 
-func authHandler(next http.Handler) http.Handler {
+func whenUserType(allowedUserType string, next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		userType := context.Get(r, "userType").(string)
+		if userType != allowedUserType {
+			respond.With(w, r, http.StatusForbidden, errors.New("unauthorized access"))
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
+}
+
+func whenFreelancer(next http.Handler) http.Handler {
+	return whenUserType("freelancer", next)
+}
+
+func whenClient(next http.Handler) http.Handler {
+	return whenUserType("client", next)
+}
+
+func whenLoggedIn(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		tokenString := r.Header.Get("Authorization")
 		if tokenString == "" {
@@ -233,6 +253,7 @@ func WithUserFromClaims(handler http.Handler) http.Handler {
 		user, err := getUserFomClaims(claims)
 		if err != nil {
 			respond.With(w, r, http.StatusBadRequest, err)
+			return
 		}
 
 		context.Set(r, "user", user)
@@ -241,24 +262,21 @@ func WithUserFromClaims(handler http.Handler) http.Handler {
 	})
 }
 
-func withClientFromJobID(handler http.Handler) http.Handler {
+func whenIDBelongsToUser(handler http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		var appContext = context.Get(r, "context").(*ApplicationContext)
-		var jobID = context.Get(r, "id").(uint)
+		var id = context.Get(r, "id").(uint)
+		var user = context.Get(r, "user").(*User)
 
-		job, err := appContext.JobRepository.GetJob(jobID)
-		if err != nil {
-			respond.With(w, r, http.StatusInternalServerError, err)
+		if id != user.ID {
+			respond.With(w, r, http.StatusForbidden, nil)
 			return
 		}
-
-		context.Set(r, "client", job.Client)
 
 		handler.ServeHTTP(w, r)
 	})
 }
 
-// func HTTPAuthHandler(next http.Handler) http.Handler {
+// func HTTPwhenLoggedIn(next http.Handler) http.Handler {
 // 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 // 		user := "fairlance"
 // 		pass := "fairlance"

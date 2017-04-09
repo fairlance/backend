@@ -64,6 +64,26 @@ type Project struct {
 	DeadlineFlexibility int          `json:"deadlineFlexibility,omitempty"`
 	WorkhoursPerDay     int          `json:"workhoursPerDay,omitempty"`
 	PerHour             float64      `json:"perHour,omitempty"`
+	Contract            *Contract    `json:"contract,omitempty"`
+	ContractID          uint         `json:"-"`
+}
+
+type Contract struct {
+	Model
+	WorkhoursPerDay     int         `json:"workhoursPerDay,omitempty"`
+	PerHour             float64     `json:"perHour,omitempty"`
+	Deadline            time.Time   `json:"deadline,omitempty"`
+	DeadlineFlexibility int         `json:"deadlineFlexibility,omitempty"`
+	Extensions          []Extension `json:"extensions,omitempty"`
+}
+
+type Extension struct {
+	Model
+	ContractID          uint      `json:"-"`
+	WorkhoursPerDay     int       `json:"workhoursPerDay,omitempty"`
+	PerHour             float64   `json:"perHour,omitempty"`
+	Deadline            time.Time `json:"deadline,omitempty"`
+	DeadlineFlexibility int       `json:"deadlineFlexibility,omitempty"`
 }
 
 type Job struct {
@@ -91,7 +111,7 @@ type JobApplication struct {
 	HourPrice        float64      `json:"hourPrice,omitempty"`
 	Hours            int          `json:"hours,omitempty"`
 	Freelancer       *Freelancer  `json:"freelancer,omitempty"`
-	FreelancerID     uint         `json:"freelancerId,omitempty" valid:"required"`
+	FreelancerID     uint         `json:"-"`
 	JobID            uint         `json:"-"`
 	Attachments      []Attachment `json:"attachments,omitempty" gorm:"polymorphic:Owner;"`
 	Examples         []Example    `json:"examples,omitempty" gorm:"polymorphic:Owner;"`

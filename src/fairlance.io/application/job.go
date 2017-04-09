@@ -64,7 +64,21 @@ func getJob() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var appContext = context.Get(r, "context").(*ApplicationContext)
 		var id = context.Get(r, "id").(uint)
-		job, err := appContext.JobRepository.GetJob(id)
+		user := context.Get(r, "user").(*User)
+		userType := context.Get(r, "userType")
+
+		var job *Job
+		var err error
+		switch userType {
+		case "client":
+			job, err = appContext.JobRepository.GetJobForClient(id, user.ID)
+		case "freelancer":
+			job, err = appContext.JobRepository.GetJobForFreelancer(id, user.ID)
+		default:
+			log.Printf("getJob: userType not recognized [%s]", userType)
+			respond.With(w, r, http.StatusInternalServerError, nil)
+			return
+		}
 		if err != nil {
 			respond.With(w, r, http.StatusNotFound, err)
 			return
@@ -146,13 +160,15 @@ func withJobApplication(handler http.Handler) http.Handler {
 	})
 }
 
-func addJobApplicationByID() http.Handler {
+func addJobApplication() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var appContext = context.Get(r, "context").(*ApplicationContext)
 		var jobID = context.Get(r, "id").(uint)
 		var jobApplication = context.Get(r, "jobApplication").(*JobApplication)
+		var user = context.Get(r, "user").(*User)
 
 		jobApplication.JobID = jobID
+		jobApplication.FreelancerID = user.ID
 		if err := appContext.JobRepository.AddJobApplication(jobApplication); err != nil {
 			respond.With(w, r, http.StatusBadRequest, err)
 			return
@@ -198,12 +214,42 @@ func deleteJobApplicationByID() http.Handler {
 			return
 		}
 
-		if err := appContext.JobRepository.DeleteJobApplication(jobApplication); err != nil {
+		if err := appContext.JobRepository.DeleteJobApplication(jobApplication.ID); err != nil {
 			log.Println("delete job application:", err)
 			respond.With(w, r, http.StatusInternalServerError, err)
 			return
 		}
 
 		respond.With(w, r, http.StatusOK, nil)
+	})
+}
+
+func whenJobApplicationBelongsToUser(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var id = context.Get(r, "id").(uint)
+		var user = context.Get(r, "user").(*User)
+		var appContext = context.Get(r, "context").(*ApplicationContext)
+		userType := context.Get(r, "userType")
+
+		var ok bool
+		var err error
+		switch userType {
+		case "client":
+			ok, err = appContext.JobRepository.jobApplicationBelongsToClient(id, user.ID)
+		case "freelancer":
+			ok, err = appContext.JobRepository.jobApplicationBelongsToFreelancer(id, user.ID)
+		}
+		if err != nil {
+			log.Printf("jobApplicationBelongsToUser: %v", err)
+			respond.With(w, r, http.StatusInternalServerError, err)
+			return
+		}
+
+		if !ok {
+			respond.With(w, r, http.StatusForbidden, err)
+			return
+		}
+
+		next.ServeHTTP(w, r)
 	})
 }

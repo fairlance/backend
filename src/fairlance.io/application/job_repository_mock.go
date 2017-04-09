@@ -29,7 +29,43 @@ type JobRepositoryMock struct {
 			ID uint
 		}
 		Returns struct {
-			Job   Job
+			Job   *Job
+			Error error
+		}
+	}
+	GetJobForClientCall struct {
+		Receives struct {
+			ID       uint
+			ClientID uint
+		}
+		Returns struct {
+			Job   *Job
+			Error error
+		}
+	}
+	GetJobForFreelancerCall struct {
+		Receives struct {
+			ID           uint
+			FreelancerID uint
+		}
+		Returns struct {
+			Job   *Job
+			Error error
+		}
+	}
+	DeleteJobCall struct {
+		Receives struct {
+			ID uint
+		}
+		Returns struct {
+			Error error
+		}
+	}
+	DeactivateJobCall struct {
+		Receives struct {
+			Job *Job
+		}
+		Returns struct {
 			Error error
 		}
 	}
@@ -52,9 +88,29 @@ type JobRepositoryMock struct {
 	}
 	DeleteJobApplicationCall struct {
 		Receives struct {
-			JobApplication *JobApplication
+			ID uint
 		}
 		Returns struct {
+			Error error
+		}
+	}
+	JobApplicationBelongsToClientCall struct {
+		Receives struct {
+			ID       uint
+			ClientID uint
+		}
+		Returns struct {
+			OK    bool
+			Error error
+		}
+	}
+	JobApplicationBelongsToFreelancerCall struct {
+		Receives struct {
+			ID           uint
+			FreelancerID uint
+		}
+		Returns struct {
+			OK    bool
 			Error error
 		}
 	}
@@ -76,10 +132,34 @@ func (repo *JobRepositoryMock) AddJob(job *Job) error {
 	return repo.AddJobCall.Returns.Error
 }
 
-func (repo *JobRepositoryMock) GetJob(id uint) (Job, error) {
+func (repo *JobRepositoryMock) GetJob(id uint) (*Job, error) {
 	repo.GetJobCall.Receives.ID = id
 	return repo.GetJobCall.Returns.Job,
 		repo.GetJobCall.Returns.Error
+}
+
+func (repo *JobRepositoryMock) GetJobForClient(id, clientID uint) (*Job, error) {
+	repo.GetJobForClientCall.Receives.ID = id
+	repo.GetJobForClientCall.Receives.ClientID = clientID
+	return repo.GetJobForClientCall.Returns.Job,
+		repo.GetJobForClientCall.Returns.Error
+}
+
+func (repo *JobRepositoryMock) GetJobForFreelancer(id, freelancerID uint) (*Job, error) {
+	repo.GetJobForFreelancerCall.Receives.ID = id
+	repo.GetJobForFreelancerCall.Receives.FreelancerID = freelancerID
+	return repo.GetJobForFreelancerCall.Returns.Job,
+		repo.GetJobForFreelancerCall.Returns.Error
+}
+
+func (repo *JobRepositoryMock) DeleteJob(id uint) error {
+	repo.DeleteJobCall.Receives.ID = id
+	return repo.DeleteJobCall.Returns.Error
+}
+
+func (repo *JobRepositoryMock) DeactivateJob(job *Job) error {
+	repo.DeactivateJobCall.Receives.Job = job
+	return repo.DeactivateJobCall.Returns.Error
 }
 
 func (repo *JobRepositoryMock) AddJobApplication(jobApplication *JobApplication) error {
@@ -93,7 +173,21 @@ func (repo *JobRepositoryMock) GetJobApplication(id uint) (*JobApplication, erro
 		repo.GetJobApplicationCall.Returns.Error
 }
 
-func (repo *JobRepositoryMock) DeleteJobApplication(jobApplication *JobApplication) error {
-	repo.DeleteJobApplicationCall.Receives.JobApplication = jobApplication
+func (repo *JobRepositoryMock) DeleteJobApplication(id uint) error {
+	repo.DeleteJobApplicationCall.Receives.ID = id
 	return repo.DeleteJobApplicationCall.Returns.Error
+}
+
+func (repo *JobRepositoryMock) jobApplicationBelongsToClient(id uint, clientID uint) (bool, error) {
+	repo.JobApplicationBelongsToClientCall.Receives.ID = id
+	repo.JobApplicationBelongsToClientCall.Receives.ClientID = clientID
+	return repo.JobApplicationBelongsToClientCall.Returns.OK,
+		repo.JobApplicationBelongsToClientCall.Returns.Error
+}
+
+func (repo *JobRepositoryMock) jobApplicationBelongsToFreelancer(id uint, freelancerID uint) (bool, error) {
+	repo.JobApplicationBelongsToFreelancerCall.Receives.ID = id
+	repo.JobApplicationBelongsToFreelancerCall.Receives.FreelancerID = freelancerID
+	return repo.JobApplicationBelongsToFreelancerCall.Returns.OK,
+		repo.JobApplicationBelongsToFreelancerCall.Returns.Error
 }

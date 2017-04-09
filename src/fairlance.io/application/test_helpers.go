@@ -10,16 +10,26 @@ import (
 	"github.com/gorilla/context"
 )
 
-type testNotifier struct{}
+type testNotifierCallback func(notification *notifier.Notification) error
 
-func (n *testNotifier) Notify(not *notifier.Notification) error { return nil }
+type testNotifier struct {
+	callback testNotifierCallback
+}
+
+func (n *testNotifier) Notify(notification *notifier.Notification) error {
+	return n.callback(notification)
+}
 
 func getRequest(appContext *ApplicationContext, requestBody string) *http.Request {
 	req, err := http.NewRequest("GET", "http://fairlance.io/", bytes.NewBuffer([]byte(requestBody)))
 	if err != nil {
 		log.Fatal(err)
 	}
-	appContext.Notifier = &testNotifier{}
+	if appContext.Notifier == nil {
+		appContext.Notifier = &testNotifier{
+			callback: func(notification *notifier.Notification) error { return nil },
+		}
+	}
 	req.Header.Set("Content-Type", "application/json")
 	context.Set(req, "context", appContext)
 

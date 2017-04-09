@@ -1,6 +1,8 @@
 package application
 
-import "math"
+import (
+	"math"
+)
 
 func round(val float64, roundOn float64, places int) float64 {
 	var round float64

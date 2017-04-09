@@ -8,6 +8,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"fairlance.io/notifier"
+
 	respond "gopkg.in/matryer/respond.v1"
 
 	"strings"
@@ -179,7 +181,7 @@ func TestJobAddJob(t *testing.T) {
 	is.Equal(jobRepositoryMock.AddJobCall.Receives.Job.Attachments[0].URL, "www.attachment.com")
 }
 
-func TestJobGetJobByIDReceivesTheRightID(t *testing.T) {
+func TestJobGetJobForClientReceivesTheRightParameters(t *testing.T) {
 	jobRepositoryMock := JobRepositoryMock{}
 	var jobContext = &ApplicationContext{
 		JobRepository: &jobRepositoryMock,
@@ -188,16 +190,38 @@ func TestJobGetJobByIDReceivesTheRightID(t *testing.T) {
 	w := httptest.NewRecorder()
 	r := getRequest(jobContext, "")
 	context.Set(r, "id", uint(1))
+	context.Set(r, "userType", "client")
+	context.Set(r, "user", &User{Model: Model{ID: 2}})
 
 	getJob().ServeHTTP(w, r)
 
 	is.Equal(w.Code, http.StatusOK)
-	is.Equal(jobRepositoryMock.GetJobCall.Receives.ID, uint(1))
+	is.Equal(jobRepositoryMock.GetJobForClientCall.Receives.ID, uint(1))
+	is.Equal(jobRepositoryMock.GetJobForClientCall.Receives.ClientID, uint(2))
 }
 
-func TestJobGetJobByID(t *testing.T) {
+func TestJobGetJobForFreelancerReceivesTheRightParameters(t *testing.T) {
 	jobRepositoryMock := JobRepositoryMock{}
-	jobRepositoryMock.GetJobCall.Returns.Job = Job{
+	var jobContext = &ApplicationContext{
+		JobRepository: &jobRepositoryMock,
+	}
+	is := isHelper.New(t)
+	w := httptest.NewRecorder()
+	r := getRequest(jobContext, "")
+	context.Set(r, "id", uint(1))
+	context.Set(r, "userType", "freelancer")
+	context.Set(r, "user", &User{Model: Model{ID: 2}})
+
+	getJob().ServeHTTP(w, r)
+
+	is.Equal(w.Code, http.StatusOK)
+	is.Equal(jobRepositoryMock.GetJobForFreelancerCall.Receives.ID, uint(1))
+	is.Equal(jobRepositoryMock.GetJobForFreelancerCall.Receives.FreelancerID, uint(2))
+}
+
+func TestJobGetJobForClient(t *testing.T) {
+	jobRepositoryMock := JobRepositoryMock{}
+	jobRepositoryMock.GetJobForClientCall.Returns.Job = &Job{
 		Model: Model{
 			ID: 123456789,
 		},
@@ -214,7 +238,45 @@ func TestJobGetJobByID(t *testing.T) {
 	is := isHelper.New(t)
 	w := httptest.NewRecorder()
 	r := getRequest(jobContext, "")
-	context.Set(r, "id", uint(0))
+	context.Set(r, "id", uint(123456789))
+	context.Set(r, "userType", "client")
+	context.Set(r, "user", &User{Model: Model{ID: 1}})
+
+	getJob().ServeHTTP(w, r)
+
+	is.Equal(w.Code, http.StatusOK)
+	var body Job
+	is.NoErr(json.Unmarshal(w.Body.Bytes(), &body))
+	is.Equal(body.Model.ID, uint(123456789))
+	is.Equal(body.Name, "Name1")
+	is.Equal(body.Summary, "Summary1")
+	is.Equal(body.Details, "Details1")
+	is.Equal(body.IsActive, true)
+	is.Equal(body.Price, 100)
+}
+
+func TestJobGetJobForFreelancer(t *testing.T) {
+	jobRepositoryMock := JobRepositoryMock{}
+	jobRepositoryMock.GetJobForFreelancerCall.Returns.Job = &Job{
+		Model: Model{
+			ID: 123456789,
+		},
+		Name:     "Name1",
+		Summary:  "Summary1",
+		Details:  "Details1",
+		ClientID: 1,
+		IsActive: true,
+		Price:    100,
+	}
+	var jobContext = &ApplicationContext{
+		JobRepository: &jobRepositoryMock,
+	}
+	is := isHelper.New(t)
+	w := httptest.NewRecorder()
+	r := getRequest(jobContext, "")
+	context.Set(r, "id", uint(123456789))
+	context.Set(r, "userType", "freelancer")
+	context.Set(r, "user", &User{Model: Model{ID: 1}})
 
 	getJob().ServeHTTP(w, r)
 
@@ -231,7 +293,7 @@ func TestJobGetJobByID(t *testing.T) {
 
 func TestJobGetJobByIDError(t *testing.T) {
 	jobRepositoryMock := JobRepositoryMock{}
-	jobRepositoryMock.GetJobCall.Returns.Error = errors.New("Blah")
+	jobRepositoryMock.GetJobForClientCall.Returns.Error = errors.New("Blah")
 	var jobContext = &ApplicationContext{
 		JobRepository: &jobRepositoryMock,
 	}
@@ -239,6 +301,8 @@ func TestJobGetJobByIDError(t *testing.T) {
 	w := httptest.NewRecorder()
 	r := getRequest(jobContext, "")
 	context.Set(r, "id", uint(0))
+	context.Set(r, "userType", "client")
+	context.Set(r, "user", &User{Model: Model{ID: 1}})
 
 	getJob().ServeHTTP(w, r)
 
@@ -263,26 +327,36 @@ func TestJobAddJobError(t *testing.T) {
 
 func TestJobHandleApplyForJob(t *testing.T) {
 	jobRepositoryMock := JobRepositoryMock{}
+	var notifiedClientID uint
+	var notificationType string
 	var jobContext = &ApplicationContext{
 		JobRepository: &jobRepositoryMock,
+		Notifier: &testNotifier{
+			callback: func(notification *notifier.Notification) error {
+				notifiedClientID = notification.To[0].ID
+				notificationType = notification.Type
+				return nil
+			},
+		},
 	}
 
 	is := isHelper.New(t)
 	w := httptest.NewRecorder()
 	r := getRequest(jobContext, "")
 	jobApplication := &JobApplication{
-		FreelancerID: 1,
-		Message:      "message",
-		Milestones:   []string{"one", "two"},
-		HourPrice:    1.1,
-		Hours:        1,
-		Examples:     []Example{{Description: "example", URL: "www.example.com"}},
-		Attachments:  []Attachment{{Name: "attachment", URL: "www.attachment.com"}},
+		Message:     "message",
+		Milestones:  []string{"one", "two"},
+		HourPrice:   1.1,
+		Hours:       1,
+		Examples:    []Example{{Description: "example", URL: "www.example.com"}},
+		Attachments: []Attachment{{Name: "attachment", URL: "www.attachment.com"}},
 	}
 	context.Set(r, "id", uint(1))
 	context.Set(r, "jobApplication", jobApplication)
+	context.Set(r, "user", &User{Model: Model{ID: 1}})
+	context.Set(r, "client", &Client{User: User{Model: Model{ID: 22}}})
 
-	addJobApplicationByID().ServeHTTP(w, r)
+	addJobApplication().ServeHTTP(w, r)
 
 	is.Equal(w.Code, http.StatusOK)
 	is.Equal(jobRepositoryMock.AddJobApplicationCall.Receives.JobApplication.JobID, 1)
@@ -297,6 +371,8 @@ func TestJobHandleApplyForJob(t *testing.T) {
 	is.Equal(len(jobRepositoryMock.AddJobApplicationCall.Receives.JobApplication.Attachments), 1)
 	is.Equal(jobRepositoryMock.AddJobApplicationCall.Receives.JobApplication.Attachments[0].Name, "attachment")
 	is.Equal(jobRepositoryMock.AddJobApplicationCall.Receives.JobApplication.Attachments[0].URL, "www.attachment.com")
+	is.Equal(notifiedClientID, uint(22))
+	is.Equal(notificationType, "job_application_added")
 }
 
 func TestJobHandleApplyForJobHandlerError(t *testing.T) {
@@ -311,8 +387,9 @@ func TestJobHandleApplyForJobHandlerError(t *testing.T) {
 	r := getRequest(jobContext, "")
 	context.Set(r, "id", uint(1))
 	context.Set(r, "jobApplication", &JobApplication{})
+	context.Set(r, "user", &User{Model: Model{ID: 1}})
 
-	addJobApplicationByID().ServeHTTP(w, r)
+	addJobApplication().ServeHTTP(w, r)
 
 	is.Equal(w.Code, http.StatusBadRequest)
 }
@@ -447,7 +524,7 @@ func TestJobWithJobApplication(t *testing.T) {
 	is.Equal(jobApplication.Message, "message")
 	is.Equal(jobApplication.Milestones, []string{"one", "two"})
 	is.Equal(jobApplication.DeliveryEstimate, 3)
-	is.Equal(jobApplication.FreelancerID, 1)
+	is.Equal(jobApplication.FreelancerID, 0) // ignore provided id
 	is.Equal(jobApplication.Hours, 1)
 	is.Equal(jobApplication.HourPrice, 1.1)
 	is.Equal(len(jobApplication.Examples), 1)
@@ -522,7 +599,7 @@ func TestDeleteJobApplicationByID(t *testing.T) {
 
 	is.Equal(w.Code, http.StatusOK)
 	is.Equal(jobRepositoryMock.GetJobApplicationCall.Receives.ID, 1)
-	is.Equal(jobRepositoryMock.DeleteJobApplicationCall.Receives.JobApplication.ID, 1)
+	is.Equal(jobRepositoryMock.DeleteJobApplicationCall.Receives.ID, 1)
 }
 
 var deleteJobApplicationByIDData = []struct {
@@ -639,5 +716,111 @@ func TestDeleteJobApplicationByIDWithError(t *testing.T) {
 
 		is.Equal(w.Code, testCase.outStatus)
 		is.Equal(strings.TrimSpace(w.Body.String()), fmt.Sprintf(`"%s"`, testCase.out))
+	}
+}
+
+var whenJobApplicationBelongsToClientData = []struct {
+	inOK            bool
+	inError         error
+	inUserType      string
+	outIsNextCalled bool
+	outStatus       int
+	out             string
+}{
+	{
+		inOK:            true,
+		inUserType:      "freelancer",
+		inError:         nil,
+		outIsNextCalled: true,
+		outStatus:       http.StatusOK,
+		out:             "",
+	},
+	{
+		inOK:            true,
+		inUserType:      "client",
+		inError:         nil,
+		outIsNextCalled: true,
+		outStatus:       http.StatusOK,
+		out:             "",
+	},
+	{
+		inOK:            false,
+		inUserType:      "freelancer",
+		inError:         nil,
+		outIsNextCalled: false,
+		outStatus:       http.StatusForbidden,
+		out:             "null",
+	},
+	{
+		inOK:            false,
+		inUserType:      "client",
+		inError:         nil,
+		outIsNextCalled: false,
+		outStatus:       http.StatusForbidden,
+		out:             "null",
+	},
+	{
+		inOK:            false,
+		inUserType:      "freelancer",
+		inError:         errors.New("error message"),
+		outIsNextCalled: false,
+		outStatus:       http.StatusInternalServerError,
+		out:             `"error message"`,
+	},
+}
+
+func TestWhenJobApplicationBelongsToClient(t *testing.T) {
+	jobRepositoryMock := &JobRepositoryMock{}
+	for _, testCase := range whenJobApplicationBelongsToClientData {
+		jobRepositoryMock.JobApplicationBelongsToClientCall.Returns.OK = testCase.inOK
+		jobRepositoryMock.JobApplicationBelongsToClientCall.Returns.Error = testCase.inError
+		jobRepositoryMock.JobApplicationBelongsToFreelancerCall.Returns.OK = testCase.inOK
+		jobRepositoryMock.JobApplicationBelongsToFreelancerCall.Returns.Error = testCase.inError
+		var jobContext = &ApplicationContext{
+			JobRepository: jobRepositoryMock,
+		}
+		is := isHelper.New(t)
+		w := httptest.NewRecorder()
+		r := getRequest(jobContext, "")
+
+		context.Set(r, "id", uint(1))
+		context.Set(r, "userType", testCase.inUserType)
+		context.Set(r, "user", &User{
+			Model: Model{
+				ID: 2,
+			},
+		})
+
+		opts := &respond.Options{
+			Before: func(w http.ResponseWriter, r *http.Request, status int, data interface{}) (int, interface{}) {
+				switch data.(type) {
+				case string:
+					return status, data.(string)
+				case error:
+					return status, data.(error).Error()
+				}
+
+				return status, data
+			},
+		}
+
+		var isNextCalled bool
+		next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			isNextCalled = true
+		})
+
+		opts.Handler(whenJobApplicationBelongsToUser(next)).ServeHTTP(w, r)
+
+		switch testCase.inUserType {
+		case "client":
+			is.Equal(jobRepositoryMock.JobApplicationBelongsToClientCall.Receives.ID, 1)
+			is.Equal(jobRepositoryMock.JobApplicationBelongsToClientCall.Receives.ClientID, 2)
+		case "freelancer":
+			is.Equal(jobRepositoryMock.JobApplicationBelongsToFreelancerCall.Receives.ID, 1)
+			is.Equal(jobRepositoryMock.JobApplicationBelongsToFreelancerCall.Receives.FreelancerID, 2)
+		}
+		is.Equal(isNextCalled, testCase.outIsNextCalled)
+		is.Equal(w.Code, testCase.outStatus)
+		is.Equal(strings.TrimSpace(w.Body.String()), testCase.out)
 	}
 }

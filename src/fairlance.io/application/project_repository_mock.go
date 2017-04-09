@@ -12,7 +12,7 @@ type projectRepositoryMock struct {
 			ID uint
 		}
 		Returns struct {
-			Project Project
+			Project *Project
 			Error   error
 		}
 	}
@@ -42,6 +42,33 @@ type projectRepositoryMock struct {
 			Error    error
 		}
 	}
+	AddContractCall struct {
+		Receives struct {
+			Contract *Contract
+		}
+		Returns struct {
+			Error error
+		}
+	}
+	AddExtensionCall struct {
+		Receives struct {
+			Extension *Extension
+		}
+		Returns struct {
+			Error error
+		}
+	}
+	ProjectBelongsToUserCall struct {
+		Receives struct {
+			ID       uint
+			UserType string
+			UserID   uint
+		}
+		Returns struct {
+			OK    bool
+			Error error
+		}
+	}
 }
 
 func (repo *projectRepositoryMock) getAllProjects() ([]Project, error) {
@@ -49,7 +76,7 @@ func (repo *projectRepositoryMock) getAllProjects() ([]Project, error) {
 		repo.GetAllProjectsCall.Returns.Error
 }
 
-func (repo *projectRepositoryMock) getByID(id uint) (Project, error) {
+func (repo *projectRepositoryMock) getByID(id uint) (*Project, error) {
 	repo.GetByIDCall.Receives.ID = id
 	return repo.GetByIDCall.Returns.Project,
 		repo.GetByIDCall.Returns.Error
@@ -70,4 +97,22 @@ func (repo *projectRepositoryMock) getAllProjectsForFreelancer(id uint) ([]Proje
 	repo.GetAllProjectsForFreelancerCall.Receives.ID = id
 	return repo.GetAllProjectsForFreelancerCall.Returns.Projects,
 		repo.GetAllProjectsForFreelancerCall.Returns.Error
+}
+
+func (repo *projectRepositoryMock) addContract(contract *Contract) error {
+	repo.AddContractCall.Receives.Contract = contract
+	return repo.AddContractCall.Returns.Error
+}
+
+func (repo *projectRepositoryMock) addExtension(extension *Extension) error {
+	repo.AddExtensionCall.Receives.Extension = extension
+	return repo.AddExtensionCall.Returns.Error
+}
+
+func (repo *projectRepositoryMock) projectBelongsToUser(id uint, userType string, userID uint) (bool, error) {
+	repo.ProjectBelongsToUserCall.Receives.ID = id
+	repo.ProjectBelongsToUserCall.Receives.UserType = userType
+	repo.ProjectBelongsToUserCall.Receives.UserID = userID
+	return repo.ProjectBelongsToUserCall.Returns.OK,
+		repo.ProjectBelongsToUserCall.Returns.Error
 }
