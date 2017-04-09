@@ -208,7 +208,12 @@
                 this.messagingWs.onmessage = function (event) {
                     self.messagingMessages = self.messagingMessages.concat(JSON.parse(event.data))
                     console.log("messagingWs.onmessage:", event.data);
-                }
+                };
+                this.messagingWs.onerror = function (event) {
+                    self.messagingWs = null;
+                    alert("failed");
+                    console.log("messagingWs.onerror:", event);
+                };
             },
             sendToMessagingWS: function (event) {
                 this.messagingWs.send(this.messagingMessage);
@@ -234,6 +239,11 @@
                     self.notificationMessages = self.notificationMessages.concat(JSON.parse(event.data))
                     console.log("notificationWs.onmessage:", event.data);
                 }
+                this.notificationWs.onerror = function (event) {
+                    self.notificationWs = null;
+                    alert("failed");
+                    console.log("notificationWs.onerror:", event);
+                };
             },
             closeNotificationWS: function (event) {
                 if (this.notificationWs != null) {
