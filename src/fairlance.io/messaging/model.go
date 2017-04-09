@@ -41,7 +41,8 @@ func NewRoom(id string, users map[string]*User) *Room {
 }
 
 type Room struct {
-	ID    string
+	ID string
+	// todo: allow same user twice
 	Users map[string]*User
 }
 
