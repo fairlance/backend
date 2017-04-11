@@ -166,7 +166,7 @@ func TestProjectGetByID(t *testing.T) {
 		Status:              projectStatusArchived,
 		Deadline:            timeNow,
 		PerHour:             2,
-		WorkhoursPerDay:     3,
+		Hours:               3,
 		DeadlineFlexibility: 4,
 	}
 	var appContext = &ApplicationContext{
@@ -188,7 +188,7 @@ func TestProjectGetByID(t *testing.T) {
 	is.Equal(body.Deadline.Format(time.RFC3339), timeNow.Format(time.RFC3339))
 	is.Equal(body.Status, projectStatusArchived)
 	is.Equal(body.PerHour, 2)
-	is.Equal(body.WorkhoursPerDay, 3)
+	is.Equal(body.Hours, 3)
 	is.Equal(body.DeadlineFlexibility, 4)
 	is.Equal(projectRepoMock.GetByIDCall.Receives.ID, uint(1))
 }
@@ -259,11 +259,11 @@ func TestCreateProjectFromJobApplication(t *testing.T) {
 	is.Equal(projectRepoMock.AddCall.Receives.Project.ClientID, uint(33))
 	is.Equal(projectRepoMock.AddCall.Receives.Project.Deadline, expectedDeadline)
 	is.Equal(projectRepoMock.AddCall.Receives.Project.Freelancers[0].ID, uint(22))
-	is.Equal(projectRepoMock.AddCall.Receives.Project.WorkhoursPerDay, 62)
+	is.Equal(projectRepoMock.AddCall.Receives.Project.Hours, 62)
 	is.Equal(projectRepoMock.AddCall.Receives.Project.PerHour, 8)
 	is.Equal(projectRepoMock.AddCall.Receives.Project.Status, projectStatusPending)
 	is.Equal(projectRepoMock.AddContractCall.Receives.Contract.Deadline, expectedDeadline)
-	is.Equal(projectRepoMock.AddContractCall.Receives.Contract.WorkhoursPerDay, 62)
+	is.Equal(projectRepoMock.AddContractCall.Receives.Contract.Hours, 62)
 	is.Equal(projectRepoMock.AddContractCall.Receives.Contract.PerHour, 8)
 	is.Equal(jobRepoMock.DeactivateJobCall.Receives.Job.Name, "jobName")
 	is.Equal(notifiedFreelancerID, uint(22))

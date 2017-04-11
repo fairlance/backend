@@ -179,9 +179,9 @@ func createProjectFromJobApplication() http.Handler {
 		deadline := time.Date(deadlineWithTime.Year(), deadlineWithTime.Month(), deadlineWithTime.Day()+1, 0, 0, 0, 0, deadlineWithTime.Location())
 
 		contract := &Contract{
-			Deadline:        deadline,
-			WorkhoursPerDay: jobApplication.Hours,
-			PerHour:         jobApplication.HourPrice,
+			Deadline: deadline,
+			Hours:    jobApplication.Hours,
+			PerHour:  jobApplication.HourPrice,
 		}
 
 		err = appContext.ProjectRepository.addContract(contract)
@@ -192,13 +192,13 @@ func createProjectFromJobApplication() http.Handler {
 		}
 
 		project := &Project{
-			Name:            job.Name,
-			Description:     job.Details,
-			ClientID:        job.ClientID,
-			Status:          projectStatusPending,
-			Deadline:        deadline,
-			WorkhoursPerDay: jobApplication.Hours,
-			PerHour:         jobApplication.HourPrice,
+			Name:        job.Name,
+			Description: job.Details,
+			ClientID:    job.ClientID,
+			Status:      projectStatusPending,
+			Deadline:    deadline,
+			Hours:       jobApplication.Hours,
+			PerHour:     jobApplication.HourPrice,
 			Freelancers: []Freelancer{
 				*jobApplication.Freelancer,
 			},

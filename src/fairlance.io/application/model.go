@@ -62,7 +62,7 @@ type Project struct {
 	Status              string       `json:"status,omitempty"`
 	Deadline            time.Time    `json:"deadline,omitempty"`
 	DeadlineFlexibility int          `json:"deadlineFlexibility,omitempty"`
-	WorkhoursPerDay     int          `json:"workhoursPerDay,omitempty"`
+	Hours               int          `json:"hours,omitempty"`
 	PerHour             float64      `json:"perHour,omitempty"`
 	Contract            *Contract    `json:"contract,omitempty"`
 	ContractID          uint         `json:"-"`
@@ -70,7 +70,7 @@ type Project struct {
 
 type Contract struct {
 	Model
-	WorkhoursPerDay     int         `json:"workhoursPerDay,omitempty"`
+	Hours               int         `json:"hours,omitempty"`
 	PerHour             float64     `json:"perHour,omitempty"`
 	Deadline            time.Time   `json:"deadline,omitempty"`
 	DeadlineFlexibility int         `json:"deadlineFlexibility,omitempty"`
@@ -80,7 +80,7 @@ type Contract struct {
 type Extension struct {
 	Model
 	ContractID          uint      `json:"-"`
-	WorkhoursPerDay     int       `json:"workhoursPerDay,omitempty"`
+	Hours               int       `json:"hours,omitempty"`
 	PerHour             float64   `json:"perHour,omitempty"`
 	Deadline            time.Time `json:"deadline,omitempty"`
 	DeadlineFlexibility int       `json:"deadlineFlexibility,omitempty"`
