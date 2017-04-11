@@ -11,26 +11,26 @@ type Model struct {
 
 type User struct {
 	Model
-	FirstName string `json:"firstName,omitempty"`
-	LastName  string `json:"lastName,omitempty"`
+	FirstName string `json:"firstName"`
+	LastName  string `json:"lastName"`
 	Password  string `json:"-"`
-	Email     string `json:"email,omitempty" valid:"required,email" sql:"index" gorm:"unique"`
-	Image     string `json:"image,omitempty"`
+	Email     string `json:"email" valid:"required,email" sql:"index" gorm:"unique"`
+	Image     string `json:"image"`
 }
 
 type Freelancer struct {
 	User
-	Rating          float64          `json:"rating,omitempty"`
-	Timezone        string           `json:"timezone,omitempty"`
-	Skills          stringList       `json:"skills,omitempty" sql:"type:JSONB NOT NULL DEFAULT '{}'::JSONB"`
-	IsAvailable     bool             `json:"isAvailable,omitempty"`
-	HourlyRateFrom  uint             `json:"hourlyRateFrom,omitempty"`
-	HourlyRateTo    uint             `json:"hourlyRateTo,omitempty"`
-	Projects        []Project        `json:"projects,omitempty" gorm:"many2many:project_freelancers;"`
-	Reviews         []Review         `json:"reviews,omitempty"`
-	References      []Reference      `json:"references,omitempty"`
-	JobApplications []JobApplication `json:"jobApplications,omitempty"`
-	About           string           `json:"about,omitempty"`
+	Rating          float64          `json:"rating"`
+	Timezone        string           `json:"timezone"`
+	Skills          stringList       `json:"skills" sql:"type:JSONB NOT NULL DEFAULT '{}'::JSONB"`
+	IsAvailable     bool             `json:"isAvailable"`
+	HourlyRateFrom  uint             `json:"hourlyRateFrom"`
+	HourlyRateTo    uint             `json:"hourlyRateTo"`
+	Projects        []Project        `json:"projects" gorm:"many2many:project_freelancers;"`
+	Reviews         []Review         `json:"reviews"`
+	References      []Reference      `json:"references"`
+	JobApplications []JobApplication `json:"jobApplications"`
+	About           string           `json:"about"`
 }
 
 type FreelancerUpdate struct {
@@ -43,27 +43,27 @@ type FreelancerUpdate struct {
 
 type Client struct {
 	User
-	Timezone string    `json:"timezone,omitempty"`
-	Payment  string    `json:"payment,omitempty"`
-	Industry string    `json:"industry,omitempty"`
-	Rating   float64   `json:"rating,omitempty"`
-	Jobs     []Job     `json:"jobs,omitempty"`
-	Projects []Project `json:"projects,omitempty"`
-	Reviews  []Review  `json:"reviews,omitempty"`
+	Timezone string    `json:"timezone"`
+	Payment  string    `json:"payment"`
+	Industry string    `json:"industry"`
+	Rating   float64   `json:"rating"`
+	Jobs     []Job     `json:"jobs"`
+	Projects []Project `json:"projects"`
+	Reviews  []Review  `json:"reviews"`
 }
 
 type Project struct {
 	Model
-	Name                string       `json:"name,omitempty"`
-	Description         string       `json:"description,omitempty"`
+	Name                string       `json:"name"`
+	Description         string       `json:"description"`
 	Freelancers         []Freelancer `json:"freelancers,omitempty" gorm:"many2many:project_freelancers;"`
 	ClientID            uint         `json:"-"`
 	Client              *Client      `json:"client,omitempty"`
-	Status              string       `json:"status,omitempty"`
+	Status              string       `json:"status"`
 	Deadline            time.Time    `json:"deadline,omitempty"`
-	DeadlineFlexibility int          `json:"deadlineFlexibility,omitempty"`
-	Hours               int          `json:"hours,omitempty"`
-	PerHour             float64      `json:"perHour,omitempty"`
+	DeadlineFlexibility int          `json:"deadlineFlexibility"`
+	Hours               int          `json:"hours"`
+	PerHour             float64      `json:"perHour"`
 	Contract            *Contract    `json:"contract,omitempty"`
 	ContractID          uint         `json:"-"`
 }
@@ -80,27 +80,27 @@ type Contract struct {
 type Extension struct {
 	Model
 	ContractID          uint      `json:"-"`
-	Hours               int       `json:"hours,omitempty"`
-	PerHour             float64   `json:"perHour,omitempty"`
-	Deadline            time.Time `json:"deadline,omitempty"`
-	DeadlineFlexibility int       `json:"deadlineFlexibility,omitempty"`
+	Hours               int       `json:"hours"`
+	PerHour             float64   `json:"perHour"`
+	Deadline            time.Time `json:"deadline"`
+	DeadlineFlexibility int       `json:"deadlineFlexibility"`
 }
 
 type Job struct {
 	Model
-	Name            string           `json:"name,omitempty"`
-	Summary         string           `json:"summary,omitempty"`
-	Details         string           `json:"details,omitempty"`
+	Name            string           `json:"name"`
+	Summary         string           `json:"summary"`
+	Details         string           `json:"details"`
 	ClientID        uint             `json:"-"`
 	Client          *Client          `json:"client,omitempty"`
-	IsActive        bool             `json:"isActive,omitempty"`
-	Price           int              `json:"price,omitempty"`
-	StartDate       time.Time        `json:"startDate,omitempty"`
-	Deadline        time.Time        `json:"deadline,omitempty"`
-	Tags            stringList       `json:"tags,omitempty" sql:"type:JSONB NOT NULL DEFAULT '{}'::JSONB"`
-	JobApplications []JobApplication `json:"jobApplications,omitempty"`
-	Attachments     []Attachment     `json:"attachments,omitempty" gorm:"polymorphic:Owner;"`
-	Examples        []Example        `json:"examples,omitempty" gorm:"polymorphic:Owner;"`
+	IsActive        bool             `json:"isActive"`
+	Price           int              `json:"price"`
+	StartDate       time.Time        `json:"startDate"`
+	Deadline        time.Time        `json:"deadline"`
+	Tags            stringList       `json:"tags" sql:"type:JSONB NOT NULL DEFAULT '{}'::JSONB"`
+	JobApplications []JobApplication `json:"jobApplications"`
+	Attachments     []Attachment     `json:"attachments" gorm:"polymorphic:Owner;"`
+	Examples        []Example        `json:"examples" gorm:"polymorphic:Owner;"`
 }
 
 type JobApplication struct {
