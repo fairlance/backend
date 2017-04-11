@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
-	"math"
 	"net/http"
 	"os"
 	"strconv"
@@ -156,53 +155,60 @@ func getJobSearchRequest(r *http.Request) (*bleve.SearchRequest, error) {
 		musts = append(musts, booleanQuery)
 	}
 
-	value1 := 0.0
-	if len(r.URL.Query().Get("price_from")) != 0 {
-		intValue1, err := strconv.ParseInt(r.URL.Query().Get("price_from"), 10, 64)
+	var priceFromVal *float64
+	var priceToVal *float64
+	if r.URL.Query().Get("price_from") != "" {
+		priceFromFloat, err := strconv.ParseFloat(r.URL.Query().Get("price_from"), 64)
 		if err != nil {
 			return nil, err
 		}
-		value1 = float64(intValue1)
+		priceFromVal = &priceFromFloat
 	}
-	value2 := math.MaxFloat64
-	if len(r.URL.Query().Get("price_to")) != 0 {
-		intValue2, err := strconv.ParseInt(r.URL.Query().Get("price_to"), 10, 64)
+
+	if r.URL.Query().Get("price_to") != "" {
+		priceToFloat, err := strconv.ParseFloat(r.URL.Query().Get("price_to"), 64)
 		if err != nil {
 			return nil, err
 		}
-		value2 = float64(intValue2)
+		priceToVal = &priceToFloat
 	}
 
-	inclusiveValue1 := true
-	inclusiveValue2 := false
-	numericRangeIncludiveQuery := bleve.NewNumericRangeInclusiveQuery(
-		&value1,
-		&value2,
-		&inclusiveValue1,
-		&inclusiveValue2,
-	)
-	numericRangeIncludiveQuery.SetField("price")
-	musts = append(musts, numericRangeIncludiveQuery)
+	if priceFromVal != nil || priceToVal != nil {
+		inclusiveValue1 := true
+		inclusiveValue2 := false
+		numericRangeIncludiveQuery := bleve.NewNumericRangeInclusiveQuery(
+			priceFromVal,
+			priceToVal,
+			&inclusiveValue1,
+			&inclusiveValue2,
+		)
+		numericRangeIncludiveQuery.SetField("price")
+		musts = append(musts, numericRangeIncludiveQuery)
+	}
 
-	period := int64(30)
 	if len(r.URL.Query().Get("period")) != 0 {
-		periodTemp, err := strconv.ParseInt(r.URL.Query().Get("period"), 10, 64)
+		period, err := strconv.Atoi(r.URL.Query().Get("period"))
 		if err != nil {
 			return nil, err
 		}
-		if periodTemp > 0 && periodTemp <= 365 {
-			period = periodTemp
+
+		if period < 0 || period > 365 {
+			period = 30
 		}
+		now := time.Now()
+		dateTo := time.Now().Add(time.Duration(24*period) * time.Hour)
+		dateRangeQuery := bleve.NewDateRangeQuery(now, dateTo)
+		dateRangeQuery.SetField("startDate")
+		musts = append(musts, dateRangeQuery)
 	}
 
-	now := time.Now()
-	dateTo := time.Now().Add(time.Duration(24*period) * time.Hour)
-	dateRangeQuery := bleve.NewDateRangeQuery(now, dateTo)
-	dateRangeQuery.SetField("startDate")
-	musts = append(musts, dateRangeQuery)
-
-	query := bleve.NewBooleanQuery()
-	query.AddMust(musts...)
+	var query query.Query
+	if len(musts) > 0 {
+		query := bleve.NewBooleanQuery()
+		query.AddMust(musts...)
+	} else {
+		query = bleve.NewMatchAllQuery()
+	}
 	// query.AddMustNot(mustNots...)
 	// query.AddShould(shoulds...)
 
