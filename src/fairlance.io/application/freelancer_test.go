@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -390,9 +391,7 @@ func TestWithReview(t *testing.T) {
 	is.Equal(nextCalled, true)
 	review := context.Get(r, "review").(*Review)
 	is.Equal(review.Title, "title")
-	is.Equal(review.ClientID, 2)
 	is.Equal(review.Content, "content")
-	is.Equal(review.FreelancerID, 3)
 	is.Equal(review.JobID, 4)
 	is.Equal(review.Rating, 5.6)
 }

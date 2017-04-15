@@ -350,7 +350,7 @@ func TestWhenProjectBelongsToUser(t *testing.T) {
 			isNextCalled = true
 		})
 
-		whenProjectBelongsToUser(next).ServeHTTP(w, r)
+		whenProjectBelongsToUserByID(next).ServeHTTP(w, r)
 
 		is.Equal(projectRepoMock.GetByIDCall.Receives.ID, uint(2))
 		is.Equal(isNextCalled, testCase.isNextCalled)

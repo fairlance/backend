@@ -58,6 +58,33 @@ type projectRepositoryMock struct {
 			Error error
 		}
 	}
+	GetExtensionCall struct {
+		Receives struct {
+			ID uint
+		}
+		Returns struct {
+			Extension *Extension
+			Error     error
+		}
+	}
+	UpdateContractCall struct {
+		Receives struct {
+			Contract *Contract
+			Fields   map[string]interface{}
+		}
+		Returns struct {
+			Error error
+		}
+	}
+	UpdateExtensionCall struct {
+		Receives struct {
+			Extension *Extension
+			Fields    map[string]interface{}
+		}
+		Returns struct {
+			Error error
+		}
+	}
 	ProjectBelongsToUserCall struct {
 		Receives struct {
 			ID       uint
@@ -107,6 +134,23 @@ func (repo *projectRepositoryMock) addContract(contract *Contract) error {
 func (repo *projectRepositoryMock) addExtension(extension *Extension) error {
 	repo.AddExtensionCall.Receives.Extension = extension
 	return repo.AddExtensionCall.Returns.Error
+}
+
+func (repo *projectRepositoryMock) getExtension(id uint) (*Extension, error) {
+	repo.GetExtensionCall.Receives.ID = id
+	return repo.GetExtensionCall.Returns.Extension,
+		repo.GetExtensionCall.Returns.Error
+}
+func (repo *projectRepositoryMock) updateContract(contract *Contract, fields map[string]interface{}) error {
+	repo.UpdateContractCall.Receives.Contract = contract
+	repo.UpdateContractCall.Receives.Fields = fields
+	return repo.UpdateContractCall.Returns.Error
+}
+
+func (repo *projectRepositoryMock) updateExtension(extension *Extension, fields map[string]interface{}) error {
+	repo.UpdateExtensionCall.Receives.Extension = extension
+	repo.UpdateExtensionCall.Receives.Fields = fields
+	return repo.UpdateExtensionCall.Returns.Error
 }
 
 func (repo *projectRepositoryMock) projectBelongsToUser(id uint, userType string, userID uint) (bool, error) {
