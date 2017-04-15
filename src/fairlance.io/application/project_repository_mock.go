@@ -96,6 +96,15 @@ type projectRepositoryMock struct {
 			Error error
 		}
 	}
+	SetProposalCall struct {
+		Receives struct {
+			Contract *Contract
+			Proposal *Proposal
+		}
+		Returns struct {
+			Error error
+		}
+	}
 }
 
 func (repo *projectRepositoryMock) getAllProjects() ([]Project, error) {
@@ -159,4 +168,10 @@ func (repo *projectRepositoryMock) projectBelongsToUser(id uint, userType string
 	repo.ProjectBelongsToUserCall.Receives.UserID = userID
 	return repo.ProjectBelongsToUserCall.Returns.OK,
 		repo.ProjectBelongsToUserCall.Returns.Error
+}
+
+func (repo *projectRepositoryMock) setProposal(contract *Contract, proposal *Proposal) error {
+	repo.SetProposalCall.Receives.Contract = contract
+	repo.SetProposalCall.Receives.Proposal = proposal
+	return repo.SetProposalCall.Returns.Error
 }

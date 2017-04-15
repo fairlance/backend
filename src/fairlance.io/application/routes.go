@@ -108,6 +108,14 @@ var routes = Routes{
 			withProjectByID(withUINT("extensionID", withExtensionWhenBelongsToProject(
 				agreeToExtensionTerms())))))),
 	},
+	Route{
+		"AddProposal",
+		"POST",
+		"/project/{id}/proposal",
+		whenLoggedIn(withID(whenProjectBelongsToUserByID(
+			withProjectByID(withProposal(
+				setProposalToProjectContract()))))),
+	},
 
 	// Route{
 	// 	"IndexClient",
@@ -144,7 +152,7 @@ var routes = Routes{
 		"NewJob",
 		"PUT",
 		"/job/new",
-		whenLoggedIn(whenClient(addJob())),
+		whenLoggedIn(whenClient(withJob(addJob()))),
 	},
 	Route{
 		"GetJob",

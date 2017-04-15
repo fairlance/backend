@@ -1,6 +1,9 @@
 package application
 
-import "time"
+import (
+	"database/sql/driver"
+	"time"
+)
 
 type Model struct {
 	ID        uint       `json:"id" gorm:"primary_key"`
@@ -77,6 +80,25 @@ type Contract struct {
 	Extensions          []Extension `json:"extensions"`
 	ClientAgreed        bool        `json:"clientAgreed"`
 	FreelancersToAgree  uintList    `json:"freelancersToAgree" sql:"type:JSONB NOT NULL DEFAULT '{}'::JSONB"`
+	Proposal            *Proposal   `json:"proposal,omitempty" sql:"type:JSONB"`
+}
+
+type Proposal struct {
+	UserType            string    `json:"userType"`
+	ID                  uint      `json:"id"`
+	Deadline            time.Time `json:"deadline"`
+	DeadlineFlexibility int       `json:"deadlineFlexibility"`
+	Hours               int       `json:"hours"`
+	PerHour             float64   `json:"perHour"`
+	Time                time.Time `json:"time"`
+}
+
+func (p *Proposal) Value() (driver.Value, error) {
+	return pValue(p)
+}
+
+func (p *Proposal) Scan(src interface{}) error {
+	return pScan(p, src)
 }
 
 type Extension struct {
@@ -135,31 +157,31 @@ type Review struct {
 
 type Reference struct {
 	Model
-	Title        string `json:"title,omitempty"`
-	Content      string `json:"content,omitempty"`
-	Media        Media  `json:"media,omitempty"`
-	FreelancerID uint   `json:"freelancerId,omitempty"`
+	Title        string `json:"title"`
+	Content      string `json:"content"`
+	Media        Media  `json:"media,omitempty"` // todo: should be a pointer
+	FreelancerID uint   `json:"freelancerId"`
 }
 
 type Media struct {
 	Model
-	Image       string `json:"image,omitempty"`
-	Video       string `json:"video,omitempty"`
-	ReferenceID uint   `json:"referenceId,omitempty"`
+	Image       string `json:"image"`
+	Video       string `json:"video"`
+	ReferenceID uint   `json:"referenceId"`
 }
 
 type Attachment struct {
 	Model
-	Name      string `json:"name,omitempty"`
-	URL       string `json:"url,omitempty"`
+	Name      string `json:"name"`
+	URL       string `json:"url"`
 	OwnerID   int    `json:"-"`
 	OwnerType string `json:"-"`
 }
 
 type Example struct {
 	Model
-	URL         string `json:"url,omitempty"`
-	Description string `json:"description,omitempty"`
+	URL         string `json:"url"`
+	Description string `json:"description"`
 	OwnerID     int    `json:"-"`
 	OwnerType   string `json:"-"`
 }

@@ -1,6 +1,7 @@
 package application
 
 import (
+	"encoding/json"
 	"errors"
 	"log"
 	"net/http"
@@ -223,5 +224,36 @@ func agreeToContractTerms() http.Handler {
 		}
 
 		respond.With(w, r, http.StatusOK, project)
+	})
+}
+
+func withProposal(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		decoder := json.NewDecoder(r.Body)
+		defer r.Body.Close()
+		proposal := &Proposal{}
+		if err := decoder.Decode(proposal); err != nil {
+			respond.With(w, r, http.StatusBadRequest, err)
+			return
+		}
+		proposal.Time = time.Now()
+		context.Set(r, "proposal", proposal)
+		next.ServeHTTP(w, r)
+	})
+}
+
+func setProposalToProjectContract() http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		appContext := context.Get(r, "context").(*ApplicationContext)
+		project := context.Get(r, "project").(*Project)
+		proposal := context.Get(r, "proposal").(*Proposal)
+		err := appContext.ProjectRepository.setProposal(project.Contract, proposal)
+		if err != nil {
+			log.Printf("could not set proposal: %v", err)
+			respond.With(w, r, http.StatusInternalServerError, fmt.Errorf("could not set proposal"))
+			return
+		}
+		respond.With(w, r, http.StatusOK, project)
+
 	})
 }

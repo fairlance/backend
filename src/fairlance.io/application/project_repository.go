@@ -14,6 +14,7 @@ type ProjectRepository interface {
 	addExtension(extension *Extension) error
 	updateContract(contract *Contract, fields map[string]interface{}) error
 	updateExtension(extension *Extension, fields map[string]interface{}) error
+	setProposal(contract *Contract, proposal *Proposal) error
 }
 
 const (
@@ -112,4 +113,10 @@ func (repo *postgreProjectRepository) getExtension(id uint) (*Extension, error) 
 	err := repo.db.Find(&extension, id).Error
 
 	return &extension, err
+}
+
+func (repo *postgreProjectRepository) setProposal(contract *Contract, proposal *Proposal) error {
+	return repo.db.Model(contract).Update(map[string]interface{}{
+		"proposal": proposal,
+	}).Error
 }
