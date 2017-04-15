@@ -24,7 +24,7 @@ func NewClientRepository(db *gorm.DB) (ClientRepository, error) {
 
 func (repo *PostgreClientRepository) GetAllClients() ([]Client, error) {
 	clients := []Client{}
-	repo.db.Preload("Jobs").Preload("Projects").Preload("Reviews").Find(&clients)
+	repo.db.Preload("Jobs").Preload("Projects").Preload("Reviews").Preload("Reviews.Freelancer").Find(&clients)
 	return clients, nil
 }
 
@@ -43,7 +43,7 @@ func (repo *PostgreClientRepository) UpdateClient(client *Client) error {
 
 func (repo *PostgreClientRepository) GetClient(id uint) (*Client, error) {
 	client := &Client{}
-	if err := repo.db.Preload("Projects").Preload("Jobs").Preload("Reviews").Find(client, id).Error; err != nil {
+	if err := repo.db.Preload("Projects").Preload("Jobs").Preload("Reviews").Preload("Reviews.Freelancer").Find(client, id).Error; err != nil {
 		return client, err
 	}
 	return client, nil

@@ -63,7 +63,7 @@ func (ac *ApplicationContext) DropCreateFillTables() {
 
 func (ac *ApplicationContext) DropTables() {
 	ac.db.DropTableIfExists(&Freelancer{}, &Extension{}, &Contract{}, &Project{}, &Client{}, &Job{}, &Review{}, &Reference{}, &Media{}, &JobApplication{}, &Attachment{}, &Example{})
-	ac.db.DropTable("project_freelancers", "job_applications")
+	ac.db.DropTable("project_freelancers") //, "job_applications")
 }
 
 func (ac *ApplicationContext) CreateTables() {
@@ -141,6 +141,8 @@ func (ac *ApplicationContext) FillTables() {
 		PerHour:             5,
 		Hours:               6,
 		DeadlineFlexibility: 1,
+		ClientAgreed:        false,
+		FreelancersToAgree:  []uint{1, 2},
 	})
 
 	ac.db.Create(&Project{
@@ -157,6 +159,8 @@ func (ac *ApplicationContext) FillTables() {
 		PerHour:             15,
 		Hours:               4,
 		DeadlineFlexibility: 0,
+		ClientAgreed:        true,
+		FreelancersToAgree:  []uint{1},
 	}
 	ac.db.Create(&extension)
 
@@ -165,6 +169,8 @@ func (ac *ApplicationContext) FillTables() {
 		PerHour:             15,
 		Hours:               6,
 		DeadlineFlexibility: 1,
+		ClientAgreed:        true,
+		FreelancersToAgree:  []uint{},
 	}).Association("Extensions").Replace([]Extension{extension})
 
 	ac.db.Create(&Project{

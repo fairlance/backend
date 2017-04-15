@@ -1,7 +1,6 @@
 package application
 
 import (
-	"encoding/json"
 	"errors"
 	"log"
 	"net/http"
@@ -62,7 +61,7 @@ func getAllProjectsForUser() http.Handler {
 	})
 }
 
-func whenProjectBelongsToUser(next http.Handler) http.Handler {
+func whenProjectBelongsToUserByID(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var id = context.Get(r, "id").(uint)
 		var user = context.Get(r, "user").(*User)
@@ -109,60 +108,29 @@ func getProjectByID() http.Handler {
 	})
 }
 
-func withExtension(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		decoder := json.NewDecoder(r.Body)
-		defer r.Body.Close()
-
-		extension := &Extension{}
-		if err := decoder.Decode(extension); err != nil {
-			respond.With(w, r, http.StatusBadRequest, err)
-			return
-		}
-
-		context.Set(r, "extension", extension)
-
-		next.ServeHTTP(w, r)
-	})
-}
-
-func addExtensionToProjectContract() http.Handler {
+func withProjectByID(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var appContext = context.Get(r, "context").(*ApplicationContext)
 		var id = context.Get(r, "id").(uint)
-		var extension, ok = context.Get(r, "extension").(*Extension)
-		if ok != true {
-			log.Println("add extention to project contract: extension not provided")
-			respond.With(w, r, http.StatusInternalServerError, fmt.Errorf("extension could not be created"))
-			return
-		}
 
 		project, err := appContext.ProjectRepository.getByID(id)
 		if err != nil {
-			respond.With(w, r, http.StatusNotFound, err)
+			log.Printf("could not find project: %v", err)
+			respond.With(w, r, http.StatusNotFound, fmt.Errorf("could not find project"))
 			return
 		}
 
-		extension.ContractID = project.ContractID
-		err = appContext.ProjectRepository.addExtension(extension)
-		if err != nil {
-			respond.With(w, r, http.StatusInternalServerError, err)
-			return
-		}
+		context.Set(r, "project", project)
 
-		respond.With(w, r, http.StatusOK, extension)
+		next.ServeHTTP(w, r)
 	})
 }
 
 func createProjectFromJobApplication() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var appContext = context.Get(r, "context").(*ApplicationContext)
-		var id, idOK = context.Get(r, "id").(uint)
-		if !idOK {
-			log.Printf("createProjectFromJobApplication: job application id not provided")
-			respond.With(w, r, http.StatusInternalServerError, nil)
-			return
-		}
+		var id = context.Get(r, "id").(uint)
+
 		jobApplication, err := appContext.JobRepository.GetJobApplication(id)
 		if err != nil {
 			respond.With(w, r, http.StatusNotFound, err)
@@ -179,9 +147,11 @@ func createProjectFromJobApplication() http.Handler {
 		deadline := time.Date(deadlineWithTime.Year(), deadlineWithTime.Month(), deadlineWithTime.Day()+1, 0, 0, 0, 0, deadlineWithTime.Location())
 
 		contract := &Contract{
-			Deadline: deadline,
-			Hours:    jobApplication.Hours,
-			PerHour:  jobApplication.HourPrice,
+			Deadline:           deadline,
+			Hours:              jobApplication.Hours,
+			PerHour:            jobApplication.HourPrice,
+			ClientAgreed:       false,
+			FreelancersToAgree: []uint{jobApplication.FreelancerID},
 		}
 
 		err = appContext.ProjectRepository.addContract(contract)
@@ -222,6 +192,35 @@ func createProjectFromJobApplication() http.Handler {
 		}
 
 		notifyJobApplicationAccepted(appContext.Notifier, jobApplication, project)
+
+		respond.With(w, r, http.StatusOK, project)
+	})
+}
+
+func agreeToContractTerms() http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		appContext := context.Get(r, "context").(*ApplicationContext)
+		user := context.Get(r, "user").(*User)
+		userType := context.Get(r, "userType").(string)
+		project := context.Get(r, "project").(*Project)
+
+		var freelancersToAgree = project.Contract.FreelancersToAgree
+		var clientAgreed = project.Contract.ClientAgreed
+		if userType == "client" {
+			clientAgreed = true
+		} else if userType == "freelancer" {
+			freelancersToAgree = removeFromUINTSlice(freelancersToAgree, user.ID)
+		}
+
+		err := appContext.ProjectRepository.updateContract(project.Contract, map[string]interface{}{
+			"clientAgreed":       clientAgreed,
+			"freelancersToAgree": freelancersToAgree,
+		})
+		if err != nil {
+			log.Printf("could not update contract: %v", err)
+			respond.With(w, r, http.StatusInternalServerError, fmt.Errorf("could not update contract"))
+			return
+		}
 
 		respond.With(w, r, http.StatusOK, project)
 	})

@@ -70,11 +70,13 @@ type Project struct {
 
 type Contract struct {
 	Model
-	Hours               int         `json:"hours,omitempty"`
-	PerHour             float64     `json:"perHour,omitempty"`
-	Deadline            time.Time   `json:"deadline,omitempty"`
-	DeadlineFlexibility int         `json:"deadlineFlexibility,omitempty"`
-	Extensions          []Extension `json:"extensions,omitempty"`
+	Hours               int         `json:"hours"`
+	PerHour             float64     `json:"perHour"`
+	Deadline            time.Time   `json:"deadline"`
+	DeadlineFlexibility int         `json:"deadlineFlexibility"`
+	Extensions          []Extension `json:"extensions"`
+	ClientAgreed        bool        `json:"clientAgreed"`
+	FreelancersToAgree  uintList    `json:"freelancersToAgree" sql:"type:JSONB NOT NULL DEFAULT '{}'::JSONB"`
 }
 
 type Extension struct {
@@ -84,6 +86,8 @@ type Extension struct {
 	PerHour             float64   `json:"perHour"`
 	Deadline            time.Time `json:"deadline"`
 	DeadlineFlexibility int       `json:"deadlineFlexibility"`
+	ClientAgreed        bool      `json:"clientAgreed""`
+	FreelancersToAgree  uintList  `json:"freelancersToAgree" sql:"type:JSONB NOT NULL DEFAULT '{}'::JSONB"`
 }
 
 type Job struct {
@@ -119,12 +123,14 @@ type JobApplication struct {
 
 type Review struct {
 	Model
-	Title        string  `json:"title,omitempty"`
-	Content      string  `json:"content,omitempty"`
-	Rating       float64 `json:"rating,omitempty"`
-	JobID        uint    `json:"jobId,omitempty"`
-	ClientID     uint    `json:"clientId,omitempty"`
-	FreelancerID uint    `json:"freelancerId,omitempty"`
+	Title        string      `json:"title"`
+	Content      string      `json:"content"`
+	Rating       float64     `json:"rating"`
+	JobID        uint        `json:"jobId"`
+	ClientID     uint        `json:"-"`
+	Client       *Client     `json:"client,omitempty"`
+	FreelancerID uint        `json:"-"`
+	Freelancer   *Freelancer `json:"freelancer,omitempty"`
 }
 
 type Reference struct {

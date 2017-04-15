@@ -10,7 +10,10 @@ type ProjectRepository interface {
 	getAllProjectsForFreelancer(id uint) ([]Project, error)
 	projectBelongsToUser(id uint, userType string, userID uint) (bool, error)
 	addContract(contract *Contract) error
+	getExtension(id uint) (*Extension, error)
 	addExtension(extension *Extension) error
+	updateContract(contract *Contract, fields map[string]interface{}) error
+	updateExtension(extension *Extension, fields map[string]interface{}) error
 }
 
 const (
@@ -94,4 +97,19 @@ func (repo *postgreProjectRepository) getAllProjectsForFreelancer(id uint) ([]Pr
 	}
 
 	return projects, repo.db.Preload("Contract").Preload("Contract.Extensions").Preload("Client").Preload("Freelancers").Where("id IN (?)", projectIDs).Find(&projects).Error
+}
+
+func (repo *postgreProjectRepository) updateContract(contract *Contract, fields map[string]interface{}) error {
+	return repo.db.Model(contract).Update(fields).Error
+}
+
+func (repo *postgreProjectRepository) updateExtension(extension *Extension, fields map[string]interface{}) error {
+	return repo.db.Model(extension).Update(fields).Error
+}
+
+func (repo *postgreProjectRepository) getExtension(id uint) (*Extension, error) {
+	var extension Extension
+	err := repo.db.Find(&extension, id).Error
+
+	return &extension, err
 }

@@ -41,19 +41,23 @@ var routes = Routes{
 		"UpdateFreelancer",
 		"POST",
 		"/freelancer/{id}",
-		whenLoggedIn(whenFreelancer(withID(whenIDBelongsToUser(withFreelancerUpdate(updateFreelancerByID()))))),
+		whenLoggedIn(whenFreelancer(withID(
+			whenIDBelongsToUser(withFreelancerUpdate(
+				updateFreelancerByID()))))),
 	},
 	Route{
 		"DeleteFreelancer",
 		"DELETE",
 		"/freelancer/{id}",
-		whenLoggedIn(whenFreelancer(withID(whenIDBelongsToUser(deleteFreelancerByID())))),
+		whenLoggedIn(whenFreelancer(withID(
+			whenIDBelongsToUser(deleteFreelancerByID())))),
 	},
 	Route{
 		"AddFreelancerReference",
 		"PUT",
 		"/freelancer/{id}/reference",
-		whenLoggedIn(whenFreelancer(withID(withReference(addFreelancerReferenceByID())))),
+		whenLoggedIn(whenFreelancer(withID(
+			withReference(addFreelancerReferenceByID())))),
 	},
 	Route{
 		"AddFreelancerReview",
@@ -72,19 +76,37 @@ var routes = Routes{
 		"GetProject",
 		"GET",
 		"/project/{id}",
-		whenLoggedIn(withID(whenProjectBelongsToUser(getProjectByID()))),
+		whenLoggedIn(withID(whenProjectBelongsToUserByID(getProjectByID()))),
 	},
 	Route{
 		"CreateProjectFromJobApplication",
 		"POST",
 		"/project/create_from_job_application/{id}",
-		whenLoggedIn(whenClient(withID(whenJobApplicationBelongsToUser(createProjectFromJobApplication())))),
+		whenLoggedIn(whenClient(withID(
+			whenJobApplicationBelongsToUser(
+				createProjectFromJobApplication())))),
 	},
 	Route{
 		"AddExtension",
 		"POST",
 		"/project/{id}/extension",
-		whenLoggedIn(whenClient(whenProjectBelongsToUser(withID(withExtension(addExtensionToProjectContract()))))),
+		whenLoggedIn(whenClient(withID(
+			whenProjectBelongsToUserByID(withExtension(
+				addExtensionToProjectContract()))))),
+	},
+	Route{
+		"AgreeToContractTerms",
+		"POST",
+		"/project/{id}/contract/agree",
+		whenLoggedIn(withID(whenProjectBelongsToUserByID(withProjectByID(agreeToContractTerms())))),
+	},
+	Route{
+		"AgreeToExtensionTerms",
+		"POST",
+		"/project/{id}/extension/{extension_id}/agree",
+		whenLoggedIn(withID(whenProjectBelongsToUserByID(
+			withProjectByID(withUINT("extensionID", withExtensionWhenBelongsToProject(
+				agreeToExtensionTerms())))))),
 	},
 
 	// Route{
@@ -134,12 +156,16 @@ var routes = Routes{
 		"ApplyForJob", // todo: prevent freelancers to apply twice
 		"PUT",
 		"/job/{id}/apply",
-		whenLoggedIn(whenFreelancer(withID(withClientFromJobID(withJobApplication(addJobApplication()))))),
+		whenLoggedIn(whenFreelancer(withID(
+			withClientFromJobID(withJobApplication(
+				addJobApplication()))))),
 	},
 	Route{
 		"DeleteJobApplication",
 		"DELETE",
 		"/job_application/{id}",
-		whenLoggedIn(whenFreelancer(whenJobApplicationBelongsToUser(withID(deleteJobApplicationByID())))),
+		whenLoggedIn(whenFreelancer(
+			whenJobApplicationBelongsToUser(withID(
+				deleteJobApplicationByID())))),
 	},
 }

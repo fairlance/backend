@@ -19,7 +19,7 @@ func withUINT(param string, handler http.Handler) http.Handler {
 		vars := mux.Vars(r)
 
 		if vars[param] == "" {
-			respond.With(w, r, http.StatusBadRequest, "Id not provided.")
+			respond.With(w, r, http.StatusBadRequest, fmt.Errorf("%s not provided", param))
 			return
 		}
 
@@ -39,7 +39,7 @@ func withID(handler http.Handler) http.Handler {
 		vars := mux.Vars(r)
 
 		if vars["id"] == "" {
-			respond.With(w, r, http.StatusBadRequest, "Id not provided.")
+			respond.With(w, r, http.StatusBadRequest, fmt.Errorf("id not provided"))
 			return
 		}
 

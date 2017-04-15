@@ -17,3 +17,13 @@ func round(val float64, roundOn float64, places int) float64 {
 
 	return round / pow
 }
+
+func removeFromUINTSlice(slice []uint, value uint) []uint {
+	for index, val := range slice {
+		if val == value {
+			slice[index] = slice[len(slice)-1]
+			slice = slice[:len(slice)-1]
+		}
+	}
+	return slice
+}
