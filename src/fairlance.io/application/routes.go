@@ -150,7 +150,7 @@ var routes = Routes{
 	},
 	Route{
 		"NewJob",
-		"PUT",
+		"POST",
 		"/job/new",
 		whenLoggedIn(whenClient(withJob(addJob()))),
 	},
