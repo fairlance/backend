@@ -17,6 +17,9 @@ type JobRepositoryMock struct {
 		}
 	}
 	AddJobCall struct {
+		Updates struct {
+			ID uint
+		}
 		Receives struct {
 			Job *Job
 		}
@@ -129,6 +132,7 @@ func (repo *JobRepositoryMock) GetAllJobsForClient(id uint) ([]Job, error) {
 
 func (repo *JobRepositoryMock) AddJob(job *Job) error {
 	repo.AddJobCall.Receives.Job = job
+	repo.AddJobCall.Receives.Job.ID = repo.AddJobCall.Updates.ID
 	return repo.AddJobCall.Returns.Error
 }
 

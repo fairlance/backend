@@ -137,9 +137,23 @@ func TestJobIndexJobError(t *testing.T) {
 
 func TestJobAddJob(t *testing.T) {
 	jobRepositoryMock := JobRepositoryMock{}
+	jobRepositoryMock.AddJobCall.Updates.ID = 4
+	var indexName string
+	var documentID string
+	var document *Job
 	var jobContext = &ApplicationContext{
 		JobRepository: &jobRepositoryMock,
+		Indexer: &testIndexer{
+			indexCallback: func(index, docID string, doc interface{}) error {
+				indexName = index
+				documentID = docID
+				document = doc.(*Job)
+				return nil
+			},
+			deleteCallback: func(index, docID string) error { return nil },
+		},
 	}
+
 	is := isHelper.New(t)
 	w := httptest.NewRecorder()
 	r := getRequest(jobContext, "")
@@ -179,6 +193,9 @@ func TestJobAddJob(t *testing.T) {
 	is.Equal(len(jobRepositoryMock.AddJobCall.Receives.Job.Attachments), 1)
 	is.Equal(jobRepositoryMock.AddJobCall.Receives.Job.Attachments[0].Name, "attachment")
 	is.Equal(jobRepositoryMock.AddJobCall.Receives.Job.Attachments[0].URL, "www.attachment.com")
+	is.Equal(indexName, "jobs")
+	is.Equal(documentID, "4")
+	is.Equal(document.Name, "Name1")
 }
 
 func TestJobGetJobForClientReceivesTheRightParameters(t *testing.T) {

@@ -227,11 +227,14 @@ func TestCreateProjectFromJobApplication(t *testing.T) {
 	deadline := time.Now().Add(time.Hour * 24 * 2)
 	expectedDeadline := time.Date(deadline.Year(), deadline.Month(), deadline.Day()+1, 0, 0, 0, 0, deadline.Location())
 	jobRepoMock.GetJobCall.Returns.Job = &Job{
+		Model:    Model{ID: 4},
 		Name:     "jobName",
 		Details:  "jobDetails",
 		ClientID: uint(33),
 	}
 
+	var indexName string
+	var documentID string
 	var notifiedFreelancerID uint
 	var notificationType string
 
@@ -242,6 +245,14 @@ func TestCreateProjectFromJobApplication(t *testing.T) {
 			callback: func(notification *notifier.Notification) error {
 				notifiedFreelancerID = notification.To[0].ID
 				notificationType = notification.Type
+				return nil
+			},
+		},
+		Indexer: &testIndexer{
+			indexCallback: func(index, docID string, doc interface{}) error { return nil },
+			deleteCallback: func(index, docID string) error {
+				indexName = index
+				documentID = docID
 				return nil
 			},
 		},
@@ -268,6 +279,8 @@ func TestCreateProjectFromJobApplication(t *testing.T) {
 	is.Equal(jobRepoMock.DeactivateJobCall.Receives.Job.Name, "jobName")
 	is.Equal(notifiedFreelancerID, uint(22))
 	is.Equal(notificationType, "job_application_accepted")
+	is.Equal(indexName, "jobs")
+	is.Equal(documentID, "4")
 }
 
 var whenProjectBelongsToUserData = []struct {
