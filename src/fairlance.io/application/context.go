@@ -177,10 +177,6 @@ func (ac *ApplicationContext) FillTables() {
 		DeadlineFlexibility: 1,
 		ClientAgreed:        true,
 		FreelancersToAgree:  []uint{},
-		Proposal: &Proposal{
-			UserID:   1,
-			UserType: "client",
-		},
 	}).Association("Extensions").Replace([]Extension{extension})
 
 	ac.db.Create(&Project{
