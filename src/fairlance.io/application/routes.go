@@ -105,16 +105,24 @@ var routes = Routes{
 		"POST",
 		"/project/{id}/extension/{extension_id}/agree",
 		whenLoggedIn(withID(whenProjectBelongsToUserByID(
-			withProjectByID(withUINT("extensionID", withExtensionWhenBelongsToProject(
+			withProjectByID(withUINT("extension_id", withExtensionWhenBelongsToProject(
 				agreeToExtensionTerms())))))),
 	},
 	Route{
-		"AddProposal",
+		"AddProjectContractProposal",
 		"POST",
-		"/project/{id}/proposal",
+		"/project/{id}/contract/proposal",
 		whenLoggedIn(withID(whenProjectBelongsToUserByID(
 			withProjectByID(withProposal(
 				setProposalToProjectContract()))))),
+	},
+	Route{
+		"AddProjectContractExtensionProposal",
+		"POST",
+		"/project/{id}/extension/{extension_id}/proposal",
+		whenLoggedIn(withID(whenProjectBelongsToUserByID(
+			withProjectByID(withProposal(withUINT("extension_id", withExtensionWhenBelongsToProject(
+				setProposalToProjectContractExtension()))))))),
 	},
 
 	// Route{

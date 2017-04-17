@@ -3,21 +3,22 @@ package application
 import (
 	"time"
 
-	"fairlance.io/notifier"
+	"fairlance.io/dispatcher"
 	"github.com/jinzhu/gorm"
 )
 
 type ApplicationContext struct {
-	db                   *gorm.DB
-	FreelancerRepository FreelancerRepository
-	ProjectRepository    ProjectRepository
-	ClientRepository     ClientRepository
-	ReferenceRepository  ReferenceRepository
-	JobRepository        JobRepository
-	UserRepository       UserRepository
-	JwtSecret            string
-	Notifier             notifier.Notifier
-	Indexer              Indexer
+	db                     *gorm.DB
+	FreelancerRepository   FreelancerRepository
+	ProjectRepository      ProjectRepository
+	ClientRepository       ClientRepository
+	ReferenceRepository    ReferenceRepository
+	JobRepository          JobRepository
+	UserRepository         UserRepository
+	JwtSecret              string
+	NotificationDispatcher *NotificationDispatcher
+	MessagingDispatcher    *MessagingDispatcher
+	Indexer                Indexer
 }
 
 type ContextOptions struct {
@@ -26,6 +27,7 @@ type ContextOptions struct {
 	DbPass          string
 	Secret          string
 	NotificationURL string
+	MessagingURL    string
 	SearcherURL     string
 }
 
@@ -43,16 +45,17 @@ func NewContext(options ContextOptions) (*ApplicationContext, error) {
 	referenceRepository, _ := NewReferenceRepository(db)
 
 	context := &ApplicationContext{
-		db:                   db,
-		UserRepository:       userRepository,
-		FreelancerRepository: freelancerRepository,
-		ClientRepository:     clientRepository,
-		JobRepository:        jobRepository,
-		ProjectRepository:    projectRepository,
-		ReferenceRepository:  referenceRepository,
-		JwtSecret:            options.Secret, //base64.StdEncoding.EncodeToString([]byte(options.Secret)),
-		Notifier:             notifier.NewHTTPNotifier(options.NotificationURL),
-		Indexer:              NewIndexer(options.SearcherURL),
+		db:                     db,
+		UserRepository:         userRepository,
+		FreelancerRepository:   freelancerRepository,
+		ClientRepository:       clientRepository,
+		JobRepository:          jobRepository,
+		ProjectRepository:      projectRepository,
+		ReferenceRepository:    referenceRepository,
+		JwtSecret:              options.Secret, //base64.StdEncoding.EncodeToString([]byte(options.Secret)),
+		NotificationDispatcher: NewNotificationDispatcher(dispatcher.NewHTTPNotifier(options.NotificationURL)),
+		MessagingDispatcher:    NewMessagingDispatcher(dispatcher.NewHTTPMessaging(options.MessagingURL)),
+		Indexer:                NewHTTPIndexer(options.SearcherURL),
 	}
 
 	return context, nil
@@ -175,7 +178,7 @@ func (ac *ApplicationContext) FillTables() {
 		ClientAgreed:        true,
 		FreelancersToAgree:  []uint{},
 		Proposal: &Proposal{
-			ID:       1,
+			UserID:   1,
 			UserType: "client",
 		},
 	}).Association("Extensions").Replace([]Extension{extension})

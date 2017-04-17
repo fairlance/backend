@@ -196,7 +196,9 @@ func createProjectFromJobApplication() http.Handler {
 			log.Printf("job could not be deleted from searcher: %v", err)
 		}
 
-		notifyJobApplicationAccepted(appContext.Notifier, jobApplication, project)
+		if err := appContext.NotificationDispatcher.notifyJobApplicationAccepted(jobApplication, project); err != nil {
+			log.Printf("could not notifyJobApplicationAccepted: %v", err)
+		}
 
 		respond.With(w, r, http.StatusOK, project)
 	})
@@ -263,13 +265,15 @@ func setProposalToProjectContract() http.Handler {
 		appContext := context.Get(r, "context").(*ApplicationContext)
 		project := context.Get(r, "project").(*Project)
 		proposal := context.Get(r, "proposal").(*Proposal)
-		err := appContext.ProjectRepository.setProposal(project.Contract, proposal)
+		err := appContext.ProjectRepository.setContractProposal(project.Contract, proposal)
 		if err != nil {
 			log.Printf("could not set proposal: %v", err)
 			respond.With(w, r, http.StatusInternalServerError, fmt.Errorf("could not set proposal"))
 			return
 		}
+		if err := appContext.MessagingDispatcher.sendProjectContractProposalAdded(project.ID, proposal); err != nil {
+			log.Printf("could not sendProjectContractProposalAdded: %v", err)
+		}
 		respond.With(w, r, http.StatusOK, project)
-
 	})
 }

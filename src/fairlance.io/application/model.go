@@ -85,7 +85,7 @@ type Contract struct {
 
 type Proposal struct {
 	UserType            string    `json:"userType"`
-	ID                  uint      `json:"id"`
+	UserID              uint      `json:"userId"`
 	Deadline            time.Time `json:"deadline"`
 	DeadlineFlexibility int       `json:"deadlineFlexibility"`
 	Hours               int       `json:"hours"`

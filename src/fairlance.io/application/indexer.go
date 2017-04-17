@@ -13,7 +13,7 @@ type Indexer interface {
 	Delete(index, docID string) error
 }
 
-func NewIndexer(searcherURL string) *HTTPIndexer {
+func NewHTTPIndexer(searcherURL string) *HTTPIndexer {
 	return &HTTPIndexer{"http://" + searcherURL}
 }
 

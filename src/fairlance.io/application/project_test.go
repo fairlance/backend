@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"fairlance.io/notifier"
+	"fairlance.io/dispatcher"
 
 	isHelper "github.com/cheekybits/is"
 	"github.com/gorilla/context"
@@ -241,13 +241,13 @@ func TestCreateProjectFromJobApplication(t *testing.T) {
 	var appContext = &ApplicationContext{
 		ProjectRepository: projectRepoMock,
 		JobRepository:     jobRepoMock,
-		Notifier: &testNotifier{
-			callback: func(notification *notifier.Notification) error {
+		NotificationDispatcher: NewNotificationDispatcher(&testNotifier{
+			callback: func(notification *dispatcher.Notification) error {
 				notifiedFreelancerID = notification.To[0].ID
 				notificationType = notification.Type
 				return nil
 			},
-		},
+		}),
 		Indexer: &testIndexer{
 			indexCallback: func(index, docID string, doc interface{}) error { return nil },
 			deleteCallback: func(index, docID string) error {

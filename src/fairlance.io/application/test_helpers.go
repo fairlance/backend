@@ -5,19 +5,29 @@ import (
 	"log"
 	"net/http"
 
-	"fairlance.io/notifier"
+	"fairlance.io/dispatcher"
 
 	"github.com/gorilla/context"
 )
 
-type testNotifierCallback func(notification *notifier.Notification) error
+type testNotifierCallback func(notification *dispatcher.Notification) error
 
 type testNotifier struct {
 	callback testNotifierCallback
 }
 
-func (n *testNotifier) Notify(notification *notifier.Notification) error {
+func (n *testNotifier) Notify(notification *dispatcher.Notification) error {
 	return n.callback(notification)
+}
+
+type testMessagingCallback func(meassage *dispatcher.Message) error
+
+type testMessaging struct {
+	callback testMessagingCallback
+}
+
+func (n *testMessaging) Send(message *dispatcher.Message) error {
+	return n.callback(message)
 }
 
 type testIndexerIndexCallback func(index, docID string, document interface{}) error
@@ -41,10 +51,15 @@ func getRequest(appContext *ApplicationContext, requestBody string) *http.Reques
 	if err != nil {
 		log.Fatal(err)
 	}
-	if appContext.Notifier == nil {
-		appContext.Notifier = &testNotifier{
-			callback: func(notification *notifier.Notification) error { return nil },
-		}
+	if appContext.NotificationDispatcher == nil {
+		appContext.NotificationDispatcher = NewNotificationDispatcher(&testNotifier{
+			callback: func(notification *dispatcher.Notification) error { return nil },
+		})
+	}
+	if appContext.MessagingDispatcher == nil {
+		appContext.MessagingDispatcher = NewMessagingDispatcher(&testMessaging{
+			callback: func(message *dispatcher.Message) error { return nil },
+		})
 	}
 	if appContext.Indexer == nil {
 		appContext.Indexer = &testIndexer{

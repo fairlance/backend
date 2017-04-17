@@ -8,7 +8,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"fairlance.io/notifier"
+	"fairlance.io/dispatcher"
 
 	respond "gopkg.in/matryer/respond.v1"
 
@@ -348,13 +348,13 @@ func TestJobHandleApplyForJob(t *testing.T) {
 	var notificationType string
 	var jobContext = &ApplicationContext{
 		JobRepository: &jobRepositoryMock,
-		Notifier: &testNotifier{
-			callback: func(notification *notifier.Notification) error {
+		NotificationDispatcher: NewNotificationDispatcher(&testNotifier{
+			callback: func(notification *dispatcher.Notification) error {
 				notifiedClientID = notification.To[0].ID
 				notificationType = notification.Type
 				return nil
 			},
-		},
+		}),
 	}
 
 	is := isHelper.New(t)

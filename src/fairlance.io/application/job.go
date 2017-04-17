@@ -186,7 +186,9 @@ func addJobApplication() http.Handler {
 				respond.With(w, r, http.StatusInternalServerError, err)
 				return
 			}
-			notifyJobApplicationAdded(appContext.Notifier, jobApplication, client.ID)
+			if err := appContext.NotificationDispatcher.notifyJobApplicationAdded(jobApplication, client.ID); err != nil {
+				log.Printf("could not notifyJobApplicationAdded: %v", err)
+			}
 		}
 
 		respond.With(w, r, http.StatusOK, jobApplication)

@@ -105,10 +105,19 @@ type projectRepositoryMock struct {
 			Error error
 		}
 	}
-	SetProposalCall struct {
+	SetContractProposalCall struct {
 		Receives struct {
 			Contract *Contract
 			Proposal *Proposal
+		}
+		Returns struct {
+			Error error
+		}
+	}
+	SetContractExtensionProposalCall struct {
+		Receives struct {
+			Extension *Extension
+			Proposal  *Proposal
 		}
 		Returns struct {
 			Error error
@@ -184,8 +193,14 @@ func (repo *projectRepositoryMock) projectBelongsToUser(id uint, userType string
 		repo.ProjectBelongsToUserCall.Returns.Error
 }
 
-func (repo *projectRepositoryMock) setProposal(contract *Contract, proposal *Proposal) error {
-	repo.SetProposalCall.Receives.Contract = contract
-	repo.SetProposalCall.Receives.Proposal = proposal
-	return repo.SetProposalCall.Returns.Error
+func (repo *projectRepositoryMock) setContractProposal(contract *Contract, proposal *Proposal) error {
+	repo.SetContractProposalCall.Receives.Contract = contract
+	repo.SetContractProposalCall.Receives.Proposal = proposal
+	return repo.SetContractProposalCall.Returns.Error
+}
+
+func (repo *projectRepositoryMock) setContractExtensionProposal(extension *Extension, proposal *Proposal) error {
+	repo.SetContractExtensionProposalCall.Receives.Extension = extension
+	repo.SetContractExtensionProposalCall.Receives.Proposal = proposal
+	return repo.SetContractExtensionProposalCall.Returns.Error
 }

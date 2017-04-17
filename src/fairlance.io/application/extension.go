@@ -53,7 +53,7 @@ func withExtensionWhenBelongsToProject(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		appContext := context.Get(r, "context").(*ApplicationContext)
 		project := context.Get(r, "project").(*Project)
-		extensionID := context.Get(r, "extensionID").(uint)
+		extensionID := context.Get(r, "extension_id").(uint)
 		extension, err := appContext.ProjectRepository.getExtension(extensionID)
 		if err != nil {
 			log.Printf("extension not found (id %d): %v", extensionID, err)
@@ -94,5 +94,24 @@ func agreeToExtensionTerms() http.Handler {
 			return
 		}
 		respond.With(w, r, http.StatusOK, extension)
+	})
+}
+
+func setProposalToProjectContractExtension() http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		appContext := context.Get(r, "context").(*ApplicationContext)
+		project := context.Get(r, "project").(*Project)
+		proposal := context.Get(r, "proposal").(*Proposal)
+		extension := context.Get(r, "extension").(*Extension)
+		err := appContext.ProjectRepository.setContractExtensionProposal(extension, proposal)
+		if err != nil {
+			log.Printf("could not set proposal: %v", err)
+			respond.With(w, r, http.StatusInternalServerError, fmt.Errorf("could not set proposal"))
+			return
+		}
+		if err := appContext.MessagingDispatcher.sendProjectContractExtensionProposalAdded(project.ID, extension, proposal); err != nil {
+			log.Printf("could not sendProjectContractProposalAdded: %v", err)
+		}
+		respond.With(w, r, http.StatusOK, project)
 	})
 }
