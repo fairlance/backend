@@ -8,6 +8,7 @@ import (
 	"strconv"
 
 	app "fairlance.io/application"
+	"fairlance.io/dispatcher"
 	"fairlance.io/messaging"
 
 	"github.com/gorilla/mux"
@@ -16,12 +17,12 @@ import (
 )
 
 var (
-	port       int
-	secret     string
-	dbName     string
-	dbUser     string
-	dbPass     string
-	projectURL string
+	port            int
+	secret          string
+	dbName          string
+	dbUser          string
+	dbPass          string
+	notificationURL string
 )
 
 func init() {
@@ -30,7 +31,7 @@ func init() {
 	flag.StringVar(&dbUser, "dbUser", "fairlance", "DB user.")
 	flag.StringVar(&dbPass, "dbPass", "fairlance", "Db user's password.")
 	flag.StringVar(&secret, "secret", "secret", "Secret string used for JWS.")
-	flag.StringVar(&projectURL, "projectURL", "", "Project url to check for user access rights.")
+	flag.StringVar(&notificationURL, "notificationUrl", "localhost:3007", "Notification service url.")
 	flag.Parse()
 
 	f, err := os.OpenFile("/var/log/fairlance/messaging.log", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
@@ -76,7 +77,7 @@ func main() {
 		return messaging.NewRoom(id, users), nil
 	}
 
-	hub := messaging.NewHub(messaging.NewMessageDB(), getARoom)
+	hub := messaging.NewHub(messaging.NewMessageDB(), dispatcher.NewHTTPNotifier(notificationURL), getARoom)
 	go hub.Run()
 
 	// todo: make safe

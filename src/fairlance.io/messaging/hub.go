@@ -5,7 +5,7 @@ import (
 	"log"
 	"time"
 
-	"fairlance.io/notifier"
+	"fairlance.io/dispatcher"
 )
 
 // Hub ...
@@ -23,19 +23,19 @@ type Hub struct {
 	unregister chan *User
 
 	db       messageDB
-	notifier notifier.Notifier
+	notifier dispatcher.Notifier
 	getARoom func(id string) (*Room, error)
 }
 
 // NewHub creates new Hub object
-func NewHub(db messageDB, getARoomFunc func(id string) (*Room, error)) *Hub {
+func NewHub(db messageDB, notifier dispatcher.Notifier, getARoomFunc func(id string) (*Room, error)) *Hub {
 	return &Hub{
 		broadcast:  make(chan Message),
 		register:   make(chan *userConn),
 		unregister: make(chan *User),
 		rooms:      make(map[string]*Room),
 		db:         db,
-		notifier:   notifier.NewHTTPNotifier("localhost:3007"),
+		notifier:   notifier,
 		getARoom:   getARoomFunc,
 	}
 }
@@ -66,13 +66,13 @@ func (h *Hub) Run() {
 				log.Println("sending to unknown room", msg.ProjectID)
 				continue
 			}
-
+			h.printRooms()
 			for _, usr := range h.rooms[msg.ProjectID].Users {
 				if usr.online {
 					select {
 					case usr.send <- msg:
 					default:
-						h.rooms[msg.ProjectID].CloseUser(usr)
+						usr.Close()
 					}
 				} else {
 					h.notifyUser(usr, msg)
@@ -85,7 +85,7 @@ func (h *Hub) Run() {
 func (h *Hub) removeUser(userToUnregister *User) {
 	for _, usr := range h.rooms[userToUnregister.room].Users {
 		if userToUnregister.username == usr.username {
-			h.rooms[userToUnregister.room].CloseUser(usr)
+			usr.Close()
 		}
 	}
 
@@ -102,14 +102,14 @@ func (h *Hub) SendMessage(room, name, msg string) {
 
 func (h *Hub) notifyUser(u *User, msg Message) {
 	log.Println("notifying", u.username, "with message", msg.Text)
-	h.notifier.Notify(&notifier.Notification{
-		To: []notifier.NotificationUser{
-			notifier.NotificationUser{
+	h.notifier.Notify(&dispatcher.Notification{
+		To: []dispatcher.NotificationUser{
+			dispatcher.NotificationUser{
 				ID:   u.id,
 				Type: u.userType,
 			},
 		},
-		From: notifier.NotificationUser{
+		From: dispatcher.NotificationUser{
 			ID:   msg.UserID,
 			Type: msg.UserType,
 		},

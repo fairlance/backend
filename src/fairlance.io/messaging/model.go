@@ -58,14 +58,9 @@ func (r *Room) HasReasonToExist() bool {
 func (r *Room) ActivateUser(conn *userConn) (*User, error) {
 	user, ok := r.Users[conn.id]
 	if ok {
-		user.hub = conn.hub
-		user.conn = conn.conn
-		user.send = make(chan Message, 256)
-		user.online = true
-
+		user.Activate(conn)
 		go user.startWriting()
 		go user.startReading()
-
 		return user, nil
 	}
 
@@ -74,18 +69,7 @@ func (r *Room) ActivateUser(conn *userConn) (*User, error) {
 
 func (r *Room) Close() {
 	for _, user := range r.Users {
-		r.CloseUser(user)
-	}
-}
-
-func (r *Room) CloseUser(u *User) {
-	user, ok := r.Users[fmt.Sprintf("%s.%d", u.userType, u.id)]
-	if ok && user.online == true {
-		user.hub = nil
-		if user.send != nil {
-			close(user.send)
-		}
-		user.online = false
+		user.Close()
 	}
 }
 

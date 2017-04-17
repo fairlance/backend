@@ -49,6 +49,23 @@ func NewUser(id uint, firstName, lastName, userType, room string) *User {
 func (u *User) UniqueID() string {
 	return fmt.Sprintf("%s.%d", u.userType, u.id)
 }
+
+func (u *User) Activate(conn *userConn) {
+	u.hub = conn.hub
+	u.conn = conn.conn
+	u.send = make(chan Message, 256)
+	u.online = true
+}
+
+func (u *User) Close() {
+	if u.online {
+		log.Println("close user", u.UniqueID(), u.online, u.send)
+		u.hub = nil
+		u.online = false
+		close(u.send)
+	}
+}
+
 func (u *User) startReading() {
 	defer func() {
 		u.hub.unregister <- u
@@ -60,8 +77,9 @@ func (u *User) startReading() {
 	for {
 		_, msgBytes, err := u.conn.ReadMessage()
 		if err != nil {
+			log.Printf("could not read message: %v", err)
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway) {
-				log.Printf("error: %v", err)
+				log.Printf("unexpected close error: %v", err)
 			}
 			break
 		}
@@ -71,9 +89,6 @@ func (u *User) startReading() {
 }
 
 func (u *User) startWriting() {
-	defer func() {
-		u.conn.Close()
-	}()
 	for {
 		select {
 		case msg, ok := <-u.send:
