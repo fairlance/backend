@@ -24,6 +24,15 @@ type projectRepositoryMock struct {
 			Error error
 		}
 	}
+	UpdateCall struct {
+		Receives struct {
+			Project *Project
+			Fields  map[string]interface{}
+		}
+		Returns struct {
+			Error error
+		}
+	}
 	GetAllProjectsForClientCall struct {
 		Receives struct {
 			ID uint
@@ -121,6 +130,11 @@ func (repo *projectRepositoryMock) getByID(id uint) (*Project, error) {
 func (repo *projectRepositoryMock) add(project *Project) error {
 	repo.AddCall.Receives.Project = project
 	return repo.AddCall.Returns.Error
+}
+func (repo *projectRepositoryMock) update(project *Project, fields map[string]interface{}) error {
+	repo.UpdateCall.Receives.Project = project
+	repo.UpdateCall.Receives.Fields = fields
+	return repo.UpdateCall.Returns.Error
 }
 
 func (repo *projectRepositoryMock) getAllProjectsForClient(id uint) ([]Project, error) {

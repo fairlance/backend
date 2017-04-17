@@ -6,6 +6,7 @@ type ProjectRepository interface {
 	getAllProjects() ([]Project, error)
 	getByID(id uint) (*Project, error)
 	add(project *Project) error
+	update(project *Project, fields map[string]interface{}) error
 	getAllProjectsForClient(id uint) ([]Project, error)
 	getAllProjectsForFreelancer(id uint) ([]Project, error)
 	projectBelongsToUser(id uint, userType string, userID uint) (bool, error)
@@ -45,6 +46,10 @@ func (repo *postgreProjectRepository) getByID(id uint) (*Project, error) {
 
 func (repo *postgreProjectRepository) add(project *Project) error {
 	return repo.db.Create(project).Error
+}
+
+func (repo *postgreProjectRepository) update(project *Project, fields map[string]interface{}) error {
+	return repo.db.Model(project).Update(fields).Error
 }
 
 func (repo *postgreProjectRepository) addContract(contract *Contract) error {

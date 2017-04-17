@@ -227,6 +227,18 @@ func agreeToContractTerms() http.Handler {
 			return
 		}
 
+		if clientAgreed && len(freelancersToAgree) == 0 {
+			project.Status = projectStatusWorking
+			err := appContext.ProjectRepository.update(project, map[string]interface{}{
+				"status": project.Status,
+			})
+			if err != nil {
+				log.Printf("could not update project status: %v", err)
+				respond.With(w, r, http.StatusInternalServerError, fmt.Errorf("could not update project status"))
+				return
+			}
+		}
+
 		respond.With(w, r, http.StatusOK, project)
 	})
 }
