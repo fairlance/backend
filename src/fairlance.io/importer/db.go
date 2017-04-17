@@ -18,25 +18,10 @@ func reGenerateTestData(db gorm.DB, selectedType string) error {
 	}
 	switch selectedType {
 	case "jobs":
-		clients := []application.Client{}
-		for i := 0; i < 5; i++ {
-			clients = append(clients, application.Client{
-				User: application.User{
-					FirstName: fmt.Sprintf("Clint %d", i),
-					LastName:  fmt.Sprintf("Clientwood %d", i),
-					Email:     fmt.Sprintf("email%d@email.com", i),
-				},
-				Rating: float64(i % 5),
-			})
-			if err := db.Create(&clients[i]).Error; err != nil {
-				return err
-			}
-		}
-
 		jobs := onlinevolunteering.GetJobs()
 		for i := 0; i < len(jobs); i++ {
 			job := &jobs[i]
-			job.ClientID = uint(i%5 + 1)
+			job.ClientID = 1
 			job.StartDate = time.Now().Add(time.Duration(i*24+1) * time.Hour)
 			job.Deadline = time.Now().Add(time.Duration(i*24*i+1) * time.Hour)
 			if err := db.Create(job).Error; err != nil {
@@ -67,8 +52,8 @@ func reGenerateTestData(db gorm.DB, selectedType string) error {
 func deleteAllFromDB(db gorm.DB, selectedType string) error {
 	switch selectedType {
 	case "jobs":
-		db.DropTableIfExists(&application.Job{}, &application.Client{}, &application.Example{}, &application.Attachment{})
-		db.CreateTable(&application.Job{}, &application.Client{}, &application.Example{}, &application.Attachment{})
+		db.DropTableIfExists(&application.Job{}, &application.Example{}, &application.Attachment{})
+		db.CreateTable(&application.Job{}, &application.Example{}, &application.Attachment{})
 	case "freelancers":
 		db.DropTableIfExists(&application.Freelancer{})
 		db.CreateTable(&application.Freelancer{})
