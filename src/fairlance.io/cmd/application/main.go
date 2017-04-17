@@ -18,6 +18,7 @@ var (
 	dbPass          string
 	secret          string
 	notificationURL string
+	searcherURL     string
 )
 
 func init() {
@@ -33,6 +34,7 @@ func init() {
 	flag.StringVar(&dbPass, "dbPass", "", "Db user's password.")
 	flag.StringVar(&secret, "secret", "secret", "Secret string used for JWS.")
 	flag.StringVar(&notificationURL, "notificationUrl", "localhost:3007", "Notification endpoint.")
+	flag.StringVar(&searcherURL, "searcherUrl", "localhost:3003", "Url of the searcher.")
 	flag.Parse()
 
 	if dbUser == "" || dbPass == "" {
@@ -47,6 +49,7 @@ func main() {
 		DbPass:          dbPass,
 		Secret:          secret,
 		NotificationURL: notificationURL,
+		SearcherURL:     searcherURL,
 	}
 
 	var appContext, err = application.NewContext(options)

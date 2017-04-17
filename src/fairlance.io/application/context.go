@@ -17,6 +17,7 @@ type ApplicationContext struct {
 	UserRepository       UserRepository
 	JwtSecret            string
 	Notifier             notifier.Notifier
+	Indexer              Indexer
 }
 
 type ContextOptions struct {
@@ -25,6 +26,7 @@ type ContextOptions struct {
 	DbPass          string
 	Secret          string
 	NotificationURL string
+	SearcherURL     string
 }
 
 func NewContext(options ContextOptions) (*ApplicationContext, error) {
@@ -50,6 +52,7 @@ func NewContext(options ContextOptions) (*ApplicationContext, error) {
 		ReferenceRepository:  referenceRepository,
 		JwtSecret:            options.Secret, //base64.StdEncoding.EncodeToString([]byte(options.Secret)),
 		Notifier:             notifier.NewHTTPNotifier(options.NotificationURL),
+		Indexer:              NewIndexer(options.SearcherURL),
 	}
 
 	return context, nil

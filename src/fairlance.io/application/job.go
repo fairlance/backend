@@ -56,6 +56,10 @@ func addJob() http.Handler {
 			return
 		}
 
+		if err := appContext.Indexer.Index("jobs", fmt.Sprint(job.ID), job); err != nil {
+			log.Printf("job could not be indexed: %v", err)
+		}
+
 		respond.With(w, r, http.StatusOK, job)
 	})
 }

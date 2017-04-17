@@ -192,6 +192,10 @@ func createProjectFromJobApplication() http.Handler {
 			return
 		}
 
+		if err := appContext.Indexer.Delete("jobs", fmt.Sprint(job.ID)); err != nil {
+			log.Printf("job could not be deleted from searcher: %v", err)
+		}
+
 		notifyJobApplicationAccepted(appContext.Notifier, jobApplication, project)
 
 		respond.With(w, r, http.StatusOK, project)
