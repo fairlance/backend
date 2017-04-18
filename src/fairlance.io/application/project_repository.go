@@ -13,7 +13,7 @@ type ProjectRepository interface {
 	addContract(contract *Contract) error
 	getExtension(id uint) (*Extension, error)
 	addExtension(extension *Extension) error
-	updateContract(contract *Contract, fields map[string]interface{}) error
+	updateContract(contract *Contract) error
 	updateExtension(extension *Extension, fields map[string]interface{}) error
 	setContractProposal(contract *Contract, proposal *Proposal) error
 	setContractExtensionProposal(extension *Extension, proposal *Proposal) error
@@ -106,8 +106,8 @@ func (repo *postgreProjectRepository) getAllProjectsForFreelancer(id uint) ([]Pr
 	return projects, repo.db.Preload("Contract").Preload("Contract.Extensions").Preload("Client").Preload("Freelancers").Where("id IN (?)", projectIDs).Find(&projects).Error
 }
 
-func (repo *postgreProjectRepository) updateContract(contract *Contract, fields map[string]interface{}) error {
-	return repo.db.Model(contract).Update(fields).Error
+func (repo *postgreProjectRepository) updateContract(contract *Contract) error {
+	return repo.db.Save(contract).Error
 }
 
 func (repo *postgreProjectRepository) updateExtension(extension *Extension, fields map[string]interface{}) error {

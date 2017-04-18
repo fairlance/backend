@@ -211,32 +211,16 @@ func agreeToContractTerms() http.Handler {
 		userType := context.Get(r, "userType").(string)
 		project := context.Get(r, "project").(*Project)
 
-		var freelancersToAgree = project.Contract.FreelancersToAgree
-		var clientAgreed = project.Contract.ClientAgreed
+		contract := project.Contract
 		if userType == "client" {
-			clientAgreed = true
+			contract.ClientAgreed = true
 		} else if userType == "freelancer" {
-			freelancersToAgree = removeFromUINTSlice(freelancersToAgree, user.ID)
+			contract.FreelancersToAgree = removeFromUINTSlice(contract.FreelancersToAgree, user.ID)
 		}
 
-		err := appContext.ProjectRepository.updateContract(project.Contract, map[string]interface{}{
-			"clientAgreed":       clientAgreed,
-			"freelancersToAgree": freelancersToAgree,
-		})
-		if err != nil {
-			log.Printf("could not update contract: %v", err)
-			respond.With(w, r, http.StatusInternalServerError, fmt.Errorf("could not update contract"))
-			return
-		}
-
-		if clientAgreed && len(freelancersToAgree) == 0 {
-			if err := appContext.ProjectRepository.updateContract(project.Contract, map[string]interface{}{
-				"perHour":             project.Contract.Proposal.PerHour,
-				"hours":               project.Contract.Proposal.Hours,
-				"deadline":            project.Contract.Proposal.Deadline,
-				"deadlineFlexibility": project.Contract.Proposal.DeadlineFlexibility,
-				"proposal":            nil,
-			}); err != nil {
+		if contract.allAgree() {
+			contract.applyProposal()
+			if err := appContext.ProjectRepository.updateContract(contract); err != nil {
 				log.Printf("could not update project cotract status: %v", err)
 				respond.With(w, r, http.StatusInternalServerError, fmt.Errorf("could not update project status"))
 				return
@@ -251,6 +235,12 @@ func agreeToContractTerms() http.Handler {
 			}
 			if err := appContext.MessagingDispatcher.sendProjectStateChanged(project); err != nil {
 				log.Printf("could not sendProjectStateChanged: %v", err)
+			}
+		} else {
+			if err := appContext.ProjectRepository.updateContract(contract); err != nil {
+				log.Printf("could not update contract: %v", err)
+				respond.With(w, r, http.StatusInternalServerError, fmt.Errorf("could not update contract"))
+				return
 			}
 		}
 

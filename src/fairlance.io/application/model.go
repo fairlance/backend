@@ -83,6 +83,39 @@ type Contract struct {
 	Proposal            *Proposal   `json:"proposal,omitempty" sql:"type:JSONB"`
 }
 
+func (c *Contract) allAgree() bool {
+	if c.ClientAgreed && len(c.FreelancersToAgree) == 0 {
+		return true
+	}
+
+	if c.Proposal != nil {
+		if c.ClientAgreed &&
+			len(c.FreelancersToAgree) == 1 &&
+			c.Proposal.UserType == "freelancer" &&
+			c.Proposal.UserID == c.FreelancersToAgree[0] {
+			return true
+		}
+
+		if len(c.FreelancersToAgree) == 0 &&
+			!c.ClientAgreed &&
+			c.Proposal.UserType == "client" {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (c *Contract) applyProposal() {
+	c.PerHour = c.Proposal.PerHour
+	c.Hours = c.Proposal.Hours
+	c.Deadline = c.Proposal.Deadline
+	c.DeadlineFlexibility = c.Proposal.DeadlineFlexibility
+	c.ClientAgreed = true
+	c.FreelancersToAgree = uintList{}
+	c.Proposal = nil
+}
+
 type Proposal struct {
 	UserType            string    `json:"userType"`
 	UserID              uint      `json:"userId"`

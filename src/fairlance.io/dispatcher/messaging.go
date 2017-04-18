@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"net/url"
 )
 
 type Messaging interface {
@@ -28,7 +29,7 @@ func NewHTTPMessaging(MessagingURL string) *HTTPMessaging {
 }
 
 func (m *HTTPMessaging) Send(msg *Message) error {
-	url := fmt.Sprintf("http://%s/%s/%s/send?message=%s", m.MessagingURL, msg.Username, msg.ProjectID, msg.Text)
+	url := fmt.Sprintf("http://%s/%s/%s/send?message=%s", m.MessagingURL, msg.Username, msg.ProjectID, url.QueryEscape(msg.Text))
 	request, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		log.Println(err)

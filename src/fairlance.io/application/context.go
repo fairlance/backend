@@ -175,7 +175,7 @@ func (ac *ApplicationContext) FillTables() {
 		PerHour:             15,
 		Hours:               6,
 		DeadlineFlexibility: 1,
-		FreelancersToAgree:  []uint{},
+		FreelancersToAgree:  []uint{1},
 	}).Association("Extensions").Replace([]Extension{extension})
 
 	ac.db.Create(&Project{
