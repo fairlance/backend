@@ -242,6 +242,9 @@ func agreeToContractTerms() http.Handler {
 				respond.With(w, r, http.StatusInternalServerError, fmt.Errorf("could not update contract"))
 				return
 			}
+			if err := appContext.MessagingDispatcher.sendContractAccepted(project, userType, user); err != nil {
+				log.Printf("could not sendContractAccepted: %v", err)
+			}
 		}
 
 		respond.With(w, r, http.StatusOK, project)

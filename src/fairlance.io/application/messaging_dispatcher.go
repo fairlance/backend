@@ -53,11 +53,24 @@ func (m *MessagingDispatcher) sendProjectContractExtensionProposalAdded(projectI
 
 func (m *MessagingDispatcher) sendProjectStateChanged(project *Project) error {
 	msgTextObject := struct {
-		NewStatus string `json:"new_status"`
-		Type      string `json:"type"`
+		Status string `json:"status"`
+		Type   string `json:"type"`
 	}{
 		project.Status,
-		"project_state_changed",
+		"project_status_changed",
+	}
+	return m.send(project.ID, msgTextObject)
+}
+
+func (m *MessagingDispatcher) sendContractAccepted(project *Project, userType string, user *User) error {
+	msgTextObject := struct {
+		User     *User  `json:"user"`
+		UserType string `json:"userType"`
+		Type     string `json:"type"`
+	}{
+		user,
+		userType,
+		"project_contract_accepted",
 	}
 	return m.send(project.ID, msgTextObject)
 }
