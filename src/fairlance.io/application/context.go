@@ -175,7 +175,6 @@ func (ac *ApplicationContext) FillTables() {
 		PerHour:             15,
 		Hours:               6,
 		DeadlineFlexibility: 1,
-		ClientAgreed:        true,
 		FreelancersToAgree:  []uint{},
 	}).Association("Extensions").Replace([]Extension{extension})
 
