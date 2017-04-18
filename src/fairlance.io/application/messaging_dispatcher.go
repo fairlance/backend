@@ -12,6 +12,21 @@ func NewMessagingDispatcher(messaging dispatcher.Messaging) *MessagingDispatcher
 	return &MessagingDispatcher{messaging}
 }
 
+func (m *MessagingDispatcher) send(projectID uint, textObject interface{}) error {
+	textBytes, err := json.Marshal(textObject)
+	if err != nil {
+		return err
+	}
+	message := &dispatcher.Message{
+		Text:      string(textBytes),
+		UserID:    0,
+		UserType:  "system",
+		Username:  "system",
+		ProjectID: fmt.Sprint(projectID),
+	}
+	return m.messaging.Send(message)
+}
+
 func (m *MessagingDispatcher) sendProjectContractProposalAdded(projectID uint, proposal *Proposal) error {
 	msgTextObject := struct {
 		Proposal *Proposal `json:"proposal"`
@@ -20,20 +35,7 @@ func (m *MessagingDispatcher) sendProjectContractProposalAdded(projectID uint, p
 		proposal,
 		"project_contract_proposal",
 	}
-
-	text, err := json.Marshal(msgTextObject)
-	if err != nil {
-		return err
-	}
-
-	message := &dispatcher.Message{
-		Text:      string(text),
-		UserID:    0,
-		UserType:  "system",
-		Username:  "system",
-		ProjectID: fmt.Sprint(projectID),
-	}
-	return m.messaging.Send(message)
+	return m.send(projectID, msgTextObject)
 }
 
 func (m *MessagingDispatcher) sendProjectContractExtensionProposalAdded(projectID uint, extension *Extension, proposal *Proposal) error {
@@ -46,18 +48,16 @@ func (m *MessagingDispatcher) sendProjectContractExtensionProposalAdded(projectI
 		extension,
 		"project_contract_extension_proposal",
 	}
+	return m.send(projectID, msgTextObject)
+}
 
-	text, err := json.Marshal(msgTextObject)
-	if err != nil {
-		return err
+func (m *MessagingDispatcher) sendProjectStateChanged(project *Project) error {
+	msgTextObject := struct {
+		NewStatus string `json:"new_status"`
+		Type      string `json:"type"`
+	}{
+		project.Status,
+		"project_state_changed",
 	}
-
-	message := &dispatcher.Message{
-		Text:      string(text),
-		UserID:    0,
-		UserType:  "system",
-		Username:  "system",
-		ProjectID: fmt.Sprint(projectID),
-	}
-	return m.messaging.Send(message)
+	return m.send(project.ID, msgTextObject)
 }

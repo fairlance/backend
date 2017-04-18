@@ -45,13 +45,8 @@ func (m *HTTPMessaging) Send(msg *Message) error {
 			log.Println(err)
 			return err
 		}
-		err = fmt.Errorf(
-			"Bad status: %d\n body: %s\nfor url: %s",
-			response.StatusCode,
-			contents,
-			url)
+		err = fmt.Errorf("\nStatus: %s\n Body: %s\nURL: %s", response.Status, contents, url)
 		response.Body.Close()
-		log.Println(err)
 		return err
 	}
 

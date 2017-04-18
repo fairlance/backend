@@ -239,6 +239,9 @@ func agreeToContractTerms() http.Handler {
 				respond.With(w, r, http.StatusInternalServerError, fmt.Errorf("could not update project status"))
 				return
 			}
+			if err := appContext.MessagingDispatcher.sendProjectStateChanged(project); err != nil {
+				log.Printf("could not sendProjectStateChanged: %v", err)
+			}
 		}
 
 		respond.With(w, r, http.StatusOK, project)
@@ -247,14 +250,17 @@ func agreeToContractTerms() http.Handler {
 
 func withProposal(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		decoder := json.NewDecoder(r.Body)
-		defer r.Body.Close()
+		user := context.Get(r, "user").(*User)
+		userType := context.Get(r, "userType").(string)
 		proposal := &Proposal{}
-		if err := decoder.Decode(proposal); err != nil {
+		if err := json.NewDecoder(r.Body).Decode(proposal); err != nil {
 			respond.With(w, r, http.StatusBadRequest, err)
 			return
 		}
+		defer r.Body.Close()
 		proposal.Time = time.Now()
+		proposal.UserID = user.ID
+		proposal.UserType = userType
 		context.Set(r, "proposal", proposal)
 		next.ServeHTTP(w, r)
 	})
