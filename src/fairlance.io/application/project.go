@@ -230,11 +230,21 @@ func agreeToContractTerms() http.Handler {
 		}
 
 		if clientAgreed && len(freelancersToAgree) == 0 {
+			if err := appContext.ProjectRepository.updateContract(project.Contract, map[string]interface{}{
+				"perHour":             project.Contract.Proposal.PerHour,
+				"hours":               project.Contract.Proposal.Hours,
+				"deadline":            project.Contract.Proposal.Deadline,
+				"deadlineFlexibility": project.Contract.Proposal.DeadlineFlexibility,
+				"proposal":            nil,
+			}); err != nil {
+				log.Printf("could not update project cotract status: %v", err)
+				respond.With(w, r, http.StatusInternalServerError, fmt.Errorf("could not update project status"))
+				return
+			}
 			project.Status = projectStatusWorking
-			err := appContext.ProjectRepository.update(project, map[string]interface{}{
+			if err := appContext.ProjectRepository.update(project, map[string]interface{}{
 				"status": project.Status,
-			})
-			if err != nil {
+			}); err != nil {
 				log.Printf("could not update project status: %v", err)
 				respond.With(w, r, http.StatusInternalServerError, fmt.Errorf("could not update project status"))
 				return
