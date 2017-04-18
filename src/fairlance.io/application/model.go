@@ -106,14 +106,16 @@ func (c *Contract) allAgree() bool {
 	return false
 }
 
-func (c *Contract) applyProposal() {
-	c.PerHour = c.Proposal.PerHour
-	c.Hours = c.Proposal.Hours
-	c.Deadline = c.Proposal.Deadline
-	c.DeadlineFlexibility = c.Proposal.DeadlineFlexibility
+func (c *Contract) finalize() {
 	c.ClientAgreed = true
 	c.FreelancersToAgree = uintList{}
-	c.Proposal = nil
+	if c.Proposal != nil {
+		c.PerHour = c.Proposal.PerHour
+		c.Hours = c.Proposal.Hours
+		c.Deadline = c.Proposal.Deadline
+		c.DeadlineFlexibility = c.Proposal.DeadlineFlexibility
+		c.Proposal = nil
+	}
 }
 
 type Proposal struct {

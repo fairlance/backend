@@ -219,7 +219,7 @@ func agreeToContractTerms() http.Handler {
 		}
 
 		if contract.allAgree() {
-			contract.applyProposal()
+			contract.finalize()
 			if err := appContext.ProjectRepository.updateContract(contract); err != nil {
 				log.Printf("could not update project cotract status: %v", err)
 				respond.With(w, r, http.StatusInternalServerError, fmt.Errorf("could not update project status"))
