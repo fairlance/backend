@@ -221,8 +221,8 @@ func agreeToContractTerms() http.Handler {
 		if contract.allAgree() {
 			contract.finalize()
 			if err := appContext.ProjectRepository.updateContract(contract); err != nil {
-				log.Printf("could not update project cotract status: %v", err)
-				respond.With(w, r, http.StatusInternalServerError, fmt.Errorf("could not update project status"))
+				log.Printf("could not update project cotract: %v", err)
+				respond.With(w, r, http.StatusInternalServerError, fmt.Errorf("could not update project"))
 				return
 			}
 			project.Status = projectStatusWorking
@@ -242,9 +242,9 @@ func agreeToContractTerms() http.Handler {
 				respond.With(w, r, http.StatusInternalServerError, fmt.Errorf("could not update contract"))
 				return
 			}
-			if err := appContext.MessagingDispatcher.sendContractAccepted(project, userType, user); err != nil {
-				log.Printf("could not sendContractAccepted: %v", err)
-			}
+		}
+		if err := appContext.MessagingDispatcher.sendContractAccepted(project, userType, user); err != nil {
+			log.Printf("could not sendContractAccepted: %v", err)
 		}
 
 		respond.With(w, r, http.StatusOK, project)
