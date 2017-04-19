@@ -57,18 +57,69 @@ type Client struct {
 
 type Project struct {
 	Model
-	Name                string       `json:"name"`
-	Description         string       `json:"description"`
-	Freelancers         []Freelancer `json:"freelancers,omitempty" gorm:"many2many:project_freelancers;"`
-	ClientID            uint         `json:"-"`
-	Client              *Client      `json:"client,omitempty"`
-	Status              string       `json:"status"`
-	Deadline            time.Time    `json:"deadline,omitempty"`
-	DeadlineFlexibility int          `json:"deadlineFlexibility"`
-	Hours               int          `json:"hours"`
-	PerHour             float64      `json:"perHour"`
-	Contract            *Contract    `json:"contract,omitempty"`
-	ContractID          uint         `json:"-"`
+	Name                 string       `json:"name"`
+	Description          string       `json:"description"`
+	Freelancers          []Freelancer `json:"freelancers,omitempty" gorm:"many2many:project_freelancers;"`
+	ClientID             uint         `json:"-"`
+	Client               *Client      `json:"client,omitempty"`
+	Status               string       `json:"status"`
+	Deadline             time.Time    `json:"deadline,omitempty"`  //?
+	DeadlineFlexibility  int          `json:"deadlineFlexibility"` //?
+	Hours                int          `json:"hours"`               //?
+	PerHour              float64      `json:"perHour"`             //?
+	Contract             *Contract    `json:"contract,omitempty"`
+	ContractID           uint         `json:"-"`
+	ClientAgreed         bool         `json:"clientAgreed"`
+	FreelancersAgreed    uintList     `json:"freelancersAgreed" sql:"type:JSONB NOT NULL DEFAULT '{}'::JSONB"`
+	ClientConcluded      bool         `json:"clientConcluded"`
+	FreelancersConcluded uintList     `json:"freelancersConcluded" sql:"type:JSONB NOT NULL DEFAULT '{}'::JSONB"`
+}
+
+func (p *Project) allUsersConcluded() bool {
+	if p.ClientConcluded && len(p.FreelancersConcluded) == len(p.Freelancers) {
+		return true
+	}
+
+	return false
+}
+
+func (p *Project) canBeStarted() bool {
+	if p.ClientAgreed && len(p.FreelancersAgreed) == len(p.Freelancers) {
+		return true
+	}
+
+	if p.Contract.Proposal != nil {
+		freelancersNotAgree := uintList{}
+		for _, f := range p.Freelancers {
+			if !contains(p.FreelancersAgreed, f.ID) {
+				freelancersNotAgree = append(freelancersNotAgree, f.ID)
+			}
+		}
+
+		if p.ClientAgreed &&
+			len(freelancersNotAgree) == 1 &&
+			p.Contract.Proposal.UserType == "freelancer" &&
+			p.Contract.Proposal.UserID == freelancersNotAgree[0] {
+			return true
+		}
+
+		if len(freelancersNotAgree) == 0 &&
+			!p.ClientAgreed &&
+			p.Contract.Proposal.UserType == "client" {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (p *Project) mergeProposalToContract() {
+	p.ClientAgreed = true
+	p.FreelancersAgreed = uintList{}
+	for _, f := range p.Freelancers {
+		p.FreelancersAgreed = append(p.FreelancersAgreed, f.ID)
+	}
+	p.Contract.mergeProposalToContract()
 }
 
 type Contract struct {
@@ -78,37 +129,10 @@ type Contract struct {
 	Deadline            time.Time   `json:"deadline"`
 	DeadlineFlexibility int         `json:"deadlineFlexibility"`
 	Extensions          []Extension `json:"extensions"`
-	ClientAgreed        bool        `json:"clientAgreed"`
-	FreelancersToAgree  uintList    `json:"freelancersToAgree" sql:"type:JSONB NOT NULL DEFAULT '{}'::JSONB"`
 	Proposal            *Proposal   `json:"proposal,omitempty" sql:"type:JSONB"`
 }
 
-func (c *Contract) allAgree() bool {
-	if c.ClientAgreed && len(c.FreelancersToAgree) == 0 {
-		return true
-	}
-
-	if c.Proposal != nil {
-		if c.ClientAgreed &&
-			len(c.FreelancersToAgree) == 1 &&
-			c.Proposal.UserType == "freelancer" &&
-			c.Proposal.UserID == c.FreelancersToAgree[0] {
-			return true
-		}
-
-		if len(c.FreelancersToAgree) == 0 &&
-			!c.ClientAgreed &&
-			c.Proposal.UserType == "client" {
-			return true
-		}
-	}
-
-	return false
-}
-
-func (c *Contract) finalize() {
-	c.ClientAgreed = true
-	c.FreelancersToAgree = uintList{}
+func (c *Contract) mergeProposalToContract() {
 	if c.Proposal != nil {
 		c.PerHour = c.Proposal.PerHour
 		c.Hours = c.Proposal.Hours
@@ -144,7 +168,7 @@ type Extension struct {
 	Deadline            time.Time `json:"deadline"`
 	DeadlineFlexibility int       `json:"deadlineFlexibility"`
 	ClientAgreed        bool      `json:"clientAgreed""`
-	FreelancersToAgree  uintList  `json:"freelancersToAgree" sql:"type:JSONB NOT NULL DEFAULT '{}'::JSONB"`
+	FreelancersAgreed   uintList  `json:"freelancersAgreed" sql:"type:JSONB NOT NULL DEFAULT '{}'::JSONB"`
 }
 
 type Job struct {

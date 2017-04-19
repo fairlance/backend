@@ -6,7 +6,7 @@ type ProjectRepository interface {
 	getAllProjects() ([]Project, error)
 	getByID(id uint) (*Project, error)
 	add(project *Project) error
-	update(project *Project, fields map[string]interface{}) error
+	update(project *Project) error
 	getAllProjectsForClient(id uint) ([]Project, error)
 	getAllProjectsForFreelancer(id uint) ([]Project, error)
 	projectBelongsToUser(id uint, userType string, userID uint) (bool, error)
@@ -14,7 +14,7 @@ type ProjectRepository interface {
 	getExtension(id uint) (*Extension, error)
 	addExtension(extension *Extension) error
 	updateContract(contract *Contract) error
-	updateExtension(extension *Extension, fields map[string]interface{}) error
+	updateExtension(extension *Extension) error
 	setContractProposal(contract *Contract, proposal *Proposal) error
 	setContractExtensionProposal(extension *Extension, proposal *Proposal) error
 }
@@ -49,8 +49,8 @@ func (repo *postgreProjectRepository) add(project *Project) error {
 	return repo.db.Create(project).Error
 }
 
-func (repo *postgreProjectRepository) update(project *Project, fields map[string]interface{}) error {
-	return repo.db.Model(project).Update(fields).Error
+func (repo *postgreProjectRepository) update(project *Project) error {
+	return repo.db.Save(project).Error
 }
 
 func (repo *postgreProjectRepository) addContract(contract *Contract) error {
@@ -106,12 +106,16 @@ func (repo *postgreProjectRepository) getAllProjectsForFreelancer(id uint) ([]Pr
 	return projects, repo.db.Preload("Contract").Preload("Contract.Extensions").Preload("Client").Preload("Freelancers").Where("id IN (?)", projectIDs).Find(&projects).Error
 }
 
+func (repo *postgreProjectRepository) updateProject(project *Project) error {
+	return repo.db.Save(project).Error
+}
+
 func (repo *postgreProjectRepository) updateContract(contract *Contract) error {
 	return repo.db.Save(contract).Error
 }
 
-func (repo *postgreProjectRepository) updateExtension(extension *Extension, fields map[string]interface{}) error {
-	return repo.db.Model(extension).Update(fields).Error
+func (repo *postgreProjectRepository) updateExtension(extension *Extension) error {
+	return repo.db.Save(extension).Error
 }
 
 func (repo *postgreProjectRepository) getExtension(id uint) (*Extension, error) {

@@ -124,6 +124,12 @@ var routes = Routes{
 			withProjectByID(withProposal(withUINT("extension_id", withExtensionWhenBelongsToProject(
 				setProposalToProjectContractExtension()))))))),
 	},
+	Route{
+		"ConcludeProject",
+		"POST",
+		"/project/{id}/conclude",
+		whenLoggedIn(withID(whenProjectBelongsToUserByID(withProjectByID(concludeProject())))),
+	},
 
 	// Route{
 	// 	"IndexClient",

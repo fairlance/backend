@@ -147,17 +147,17 @@ func (ac *ApplicationContext) FillTables() {
 		PerHour:             5,
 		Hours:               6,
 		DeadlineFlexibility: 1,
-		ClientAgreed:        false,
-		FreelancersToAgree:  []uint{1, 2},
 	})
 
 	ac.db.Create(&Project{
-		Name:        "Project Pending",
-		Description: "Description Pending",
-		ClientID:    1,
-		Status:      projectStatusPending,
-		Deadline:    time.Now().Add(time.Duration(21) * time.Hour),
-		ContractID:  1,
+		Name:              "Project Pending",
+		Description:       "Description Pending",
+		ClientID:          1,
+		Status:            projectStatusPending,
+		Deadline:          time.Now().Add(time.Duration(21) * time.Hour),
+		ContractID:        1,
+		ClientAgreed:      false,
+		FreelancersAgreed: []uint{},
 	}).Association("Freelancers").Append([]Freelancer{*f1, *f2})
 
 	extension := Extension{
@@ -166,7 +166,7 @@ func (ac *ApplicationContext) FillTables() {
 		Hours:               4,
 		DeadlineFlexibility: 0,
 		ClientAgreed:        true,
-		FreelancersToAgree:  []uint{1},
+		FreelancersAgreed:   []uint{},
 	}
 	ac.db.Create(&extension)
 
@@ -175,18 +175,18 @@ func (ac *ApplicationContext) FillTables() {
 		PerHour:             15,
 		Hours:               6,
 		DeadlineFlexibility: 1,
-		FreelancersToAgree:  []uint{1},
 	}).Association("Extensions").Replace([]Extension{extension})
 
 	ac.db.Create(&Project{
-		Name:        "Project Finilazing Terms",
-		Description: "Description Finilazing Terms",
-		ClientID:    2,
-		Status:      projectStatusFinilazingTerms,
-		Deadline:    time.Now().Add(time.Duration(5*24+1) * time.Hour),
-		Hours:       6,
-		PerHour:     15,
-		ContractID:  2,
+		Name:              "Project Finilazing Terms",
+		Description:       "Description Finilazing Terms",
+		ClientID:          2,
+		Status:            projectStatusFinilazingTerms,
+		Deadline:          time.Now().Add(time.Duration(5*24+1) * time.Hour),
+		Hours:             6,
+		PerHour:           15,
+		ContractID:        2,
+		FreelancersAgreed: []uint{},
 	}).Association("Freelancers").Replace([]Freelancer{*f1})
 
 	ac.db.Create(&Project{

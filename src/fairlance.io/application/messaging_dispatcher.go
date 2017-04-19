@@ -74,3 +74,16 @@ func (m *MessagingDispatcher) sendContractAccepted(project *Project, userType st
 	}
 	return m.send(project.ID, msgTextObject)
 }
+
+func (m *MessagingDispatcher) sendProjectConcludedByUser(project *Project, userType string, user *User) error {
+	msgTextObject := struct {
+		User     *User  `json:"user"`
+		UserType string `json:"userType"`
+		Type     string `json:"type"`
+	}{
+		user,
+		userType,
+		"project_concluded_by_user",
+	}
+	return m.send(project.ID, msgTextObject)
+}

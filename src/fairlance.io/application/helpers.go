@@ -27,3 +27,12 @@ func removeFromUINTSlice(slice []uint, value uint) []uint {
 	}
 	return slice
 }
+
+func contains(s []uint, e uint) bool {
+	for _, a := range s {
+		if a == e {
+			return true
+		}
+	}
+	return false
+}

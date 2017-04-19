@@ -27,7 +27,6 @@ type projectRepositoryMock struct {
 	UpdateCall struct {
 		Receives struct {
 			Project *Project
-			Fields  map[string]interface{}
 		}
 		Returns struct {
 			Error error
@@ -87,7 +86,6 @@ type projectRepositoryMock struct {
 	UpdateExtensionCall struct {
 		Receives struct {
 			Extension *Extension
-			Fields    map[string]interface{}
 		}
 		Returns struct {
 			Error error
@@ -139,9 +137,8 @@ func (repo *projectRepositoryMock) add(project *Project) error {
 	repo.AddCall.Receives.Project = project
 	return repo.AddCall.Returns.Error
 }
-func (repo *projectRepositoryMock) update(project *Project, fields map[string]interface{}) error {
+func (repo *projectRepositoryMock) update(project *Project) error {
 	repo.UpdateCall.Receives.Project = project
-	repo.UpdateCall.Receives.Fields = fields
 	return repo.UpdateCall.Returns.Error
 }
 
@@ -177,9 +174,8 @@ func (repo *projectRepositoryMock) updateContract(contract *Contract) error {
 	return repo.UpdateContractCall.Returns.Error
 }
 
-func (repo *projectRepositoryMock) updateExtension(extension *Extension, fields map[string]interface{}) error {
+func (repo *projectRepositoryMock) updateExtension(extension *Extension) error {
 	repo.UpdateExtensionCall.Receives.Extension = extension
-	repo.UpdateExtensionCall.Receives.Fields = fields
 	return repo.UpdateExtensionCall.Returns.Error
 }
 

@@ -77,17 +77,12 @@ func agreeToExtensionTerms() http.Handler {
 		userType := context.Get(r, "userType").(string)
 		extension := context.Get(r, "extension").(*Extension)
 
-		var freelancersToAgree = extension.FreelancersToAgree
-		var clientAgreed = extension.ClientAgreed
 		if userType == "client" {
 			extension.ClientAgreed = true
 		} else if userType == "freelancer" {
-			freelancersToAgree = removeFromUINTSlice(freelancersToAgree, user.ID)
+			extension.FreelancersAgreed = append(extension.FreelancersAgreed, user.ID)
 		}
-		err := appContext.ProjectRepository.updateExtension(extension, map[string]interface{}{
-			"clientAgreed":       clientAgreed,
-			"freelancersToAgree": freelancersToAgree,
-		})
+		err := appContext.ProjectRepository.updateExtension(extension)
 		if err != nil {
 			log.Printf("could not update extension: %v", err)
 			respond.With(w, r, http.StatusInternalServerError, fmt.Errorf("could not update extension"))
