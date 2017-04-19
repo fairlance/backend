@@ -218,11 +218,20 @@ func agreeToContractTerms() http.Handler {
 			contract.FreelancersToAgree = removeFromUINTSlice(contract.FreelancersToAgree, user.ID)
 		}
 
+		if err := appContext.ProjectRepository.updateContract(contract); err != nil {
+			log.Printf("could not update contract: %v", err)
+			respond.With(w, r, http.StatusInternalServerError, fmt.Errorf("could not update contract"))
+			return
+		}
+		if err := appContext.MessagingDispatcher.sendContractAccepted(project, userType, user); err != nil {
+			log.Printf("could not sendContractAccepted: %v", err)
+		}
+
 		if contract.allAgree() {
 			contract.finalize()
 			if err := appContext.ProjectRepository.updateContract(contract); err != nil {
-				log.Printf("could not update project cotract: %v", err)
-				respond.With(w, r, http.StatusInternalServerError, fmt.Errorf("could not update project"))
+				log.Printf("could not update project contract: %v", err)
+				respond.With(w, r, http.StatusInternalServerError, fmt.Errorf("could not update project contract"))
 				return
 			}
 			project.Status = projectStatusWorking
@@ -236,15 +245,6 @@ func agreeToContractTerms() http.Handler {
 			if err := appContext.MessagingDispatcher.sendProjectStateChanged(project); err != nil {
 				log.Printf("could not sendProjectStateChanged: %v", err)
 			}
-		} else {
-			if err := appContext.ProjectRepository.updateContract(contract); err != nil {
-				log.Printf("could not update contract: %v", err)
-				respond.With(w, r, http.StatusInternalServerError, fmt.Errorf("could not update contract"))
-				return
-			}
-		}
-		if err := appContext.MessagingDispatcher.sendContractAccepted(project, userType, user); err != nil {
-			log.Printf("could not sendContractAccepted: %v", err)
 		}
 
 		respond.With(w, r, http.StatusOK, project)
