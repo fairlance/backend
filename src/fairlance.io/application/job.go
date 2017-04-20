@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/asaskevich/govalidator"
 	"github.com/gorilla/context"
@@ -53,6 +54,12 @@ func addJob() http.Handler {
 		job := context.Get(r, "job").(*Job)
 		user := context.Get(r, "user").(*User)
 		job.ClientID = user.ID
+		if job.StartDate.IsZero() {
+			job.StartDate = time.Now()
+		}
+		if job.Deadline.IsZero() {
+			job.Deadline = time.Now()
+		}
 		if err := appContext.JobRepository.AddJob(job); err != nil {
 			respond.With(w, r, http.StatusBadRequest, err)
 			return
