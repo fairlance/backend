@@ -244,8 +244,7 @@ func doRequest(index string, searchRequest *bleve.SearchRequest) (bleve.SearchRe
 	}
 	req.Header.Set("Content-Type", "application/json")
 
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	resp, err := http.DefaultClient.Do(req)
 	defer resp.Body.Close()
 	if err != nil {
 		return jobsSearchResults, err
