@@ -11,7 +11,7 @@ import (
 )
 
 var writeWait = 10 * time.Second
-var readWait = 30 * time.Minute
+var readWait = 4 * time.Hour
 
 func (router *Router) StartReading(u User, conn *websocket.Conn) {
 	defer func() {
