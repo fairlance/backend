@@ -58,6 +58,13 @@ func addJob() http.Handler {
 			return
 		}
 
+		// get full job to index
+		job, err := appContext.JobRepository.GetJob(job.ID)
+		if err != nil {
+			respond.With(w, r, http.StatusInternalServerError, err)
+			return
+		}
+
 		if err := appContext.Indexer.Index("jobs", fmt.Sprint(job.ID), job); err != nil {
 			log.Printf("job could not be indexed: %v", err)
 		}
