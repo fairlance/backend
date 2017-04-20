@@ -132,15 +132,16 @@ func freelancers(w http.ResponseWriter, r *http.Request) {
 		freelancers = append(freelancers, hit.Fields)
 	}
 	respond.With(w, r, http.StatusOK, struct {
-		Total int           `json:"total"`
+		Total uint64        `json:"total"`
 		Items []interface{} `json:"items"`
 	}{
-		Total: len(freelancers),
+		Total: freelnacersSearchResults.Total,
 		Items: freelancers,
 	})
 }
 
 func getJobSearchRequest(r *http.Request) (*bleve.SearchRequest, error) {
+	size := 50
 	musts := []query.Query{}
 	// mustNots := []query.Query{}
 	// shoulds := []query.Query{}
@@ -213,6 +214,17 @@ func getJobSearchRequest(r *http.Request) (*bleve.SearchRequest, error) {
 	// query.AddShould(shoulds...)
 
 	searchRequest := bleve.NewSearchRequest(query)
+	searchRequest.SortBy([]string{"-updatedAt"})
+	searchRequest.Size = size
+	if len(r.URL.Query().Get("page")) != 0 {
+		page, err := strconv.Atoi(r.URL.Query().Get("page"))
+		if err != nil {
+			return nil, err
+		}
+		if page > 0 {
+			searchRequest.From = (page - 1) * size
+		}
+	}
 	searchRequest.Fields = []string{"*"}
 
 	return searchRequest, nil
