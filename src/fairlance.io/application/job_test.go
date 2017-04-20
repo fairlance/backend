@@ -153,11 +153,7 @@ func TestJobAddJob(t *testing.T) {
 			deleteCallback: func(index, docID string) error { return nil },
 		},
 	}
-
-	is := isHelper.New(t)
-	w := httptest.NewRecorder()
-	r := getRequest(jobContext, "")
-	context.Set(r, "job", &Job{
+	job := &Job{
 		Name:     "Name1",
 		Summary:  "Summary1",
 		Details:  "Details1",
@@ -176,7 +172,13 @@ func TestJobAddJob(t *testing.T) {
 				URL:  "www.attachment.com",
 			},
 		},
-	})
+	}
+	jobRepositoryMock.GetJobCall.Returns.Job = job
+
+	is := isHelper.New(t)
+	w := httptest.NewRecorder()
+	r := getRequest(jobContext, "")
+	context.Set(r, "job", job)
 	context.Set(r, "user", &User{
 		Model: Model{
 			ID: 1,

@@ -22,6 +22,7 @@ func (n *NotificationDispatcher) notifyJobApplicationAdded(jobApplication *JobAp
 		Type: "job_application_added",
 		Data: map[string]interface{}{
 			"jobApplication": jobApplication,
+			"jobId":          jobApplication.JobID,
 		},
 	}
 	return n.notifier.Notify(notification)
@@ -42,6 +43,7 @@ func (n *NotificationDispatcher) notifyJobApplicationAccepted(jobApplication *Jo
 		Data: map[string]interface{}{
 			"jobApplication": jobApplication,
 			"project":        project,
+			"jobId":          jobApplication.JobID,
 		},
 	}
 	return n.notifier.Notify(notification)
