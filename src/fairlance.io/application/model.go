@@ -63,10 +63,6 @@ type Project struct {
 	ClientID             uint         `json:"-"`
 	Client               *Client      `json:"client,omitempty"`
 	Status               string       `json:"status"`
-	Deadline             time.Time    `json:"deadline,omitempty"`  //?
-	DeadlineFlexibility  int          `json:"deadlineFlexibility"` //?
-	Hours                int          `json:"hours"`               //?
-	PerHour              float64      `json:"perHour"`             //?
 	Contract             *Contract    `json:"contract,omitempty"`
 	ContractID           uint         `json:"-"`
 	ClientAgreed         bool         `json:"clientAgreed"`
@@ -75,6 +71,26 @@ type Project struct {
 	FreelancersConcluded uintList     `json:"freelancersConcluded" sql:"type:JSONB NOT NULL DEFAULT '{}'::JSONB"`
 }
 
+func NewProject(job *Job, jobApplication *JobApplication) *Project {
+	return &Project{
+		Name:        job.Name,
+		Description: job.Details,
+		ClientID:    job.ClientID,
+		Status:      projectStatusPending,
+		Freelancers: []Freelancer{
+			*jobApplication.Freelancer,
+		},
+		Contract: &Contract{
+			Deadline: job.Deadline,
+			Hours:    jobApplication.Hours,
+			PerHour:  jobApplication.HourPrice,
+		},
+		ClientAgreed:         false,
+		FreelancersAgreed:    []uint{},
+		ClientConcluded:      false,
+		FreelancersConcluded: []uint{},
+	}
+}
 func (p *Project) allUsersConcluded() bool {
 	if p.ClientConcluded && len(p.FreelancersConcluded) == len(p.Freelancers) {
 		return true
@@ -128,7 +144,7 @@ type Contract struct {
 	PerHour             float64     `json:"perHour"`
 	Deadline            time.Time   `json:"deadline"`
 	DeadlineFlexibility int         `json:"deadlineFlexibility"`
-	Extensions          []Extension `json:"extensions"`
+	Extensions          []Extension `json:"extensions,omitempty"`
 	Proposal            *Proposal   `json:"proposal,omitempty" sql:"type:JSONB"`
 }
 
@@ -190,16 +206,15 @@ type Job struct {
 
 type JobApplication struct {
 	Model
-	Message          string       `json:"message,omitempty"`
-	DeliveryEstimate int          `json:"deliveryEstimate,omitempty"`
-	Milestones       stringList   `json:"milestones,omitempty" sql:"type:JSONB NOT NULL DEFAULT '{}'::JSONB"`
-	HourPrice        float64      `json:"hourPrice,omitempty"`
-	Hours            int          `json:"hours,omitempty"`
-	Freelancer       *Freelancer  `json:"freelancer,omitempty"`
-	FreelancerID     uint         `json:"-"`
-	JobID            uint         `json:"-"`
-	Attachments      []Attachment `json:"attachments,omitempty" gorm:"polymorphic:Owner;"`
-	Examples         []Example    `json:"examples,omitempty" gorm:"polymorphic:Owner;"`
+	Message      string       `json:"message"`
+	Milestones   stringList   `json:"milestones" sql:"type:JSONB NOT NULL DEFAULT '{}'::JSONB"`
+	HourPrice    float64      `json:"hourPrice"`
+	Hours        int          `json:"hours"`
+	Freelancer   *Freelancer  `json:"freelancer,omitempty"`
+	FreelancerID uint         `json:"-"`
+	JobID        uint         `json:"-"`
+	Attachments  []Attachment `json:"attachments" gorm:"polymorphic:Owner;"`
+	Examples     []Example    `json:"examples" gorm:"polymorphic:Owner;"`
 }
 
 type Review struct {

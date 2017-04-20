@@ -160,14 +160,16 @@ func TestProjectGetByID(t *testing.T) {
 		Model: Model{
 			ID: 123456789,
 		},
-		Name:                "Name1",
-		Description:         "Description1",
-		ClientID:            1,
-		Status:              projectStatusArchived,
-		Deadline:            timeNow,
-		PerHour:             2,
-		Hours:               3,
-		DeadlineFlexibility: 4,
+		Name:        "Name1",
+		Description: "Description1",
+		ClientID:    1,
+		Status:      projectStatusArchived,
+		Contract: &Contract{
+			Deadline:            timeNow,
+			PerHour:             2,
+			Hours:               3,
+			DeadlineFlexibility: 4,
+		},
 	}
 	var appContext = &ApplicationContext{
 		ProjectRepository: projectRepoMock,
@@ -185,11 +187,11 @@ func TestProjectGetByID(t *testing.T) {
 	is.Equal(body.Model.ID, uint(123456789))
 	is.Equal(body.Name, "Name1")
 	is.Equal(body.Description, "Description1")
-	is.Equal(body.Deadline.Format(time.RFC3339), timeNow.Format(time.RFC3339))
+	is.Equal(body.Contract.Deadline.Format(time.RFC3339), timeNow.Format(time.RFC3339))
 	is.Equal(body.Status, projectStatusArchived)
-	is.Equal(body.PerHour, 2)
-	is.Equal(body.Hours, 3)
-	is.Equal(body.DeadlineFlexibility, 4)
+	is.Equal(body.Contract.PerHour, 2)
+	is.Equal(body.Contract.Hours, 3)
+	is.Equal(body.Contract.DeadlineFlexibility, 4)
 	is.Equal(projectRepoMock.GetByIDCall.Receives.ID, uint(1))
 }
 
@@ -220,17 +222,16 @@ func TestCreateProjectFromJobApplication(t *testing.T) {
 				},
 			},
 		},
-		Hours:            62,
-		HourPrice:        8,
-		DeliveryEstimate: 2,
+		Hours:     62,
+		HourPrice: 8,
 	}
-	deadline := time.Now().Add(time.Hour * 24 * 2)
-	expectedDeadline := time.Date(deadline.Year(), deadline.Month(), deadline.Day()+1, 0, 0, 0, 0, deadline.Location())
+	deadline := time.Now()
 	jobRepoMock.GetJobCall.Returns.Job = &Job{
 		Model:    Model{ID: 4},
 		Name:     "jobName",
 		Details:  "jobDetails",
 		ClientID: uint(33),
+		Deadline: deadline,
 	}
 
 	var indexName string
@@ -268,15 +269,12 @@ func TestCreateProjectFromJobApplication(t *testing.T) {
 	is.Equal(projectRepoMock.AddCall.Receives.Project.Name, "jobName")
 	is.Equal(projectRepoMock.AddCall.Receives.Project.Description, "jobDetails")
 	is.Equal(projectRepoMock.AddCall.Receives.Project.ClientID, uint(33))
-	is.Equal(projectRepoMock.AddCall.Receives.Project.Deadline, expectedDeadline)
 	is.Equal(projectRepoMock.AddCall.Receives.Project.Freelancers[0].ID, uint(22))
-	is.Equal(projectRepoMock.AddCall.Receives.Project.Hours, 62)
-	is.Equal(projectRepoMock.AddCall.Receives.Project.PerHour, 8)
 	is.Equal(projectRepoMock.AddCall.Receives.Project.Status, projectStatusPending)
-	is.Equal(projectRepoMock.AddContractCall.Receives.Contract.Deadline, expectedDeadline)
-	is.Equal(projectRepoMock.AddContractCall.Receives.Contract.Hours, 62)
-	is.Equal(projectRepoMock.AddContractCall.Receives.Contract.PerHour, 8)
-	is.Equal(jobRepoMock.DeactivateJobCall.Receives.Job.Name, "jobName")
+	is.Equal(projectRepoMock.AddCall.Receives.Project.Contract.Deadline, deadline)
+	is.Equal(projectRepoMock.AddCall.Receives.Project.Contract.Hours, 62)
+	is.Equal(projectRepoMock.AddCall.Receives.Project.Contract.PerHour, 8)
+	is.Equal(jobRepoMock.UpdateCall.Receives.Job.Name, "jobName")
 	is.Equal(notifiedFreelancerID, uint(22))
 	is.Equal(notificationType, "job_application_accepted")
 	is.Equal(indexName, "jobs")

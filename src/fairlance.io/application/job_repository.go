@@ -11,7 +11,7 @@ type JobRepository interface {
 	GetJob(id uint) (*Job, error)
 	GetJobForClient(id, clientID uint) (*Job, error)
 	GetJobForFreelancer(id, freelancerID uint) (*Job, error)
-	DeactivateJob(job *Job) error
+	update(job *Job) error
 	DeleteJob(id uint) error
 	GetJobApplication(id uint) (*JobApplication, error)
 	AddJobApplication(jobApplication *JobApplication) error
@@ -50,8 +50,8 @@ func (repo *PostgreJobRepository) DeleteJob(id uint) error {
 	return repo.db.Where("id = ?", id).Delete(&Job{}).Error
 }
 
-func (repo *PostgreJobRepository) DeactivateJob(job *Job) error {
-	return repo.db.Model(job).Update("is_active", false).Error
+func (repo *PostgreJobRepository) update(job *Job) error {
+	return repo.db.Save(job).Error
 }
 
 func (repo *PostgreJobRepository) GetJob(id uint) (*Job, error) {

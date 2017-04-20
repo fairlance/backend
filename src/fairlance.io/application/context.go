@@ -142,73 +142,67 @@ func (ac *ApplicationContext) FillTables() {
 		Media:   Media{Image: "image", Video: "video"},
 	})
 
-	ac.db.Create(&Contract{
-		Deadline:            time.Now().Add(24 * time.Hour * 2),
-		PerHour:             5,
-		Hours:               6,
-		DeadlineFlexibility: 1,
-	})
-
 	ac.db.Create(&Project{
-		Name:              "Project Pending",
-		Description:       "Description Pending",
-		ClientID:          1,
-		Status:            projectStatusPending,
-		Deadline:          time.Now().Add(time.Duration(21) * time.Hour),
-		ContractID:        1,
+		Name:        "Project Pending",
+		Description: "Description Pending",
+		ClientID:    1,
+		Status:      projectStatusPending,
+		Contract: &Contract{
+			Deadline:            time.Now().Add(24 * time.Hour * 2),
+			PerHour:             5,
+			Hours:               6,
+			DeadlineFlexibility: 1,
+		},
 		ClientAgreed:      false,
 		FreelancersAgreed: []uint{},
 	}).Association("Freelancers").Append([]Freelancer{*f1, *f2})
 
-	extension := Extension{
-		Deadline:            time.Now().Add(24 * time.Hour * 6),
-		PerHour:             15,
-		Hours:               4,
-		DeadlineFlexibility: 0,
-		ClientAgreed:        true,
-		FreelancersAgreed:   []uint{},
-	}
-	ac.db.Create(&extension)
-
-	ac.db.Create(&Contract{
-		Deadline:            time.Now().Add(24 * time.Hour * 5),
-		PerHour:             15,
-		Hours:               6,
-		DeadlineFlexibility: 1,
-	}).Association("Extensions").Replace([]Extension{extension})
-
 	ac.db.Create(&Project{
-		Name:              "Project Finilazing Terms",
-		Description:       "Description Finilazing Terms",
-		ClientID:          2,
-		Status:            projectStatusFinilazingTerms,
-		Deadline:          time.Now().Add(time.Duration(5*24+1) * time.Hour),
-		Hours:             6,
-		PerHour:           15,
-		ContractID:        2,
+		Name:        "Project Finilazing Terms",
+		Description: "Description Finilazing Terms",
+		ClientID:    2,
+		Status:      projectStatusFinilazingTerms,
+		Contract: &Contract{
+			Deadline:            time.Now().Add(24 * time.Hour * 5),
+			PerHour:             15,
+			Hours:               6,
+			DeadlineFlexibility: 1,
+			Extensions: []Extension{Extension{
+				Deadline:            time.Now().Add(24 * time.Hour * 6),
+				PerHour:             15,
+				Hours:               4,
+				DeadlineFlexibility: 0,
+				ClientAgreed:        true,
+				FreelancersAgreed:   []uint{},
+			}},
+		},
 		FreelancersAgreed: []uint{},
 	}).Association("Freelancers").Replace([]Freelancer{*f1})
 
 	ac.db.Create(&Project{
-		Name:                "Project Working",
-		Description:         "Description Working",
-		ClientID:            1,
-		Status:              projectStatusWorking,
-		Deadline:            time.Now().Add(time.Hour),
-		DeadlineFlexibility: 1,
-		Hours:               4,
-		PerHour:             9.5,
+		Name:        "Project Working",
+		Description: "Description Working",
+		ClientID:    1,
+		Status:      projectStatusWorking,
+		Contract: &Contract{
+			Deadline:            time.Now().Add(time.Hour),
+			DeadlineFlexibility: 1,
+			Hours:               4,
+			PerHour:             9.5,
+		},
 	}).Association("Freelancers").Append([]Freelancer{*f2})
 
 	ac.db.Create(&Project{
-		Name:                "Project Archived",
-		Description:         "Description Archived",
-		ClientID:            1,
-		Status:              projectStatusArchived,
-		Deadline:            time.Now().Add(time.Hour),
-		DeadlineFlexibility: 4,
-		Hours:               2,
-		PerHour:             10,
+		Name:        "Project Archived",
+		Description: "Description Archived",
+		ClientID:    1,
+		Status:      projectStatusArchived,
+		Contract: &Contract{
+			DeadlineFlexibility: 1,
+			Deadline:            time.Now(),
+			Hours:               1,
+			PerHour:             1,
+		},
 	}).Association("Freelancers").Append([]Freelancer{*f2})
 
 	ac.db.Create(&Project{
@@ -216,19 +210,15 @@ func (ac *ApplicationContext) FillTables() {
 		Description: "Description Canceled",
 		ClientID:    2,
 		Status:      projectStatusCanceled,
-		Deadline:    time.Now().Add(time.Hour),
-		Hours:       8,
-		PerHour:     7.85,
 	}).Association("Freelancers").Append([]Freelancer{*f1})
 
 	jobApplication := ac.db.Create(&JobApplication{
-		Message:          "I apply",
-		JobID:            1,
-		FreelancerID:     1,
-		Milestones:       stringList{"Milestone1", "Milestone2"},
-		DeliveryEstimate: 15,
-		HourPrice:        9.5,
-		Hours:            6,
+		Message:      "I apply",
+		JobID:        1,
+		FreelancerID: 1,
+		Milestones:   stringList{"Milestone1", "Milestone2"},
+		HourPrice:    9.5,
+		Hours:        6,
 	})
 	jobApplication.Association("Attachments").Replace([]Attachment{{Name: "job application attachment", URL: "www.google.com"}})
 	jobApplication.Association("Examples").Replace([]Example{{Description: "Some job application example", URL: "www.google.com"}})

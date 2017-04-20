@@ -49,8 +49,10 @@ func getAllJobsForUser() http.Handler {
 
 func addJob() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		var appContext = context.Get(r, "context").(*ApplicationContext)
-		var job = context.Get(r, "job").(*Job)
+		appContext := context.Get(r, "context").(*ApplicationContext)
+		job := context.Get(r, "job").(*Job)
+		user := context.Get(r, "user").(*User)
+		job.ClientID = user.ID
 		if err := appContext.JobRepository.AddJob(job); err != nil {
 			respond.With(w, r, http.StatusBadRequest, err)
 			return
@@ -97,44 +99,23 @@ func withJob(handler http.Handler) http.Handler {
 		decoder := json.NewDecoder(r.Body)
 		defer r.Body.Close()
 
-		var body struct {
-			Name        string       `json:"name" valid:"required"`
-			Summary     string       `json:"summary" valid:"required"`
-			Details     string       `json:"details" valid:"required"`
-			ClientID    uint         `json:"clientId" valid:"required"`
-			IsActive    bool         `json:"isActive"`
-			Tags        stringList   `json:"tags"`
-			Attachments []Attachment `json:"attachments"`
-			Examples    []Example    `json:"examples"`
-		}
-
-		if err := decoder.Decode(&body); err != nil {
+		var job Job
+		if err := decoder.Decode(&job); err != nil {
 			respond.With(w, r, http.StatusBadRequest, err)
 			return
 		}
 
-		if len(body.Tags) > 10 {
+		if len(job.Tags) > 10 {
 			respond.With(w, r, http.StatusBadRequest, errors.New("max of 10 tags are allowed"))
 			return
 		}
 
-		if ok, err := govalidator.ValidateStruct(body); ok == false || err != nil {
+		if ok, err := govalidator.ValidateStruct(job); ok == false || err != nil {
 			respond.With(w, r, http.StatusBadRequest, govalidator.ErrorsByField(err))
 			return
 		}
 
-		job := &Job{
-			Name:        body.Name,
-			Summary:     body.Summary,
-			Details:     body.Details,
-			ClientID:    body.ClientID,
-			IsActive:    body.IsActive,
-			Tags:        body.Tags,
-			Attachments: body.Attachments,
-			Examples:    body.Examples,
-		}
-
-		context.Set(r, "job", job)
+		context.Set(r, "job", &job)
 
 		handler.ServeHTTP(w, r)
 	})

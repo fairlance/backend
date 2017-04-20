@@ -145,40 +145,7 @@ func createProjectFromJobApplication() http.Handler {
 			return
 		}
 
-		deadlineWithTime := time.Now().Add(time.Hour * 24 * time.Duration(jobApplication.DeliveryEstimate))
-		deadline := time.Date(deadlineWithTime.Year(), deadlineWithTime.Month(), deadlineWithTime.Day()+1, 0, 0, 0, 0, deadlineWithTime.Location())
-
-		contract := &Contract{
-			Deadline: deadline,
-			Hours:    jobApplication.Hours,
-			PerHour:  jobApplication.HourPrice,
-		}
-
-		err = appContext.ProjectRepository.addContract(contract)
-		if err != nil {
-			log.Printf("create contract: %v\n", err)
-			respond.With(w, r, http.StatusInternalServerError, err)
-			return
-		}
-
-		project := &Project{
-			Name:        job.Name,
-			Description: job.Details,
-			ClientID:    job.ClientID,
-			Status:      projectStatusPending,
-			Deadline:    deadline,
-			Hours:       jobApplication.Hours,
-			PerHour:     jobApplication.HourPrice,
-			Freelancers: []Freelancer{
-				*jobApplication.Freelancer,
-			},
-			ContractID:           contract.ID,
-			Contract:             contract,
-			ClientAgreed:         false,
-			FreelancersAgreed:    []uint{},
-			ClientConcluded:      false,
-			FreelancersConcluded: []uint{},
-		}
+		project := NewProject(job, jobApplication)
 
 		err = appContext.ProjectRepository.add(project)
 		if err != nil {
@@ -188,7 +155,7 @@ func createProjectFromJobApplication() http.Handler {
 		}
 
 		job.IsActive = false
-		err = appContext.JobRepository.DeactivateJob(job)
+		err = appContext.JobRepository.update(job)
 		if err != nil {
 			log.Printf("deactivate job: %v\n", err)
 			respond.With(w, r, http.StatusInternalServerError, err)

@@ -64,7 +64,7 @@ type JobRepositoryMock struct {
 			Error error
 		}
 	}
-	DeactivateJobCall struct {
+	UpdateCall struct {
 		Receives struct {
 			Job *Job
 		}
@@ -161,9 +161,9 @@ func (repo *JobRepositoryMock) DeleteJob(id uint) error {
 	return repo.DeleteJobCall.Returns.Error
 }
 
-func (repo *JobRepositoryMock) DeactivateJob(job *Job) error {
-	repo.DeactivateJobCall.Receives.Job = job
-	return repo.DeactivateJobCall.Returns.Error
+func (repo *JobRepositoryMock) update(job *Job) error {
+	repo.UpdateCall.Receives.Job = job
+	return repo.UpdateCall.Returns.Error
 }
 
 func (repo *JobRepositoryMock) AddJobApplication(jobApplication *JobApplication) error {
