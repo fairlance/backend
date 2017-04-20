@@ -352,6 +352,16 @@ func TestJobAddJobError(t *testing.T) {
 
 func TestJobHandleApplyForJob(t *testing.T) {
 	jobRepositoryMock := JobRepositoryMock{}
+	jobApplication := &JobApplication{
+		JobID:       1,
+		Message:     "message",
+		Milestones:  []string{"one", "two"},
+		HourPrice:   1.1,
+		Hours:       1,
+		Examples:    []Example{{Description: "example", URL: "www.example.com"}},
+		Attachments: []Attachment{{Name: "attachment", URL: "www.attachment.com"}},
+	}
+	jobRepositoryMock.GetJobApplicationCall.Returns.JobApplication = jobApplication
 	var notifiedClientID uint
 	var notificationType string
 	var jobContext = &ApplicationContext{
@@ -368,15 +378,8 @@ func TestJobHandleApplyForJob(t *testing.T) {
 	is := isHelper.New(t)
 	w := httptest.NewRecorder()
 	r := getRequest(jobContext, "")
-	jobApplication := &JobApplication{
-		Message:     "message",
-		Milestones:  []string{"one", "two"},
-		HourPrice:   1.1,
-		Hours:       1,
-		Examples:    []Example{{Description: "example", URL: "www.example.com"}},
-		Attachments: []Attachment{{Name: "attachment", URL: "www.attachment.com"}},
-	}
 	context.Set(r, "id", uint(1))
+	jobApplication.JobID = 0 // reset jobID because we needed it before
 	context.Set(r, "jobApplication", jobApplication)
 	context.Set(r, "user", &User{Model: Model{ID: 1}})
 	context.Set(r, "client", &Client{User: User{Model: Model{ID: 22}}})

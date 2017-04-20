@@ -16,9 +16,6 @@ import (
 const (
 	projectStatusWorking         = "working"
 	projectStatusFinilazingTerms = "finalizing_terms"
-	projectStatusPending         = "pending"
-	projectStatusArchived        = "archived"
-	projectStatusCanceled        = "canceled"
 	projectStatusConcluded       = "concluded"
 )
 

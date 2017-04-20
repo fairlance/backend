@@ -143,10 +143,10 @@ func (ac *ApplicationContext) FillTables() {
 	})
 
 	ac.db.Create(&Project{
-		Name:        "Project Pending",
-		Description: "Description Pending",
+		Name:        "Project Concluded",
+		Description: "Description Concluded",
 		ClientID:    1,
-		Status:      projectStatusPending,
+		Status:      projectStatusConcluded,
 		Contract: &Contract{
 			Deadline:            time.Now().Add(24 * time.Hour * 2),
 			PerHour:             5,
@@ -191,26 +191,6 @@ func (ac *ApplicationContext) FillTables() {
 			PerHour:             9.5,
 		},
 	}).Association("Freelancers").Append([]Freelancer{*f2})
-
-	ac.db.Create(&Project{
-		Name:        "Project Archived",
-		Description: "Description Archived",
-		ClientID:    1,
-		Status:      projectStatusArchived,
-		Contract: &Contract{
-			DeadlineFlexibility: 1,
-			Deadline:            time.Now(),
-			Hours:               1,
-			PerHour:             1,
-		},
-	}).Association("Freelancers").Append([]Freelancer{*f2})
-
-	ac.db.Create(&Project{
-		Name:        "Project Canceled",
-		Description: "Description Canceled",
-		ClientID:    2,
-		Status:      projectStatusCanceled,
-	}).Association("Freelancers").Append([]Freelancer{*f1})
 
 	jobApplication := ac.db.Create(&JobApplication{
 		Message:      "I apply",
