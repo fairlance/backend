@@ -1,3 +1,7 @@
+checkout:
+    post:
+        - mkdir $HOME/src/github.com/fairlance
+        - cp -Rf ./* ./../src/github.com/fairlance # move to src folder so make executes tasks there
 dependencies:
     override:
         - make installDependencies
