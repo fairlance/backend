@@ -1,10 +1,7 @@
-checkout:
-    override:
-        - mkdir -p /home/ubuntu/src/github.com/fairlance
-        - git clone git@github.com:fairlance/backend.git /home/ubuntu/src/github.com/fairlance
+general:
+    build_dir: /home/ubuntu/src/github.com/fairlance
 dependencies:
-        - make installDependencies:
-            pwd: /home/ubuntu/src/github.com/fairlance
+        - make installDependencies
 test:
     override:
         - make test:
