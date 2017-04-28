@@ -4,12 +4,9 @@ dependencies:
         - make installDependencies
 test:
     override:
-        - make test:
-            pwd: /home/ubuntu/src/github.com/fairlance
+        - make test
     post:
-        - make install:
-            pwd: /home/ubuntu/src/github.com/fairlance
-        - make installARM:
-            pwd: /home/ubuntu/src/github.com/fairlance
+        - make install
+        - make installARM
         - sudo cp * $CIRCLE_ARTIFACTS:
             pwd: bin
