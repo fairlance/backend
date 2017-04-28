@@ -1,11 +1,3 @@
-dependencies:
-        - make installDependencies
-test:
-    override:
-        - make test
-    post:
-        - make install
-        - make installARM
-        - sudo cp * $CIRCLE_ARTIFACTS:
-            pwd:
-                bin
+general:
+  artifacts:
+    - "~/bin"
