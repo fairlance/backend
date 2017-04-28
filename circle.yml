@@ -1,6 +1,3 @@
-checkout:
-    post:
-        - mv $HOME/backend/* $HOME/src/github.com/fairlance
 dependencies:
         - make installDependencies
 test:
