@@ -2,21 +2,13 @@ checkout:
     post:
         - mv $HOME/backend/* $HOME/src/github.com/fairlance
 dependencies:
-        - make installDependencies:
-            pwd:
-                $HOME/src/github.com/fairlance
+        - make installDependencies
 test:
     override:
-        - make test:
-            pwd:
-                $HOME/src/github.com/fairlance
+        - make test
     post:
-        - make install:
-            pwd:
-                $HOME/src/github.com/fairlance
-        - make installARM:
-            pwd:
-                $HOME/src/github.com/fairlance
+        - make install
+        - make installARM
         - sudo cp * $CIRCLE_ARTIFACTS:
             pwd:
                 bin
