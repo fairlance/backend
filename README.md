@@ -33,12 +33,12 @@ Use the interface to import
 │   └── application
 ├── pkg
 │   └── linux_amd64
-│       ├── fairlance.io
+│       ├── github.com/fairlance
 │       │   ├── mailer.a
 │       │   └── registration.a
 │       └── ...
 └── src
-    └── fairlance.io/
+    └── github.com/fairlance/
         ├── cmd
         │   ├── application             <---- contains main function, used to build an executable; package main
         │   │   └── main.go

@@ -10,17 +10,17 @@ installDependencies:
 	cat dependencies.txt | xargs go get
 
 test:
-	 go list fairlance.io/... | grep -v /cmd/ | xargs go test -v
+	 go list github.com/fairlance/... | grep -v /cmd/ | xargs go test -v
 
 install:
-	go install fairlance.io/cmd/...
+	go install github.com/fairlance/cmd/...
 
 installARM:
-	env GOOS=linux GOARCH=arm GOARM=7 go build -o ./bin/registration_arm fairlance.io/cmd/registration
-	env GOOS=linux GOARCH=arm GOARM=7 go build -o ./bin/application_arm fairlance.io/cmd/application
-	env GOOS=linux GOARCH=arm GOARM=7 go build -o ./bin/search_arm fairlance.io/cmd/search
-	env GOOS=linux GOARCH=arm GOARM=7 go build -o ./bin/importer_arm fairlance.io/cmd/importer
-	env GOOS=linux GOARCH=arm GOARM=7 go build -o ./bin/searcher_arm fairlance.io/cmd/searcher
-	env GOOS=linux GOARCH=arm GOARM=7 go build -o ./bin/messaging_arm fairlance.io/cmd/messaging
-	env GOOS=linux GOARCH=arm GOARM=7 go build -o ./bin/fileserver_arm fairlance.io/cmd/fileserver
-	env GOOS=linux GOARCH=arm GOARM=7 go build -o ./bin/notification_arm fairlance.io/cmd/notification
+	env GOOS=linux GOARCH=arm GOARM=7 go build -o ./bin/registration_arm github.com/fairlance/cmd/registration
+	env GOOS=linux GOARCH=arm GOARM=7 go build -o ./bin/application_arm github.com/fairlance/cmd/application
+	env GOOS=linux GOARCH=arm GOARM=7 go build -o ./bin/search_arm github.com/fairlance/cmd/search
+	env GOOS=linux GOARCH=arm GOARM=7 go build -o ./bin/importer_arm github.com/fairlance/cmd/importer
+	env GOOS=linux GOARCH=arm GOARM=7 go build -o ./bin/searcher_arm github.com/fairlance/cmd/searcher
+	env GOOS=linux GOARCH=arm GOARM=7 go build -o ./bin/messaging_arm github.com/fairlance/cmd/messaging
+	env GOOS=linux GOARCH=arm GOARM=7 go build -o ./bin/fileserver_arm github.com/fairlance/cmd/fileserver
+	env GOOS=linux GOARCH=arm GOARM=7 go build -o ./bin/notification_arm github.com/fairlance/cmd/notification
