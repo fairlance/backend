@@ -1,5 +1,7 @@
 dependencies:
     override:
+        - mkdir -p /home/ubuntu/src/github.com/fairlance
+        - mv /home/ubuntu/backend/* /home/ubuntu/src/github.com/fairlance
         - make installDependencies
 test:
     override:
