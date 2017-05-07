@@ -9,14 +9,13 @@ import (
 	"net/http"
 	"os"
 
-	respond "gopkg.in/matryer/respond.v1"
-
 	app "github.com/fairlance/backend/application"
+	respond "gopkg.in/matryer/respond.v1"
 )
 
 var (
 	folderPath = flag.String("folderPath", "/tmp/files", "Storage path.")
-	port       = flag.String("port", "", "Port.")
+	port       = flag.Int("port", 3006, "Port.")
 	secret     = flag.String("secret", "", "Secret.")
 	opts       *respond.Options
 )
@@ -66,7 +65,7 @@ func main() {
 		opts.Handler(ensureMethod("POST", app.WithTokenFromHeader(
 			app.AuthenticateTokenWithClaims(*secret, upload())))))
 
-	http.ListenAndServe(":"+*port, nil)
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", *port), nil))
 }
 
 func ensureMethod(method string, next http.Handler) http.Handler {
