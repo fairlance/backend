@@ -8,7 +8,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/fairlance/dispatcher"
+	"github.com/fairlance/backend/dispatcher"
 
 	respond "gopkg.in/matryer/respond.v1"
 

@@ -6,7 +6,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/fairlance/application"
+	"github.com/fairlance/backend/application"
 
 	respond "gopkg.in/matryer/respond.v1"
 

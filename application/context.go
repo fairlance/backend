@@ -3,7 +3,7 @@ package application
 import (
 	"time"
 
-	"github.com/fairlance/dispatcher"
+	"github.com/fairlance/backend/dispatcher"
 	"github.com/jinzhu/gorm"
 )
 

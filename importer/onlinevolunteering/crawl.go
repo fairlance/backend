@@ -3,7 +3,7 @@ package onlinevolunteering
 import (
 	"log"
 
-	"github.com/fairlance/application"
+	"github.com/fairlance/backend/application"
 
 	"strings"
 

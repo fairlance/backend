@@ -12,7 +12,7 @@ import (
 	"strings"
 	"testing"
 
-	reg "github.com/fairlance/registration"
+	reg "github.com/fairlance/backend/registration"
 )
 
 type TestMailer struct{}

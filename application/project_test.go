@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/fairlance/dispatcher"
+	"github.com/fairlance/backend/dispatcher"
 
 	isHelper "github.com/cheekybits/is"
 	"github.com/gorilla/context"

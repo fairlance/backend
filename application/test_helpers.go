@@ -5,7 +5,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/fairlance/dispatcher"
+	"github.com/fairlance/backend/dispatcher"
 
 	"github.com/gorilla/context"
 )

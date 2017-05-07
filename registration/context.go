@@ -3,7 +3,7 @@ package registration
 import (
 	"log"
 
-	"github.com/fairlance/mailer"
+	"github.com/fairlance/backend/mailer"
 )
 
 type RegistrationContext struct {

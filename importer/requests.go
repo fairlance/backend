@@ -10,7 +10,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/fairlance/application"
+	"github.com/fairlance/backend/application"
 	"github.com/jinzhu/gorm"
 )
 

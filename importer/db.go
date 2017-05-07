@@ -7,8 +7,8 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/fairlance/application"
-	"github.com/fairlance/importer/onlinevolunteering"
+	"github.com/fairlance/backend/application"
+	"github.com/fairlance/backend/importer/onlinevolunteering"
 	"github.com/jinzhu/gorm"
 )
 

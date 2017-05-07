@@ -5,7 +5,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/fairlance/dispatcher"
+	"github.com/fairlance/backend/dispatcher"
 )
 
 // Hub ...

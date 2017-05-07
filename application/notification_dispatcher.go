@@ -1,6 +1,6 @@
 package application
 
-import "github.com/fairlance/dispatcher"
+import "github.com/fairlance/backend/dispatcher"
 
 type NotificationDispatcher struct {
 	notifier dispatcher.Notifier
