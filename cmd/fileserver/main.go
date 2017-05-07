@@ -11,7 +11,7 @@ import (
 
 	respond "gopkg.in/matryer/respond.v1"
 
-	app "github.com/fairlance/application"
+	app "github.com/fairlance/backend/application"
 )
 
 var (

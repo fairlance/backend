@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/fairlance/importer"
+	"github.com/fairlance/backend/importer"
 
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 )

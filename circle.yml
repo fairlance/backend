@@ -13,4 +13,4 @@ test:
         - make installARM
         - sudo cp * $CIRCLE_ARTIFACTS:
             pwd:
-                bin
+                $HOME/bin

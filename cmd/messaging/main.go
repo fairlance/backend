@@ -7,9 +7,9 @@ import (
 	"os"
 	"strconv"
 
-	app "github.com/fairlance/application"
-	"github.com/fairlance/dispatcher"
-	"github.com/fairlance/messaging"
+	app "github.com/fairlance/backend/application"
+	"github.com/fairlance/backend/dispatcher"
+	"github.com/fairlance/backend/messaging"
 
 	"github.com/gorilla/mux"
 	"github.com/jinzhu/gorm"

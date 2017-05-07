@@ -8,7 +8,7 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/fairlance/registration"
+	"github.com/fairlance/backend/registration"
 )
 
 var port int

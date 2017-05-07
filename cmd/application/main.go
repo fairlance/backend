@@ -7,7 +7,7 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/fairlance/application"
+	"github.com/fairlance/backend/application"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 )
 

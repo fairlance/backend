@@ -18,10 +18,10 @@ import (
 	"flag"
 	"os"
 
-	"github.com/dgrijalva/jwt-go"
-	"github.com/fairlance/application"
-	"github.com/fairlance/messaging"
-	"github.com/fairlance/wsrouter"
+	jwt "github.com/dgrijalva/jwt-go"
+	"github.com/fairlance/backend/application"
+	"github.com/fairlance/backend/messaging"
+	"github.com/fairlance/backend/wsrouter"
 )
 
 // todo: addd getter/setter funcs with locking
