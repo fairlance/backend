@@ -22,6 +22,7 @@ type ApplicationContext struct {
 }
 
 type ContextOptions struct {
+	DbHost          string
 	DbName          string
 	DbUser          string
 	DbPass          string
@@ -32,7 +33,7 @@ type ContextOptions struct {
 }
 
 func NewContext(options ContextOptions) (*ApplicationContext, error) {
-	db, err := gorm.Open("postgres", "user="+options.DbUser+" password="+options.DbPass+" dbname="+options.DbName+" sslmode=disable")
+	db, err := gorm.Open("postgres", "host="+options.DbHost+" user="+options.DbUser+" password="+options.DbPass+" dbname="+options.DbName+" sslmode=disable")
 	if err != nil {
 		return nil, err
 	}

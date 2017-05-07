@@ -13,6 +13,7 @@ import (
 
 var (
 	port            int
+	dbHost          string
 	dbName          string
 	dbUser          string
 	dbPass          string
@@ -30,6 +31,7 @@ func init() {
 	log.SetOutput(f)
 
 	flag.IntVar(&port, "port", 3001, "Specify the port to listen to.")
+	flag.StringVar(&dbHost, "dbHost", "localhost", "DB host.")
 	flag.StringVar(&dbName, "dbName", "application", "DB name.")
 	flag.StringVar(&dbUser, "dbUser", "", "DB user.")
 	flag.StringVar(&dbPass, "dbPass", "", "Db user's password.")
@@ -46,6 +48,7 @@ func init() {
 
 func main() {
 	options := application.ContextOptions{
+		DbHost:          dbHost,
 		DbName:          dbName,
 		DbUser:          dbUser,
 		DbPass:          dbPass,
