@@ -12,6 +12,7 @@ import (
 )
 
 var (
+	dbHost      string
 	dbName      string
 	dbUser      string
 	dbPass      string
@@ -30,6 +31,7 @@ func init() {
 
 // Indexed 50000 documents, in 6334.31s (average 126.69ms/doc)
 func main() {
+	flag.StringVar(&dbHost, "dbHost", "localhost", "DB host.")
 	flag.StringVar(&dbName, "dbName", "application", "DB name.")
 	flag.StringVar(&dbUser, "dbUser", "fairlance", "DB user.")
 	flag.StringVar(&dbPass, "dbPass", "fairlance", "Db user's password.")
@@ -38,6 +40,7 @@ func main() {
 
 	// start the HTTP server
 	http.Handle("/", importer.NewRouter(importer.Options{
+		DBHost:      dbHost,
 		DBName:      dbName,
 		DBUser:      dbUser,
 		DBPass:      dbPass,

@@ -25,42 +25,50 @@ func (i indexHandlerJSON) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		err := doImport(i.options, *i.db, pageState.Type)
 		if err != nil {
 			pageState.Message = err.Error()
+			log.Println(err)
 		}
 	case "get":
 		doc, err := getDocFromDB(*i.db, pageState.Type, pageState.DocID)
 		if err != nil {
 			pageState.Message = err.Error()
+			log.Println(err)
 		}
 		pageState.DB.Document = doc
 	case "import":
 		err := importDoc(*i.db, i.options, pageState.Type, pageState.DocID)
 		if err != nil {
 			pageState.Message = err.Error()
+			log.Println(err)
 		}
 	case "remove":
 		err := deleteDocFromSearchEngine(i.options, pageState.Type, pageState.DocID)
 		if err != nil {
 			pageState.Message = err.Error()
+			log.Println(err)
 		}
 	case "re_generate_test_data":
 		err := reGenerateTestData(*i.db, pageState.Type)
 		if err != nil {
 			pageState.Message = err.Error()
+			log.Println(err)
 		}
 	case "delete_all_from_db":
 		err := deleteAllFromDB(*i.db, pageState.Type)
 		if err != nil {
 			pageState.Message = err.Error()
+			log.Println(err)
 		}
 	case "delete_all_from_search_engine":
 		err := deleteAllFromSearchEngine(i.options, pageState.Type)
 		if err != nil {
 			pageState.Message = err.Error()
+			log.Println(err)
 		}
 	case "search":
 		entity, err := getDocFromSearchEngine(i.options, pageState.Type, pageState.DocID)
 		if err != nil {
 			pageState.Message = err.Error()
+			log.Println(err)
 		}
 		entities := make(map[string]interface{})
 		id, ok := entity["id"].(string)
@@ -79,9 +87,15 @@ func (i indexHandlerJSON) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		case "freelancers":
 			pageState.Entities, pageState.DB.TotalInDB, err = getFreelancersFromDB(*i.db, pageState.Offset, pageState.Limit)
 		}
-		pageState.DB.TotalInSearchEngine, err = getTotalInSearchEngine(i.options, pageState.Type)
 		if err != nil {
 			pageState.Message = err.Error()
+			log.Printf("could not load from db: %v", err)
+		} else {
+			pageState.DB.TotalInSearchEngine, err = getTotalInSearchEngine(i.options, pageState.Type)
+			if err != nil {
+				pageState.Message = err.Error()
+				log.Printf("could get total from search engine: %v", err)
+			}
 		}
 	case "search":
 
@@ -116,7 +130,7 @@ func (handler searchHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
 	url := handler.options.SearcherURL + "/api/" + body["url"].(string)
-	
+
 	req, err := http.NewRequest(strings.ToUpper(body["method"].(string)), url, nil)
 	if err != nil {
 		log.Println(err)
@@ -125,7 +139,7 @@ func (handler searchHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(response)
 		return
 	}
-	
+
 	req.Header.Set("Content-Type", "application/json")
 
 	client := &http.Client{}

@@ -19,18 +19,22 @@ import (
 var (
 	port            int
 	secret          string
+	dbHost          string
 	dbName          string
 	dbUser          string
 	dbPass          string
+	mongoHost       string
 	notificationURL string
 )
 
 func init() {
 	flag.IntVar(&port, "port", 3005, "Specify the port to listen to.")
+	flag.StringVar(&dbHost, "dbHost", "localhost", "DB host.")
 	flag.StringVar(&dbName, "dbName", "application", "DB name.")
 	flag.StringVar(&dbUser, "dbUser", "fairlance", "DB user.")
 	flag.StringVar(&dbPass, "dbPass", "fairlance", "Db user's password.")
 	flag.StringVar(&secret, "secret", "secret", "Secret string used for JWS.")
+	flag.StringVar(&mongoHost, "mongoHost", "localhost", "Mongo host.")
 	flag.StringVar(&notificationURL, "notificationUrl", "localhost:3007", "Notification service url.")
 	flag.Parse()
 
@@ -42,7 +46,7 @@ func init() {
 }
 
 func main() {
-	db, err := gorm.Open("postgres", "user="+dbUser+" password="+dbPass+" dbname="+dbName+" sslmode=disable")
+	db, err := gorm.Open("postgres", "host="+dbHost+" user="+dbUser+" password="+dbPass+" dbname="+dbName+" sslmode=disable")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -77,7 +81,7 @@ func main() {
 		return messaging.NewRoom(id, users), nil
 	}
 
-	hub := messaging.NewHub(messaging.NewMessageDB(), dispatcher.NewHTTPNotifier(notificationURL), getARoom)
+	hub := messaging.NewHub(messaging.NewMessageDB(mongoHost), dispatcher.NewHTTPNotifier(notificationURL), getARoom)
 	go hub.Run()
 
 	// todo: make safe

@@ -31,6 +31,7 @@ var notification struct {
 
 var port int
 var secret string
+var mongoHost string
 var db *mongoDB
 
 // Examples:
@@ -40,6 +41,7 @@ var db *mongoDB
 func init() {
 	flag.IntVar(&port, "port", 3007, "Specify the port to listen on.")
 	flag.StringVar(&secret, "secret", "secret", "Secret string used for JWS.")
+	flag.StringVar(&mongoHost, "mongoHost", "localhost", "Mongo host.")
 	flag.Parse()
 
 	f, err := os.OpenFile("/var/log/fairlance/notification.log", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
@@ -218,7 +220,7 @@ func timeToMillis(t time.Time) int64 {
 }
 
 func newMongoDatabase(dbName string) *mongoDB {
-	s, err := mgo.Dial("localhost")
+	s, err := mgo.Dial(mongoHost)
 	if err != nil {
 		log.Fatal("cannot connect to mongo:", err.Error())
 	}

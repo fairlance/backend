@@ -70,7 +70,7 @@ func (ac *ApplicationContext) DropCreateFillTables() {
 
 func (ac *ApplicationContext) DropTables() {
 	ac.db.DropTableIfExists(&Freelancer{}, &Extension{}, &Contract{}, &Project{}, &Client{}, &Job{}, &Review{}, &Reference{}, &Media{}, &JobApplication{}, &Attachment{}, &Example{})
-	ac.db.DropTable("project_freelancers") //, "job_applications")
+	ac.db.DropTableIfExists("project_freelancers") //, "job_applications")
 }
 
 func (ac *ApplicationContext) CreateTables() {

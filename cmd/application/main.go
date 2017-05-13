@@ -42,7 +42,7 @@ func init() {
 	flag.Parse()
 
 	if dbUser == "" || dbPass == "" {
-		log.Fatalln("dbUser or dbPass empty!")
+		log.Fatal("dbUser or dbPass empty!")
 	}
 }
 
@@ -60,12 +60,12 @@ func main() {
 
 	var appContext, err = application.NewContext(options)
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 	appContext.DropCreateFillTables()
 
 	router := application.NewRouter(appContext)
 	http.Handle("/", router)
 
-	panic(http.ListenAndServe(":"+strconv.Itoa(port), nil))
+	log.Fatal(http.ListenAndServe(":"+strconv.Itoa(port), nil))
 }

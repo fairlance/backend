@@ -3,7 +3,7 @@ package messaging
 import (
 	"log"
 
-	"gopkg.in/mgo.v2"
+	mgo "gopkg.in/mgo.v2"
 )
 
 type messageDB interface {
@@ -11,9 +11,9 @@ type messageDB interface {
 	loadLastMessagesForUser(user *User, num int) ([]Message, error)
 }
 
-func NewMessageDB() messageDB {
+func NewMessageDB(host string) messageDB {
 	// Setup mongo db connection
-	s, err := mgo.Dial("localhost")
+	s, err := mgo.Dial(host)
 	if err != nil {
 		log.Fatalf("open mongo db: %v", err)
 	}

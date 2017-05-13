@@ -184,7 +184,7 @@ func getDocFromDB(db gorm.DB, docType, docID string) (map[string]interface{}, er
 
 func getDB(options Options) (*gorm.DB, error) {
 	db, err := gorm.Open("postgres", fmt.Sprintf(
-		"dbname=%s user=%s password=%s sslmode=disable", options.DBName, options.DBUser, options.DBPass))
+		"host=%s dbname=%s user=%s password=%s sslmode=disable", options.DBHost, options.DBName, options.DBUser, options.DBPass))
 	if err != nil {
 		log.Fatalln(err.Error())
 	}

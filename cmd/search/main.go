@@ -22,14 +22,12 @@ import (
 )
 
 var (
-	port           = *flag.String("port", "3002", "Port.")
-	searcherURL    = *flag.String("searcherURL", "http://localhost:3003", "Url of the searcher.")
+	port           string
+	searcherURL    string
 	respondOptions *respond.Options
 )
 
 func init() {
-	flag.Parse()
-
 	f, err := os.OpenFile("/var/log/fairlance/search.log", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
 		log.Fatalf("error opening file: %v", err)
@@ -52,6 +50,9 @@ func init() {
 }
 
 func main() {
+	flag.StringVar(&port, "port", "3002", "Port.")
+	flag.StringVar(&searcherURL, "searcherURL", "http://localhost:3003", "Url of the searcher.")
+	flag.Parse()
 	http.Handle("/job", corsHandler(respondOptions.Handler(http.HandlerFunc(jobs))))
 	http.Handle("/job/tags", corsHandler(respondOptions.Handler(http.HandlerFunc(jobTags))))
 	http.Handle("/freelancer", corsHandler(respondOptions.Handler(http.HandlerFunc(freelancers))))
@@ -245,10 +246,10 @@ func doRequest(index string, searchRequest *bleve.SearchRequest) (bleve.SearchRe
 	req.Header.Set("Content-Type", "application/json")
 
 	resp, err := http.DefaultClient.Do(req)
-	defer resp.Body.Close()
 	if err != nil {
 		return jobsSearchResults, err
 	}
+	defer resp.Body.Close()
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
