@@ -12,8 +12,17 @@ import (
 )
 
 var (
-	port   int
-	secret string
+	port                int
+	secret              string
+	authorizationURL    string
+	adaptivePaymentsURL string
+	returnURL           string
+	cancelURL           string
+	applicationID       string
+	securityUserID      string
+	securityPassword    string
+	securitySignature   string
+	primaryEmail        string
 )
 
 func init() {
@@ -27,14 +36,37 @@ func init() {
 func main() {
 	flag.IntVar(&port, "port", 3008, "Port.")
 	flag.StringVar(&secret, "secret", "", "Secret.")
+	flag.StringVar(&authorizationURL, "authorizationURL", "", "authorizationURL")
+	flag.StringVar(&adaptivePaymentsURL, "adaptivePaymentsURL", "", "adaptivePaymentsURL")
+	flag.StringVar(&returnURL, "returnURL", "", "returnURL")
+	flag.StringVar(&cancelURL, "cancelURL", "", "cancelURL")
+	flag.StringVar(&applicationID, "applicationID", "", "applicationID")
+	flag.StringVar(&securityUserID, "securityUserID", "", "securityUserID")
+	flag.StringVar(&securityPassword, "securityPassword", "", "securityPassword")
+	flag.StringVar(&securitySignature, "securitySignature", "", "securitySignature")
+	flag.StringVar(&primaryEmail, "primaryEmail", "", "primaryEmail")
 	flag.Parse()
 
-	payPalRequester := payment.NewPayPalRequester(&payment.Options{})
+	payment := payment.New(&payment.Options{
+		AuthorizationURL:    authorizationURL,
+		AdaptivePaymentsURL: adaptivePaymentsURL,
+		ReturnURL:           returnURL,
+		CancelURL:           cancelURL,
+		ApplicationID:       applicationID,
+		SecurityUserID:      securityUserID,
+		SecurityPassword:    securityPassword,
+		SecuritySignature:   securitySignature,
+		PrimaryEmail:        primaryEmail,
+	})
 
-	http.Handle("/deposit", middleware.JSONEnvelope(payPalRequester.PayPrimaryHandler()))
-	http.Handle("/check", middleware.JSONEnvelope(payPalRequester.PaymentDetailsHandler()))
-	http.Handle("/finalize", middleware.JSONEnvelope(payPalRequester.ExecutePaymentHandler()))
-	http.HandleFunc("/info", func(w http.ResponseWriter, r *http.Request) { w.Write([]byte("ok")) })
+	http.Handle("/deposit",
+		middleware.RecoverHandler(
+			middleware.LoggerHandler(
+				middleware.CORSHandler(
+					middleware.JSONEnvelope(
+						payment.PayPrimaryHandler())))))
+	http.Handle("/check", middleware.JSONEnvelope(payment.PaymentDetailsHandler()))
+	http.Handle("/finalize", middleware.JSONEnvelope(payment.ExecutePaymentHandler()))
 
 	log.Fatal(http.ListenAndServe(":"+strconv.Itoa(port), nil))
 }

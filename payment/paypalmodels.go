@@ -7,6 +7,7 @@ type PayRequest struct {
 	ReturnURL       string          `json:"returnUrl"`
 	CancelURL       string          `json:"cancelUrl"`
 	RequestEnvelope RequestEnvelope `json:"requestEnvelope"`
+	FeesPayer       string          `json:"feesPayer"`
 }
 
 type RequestEnvelope struct {
@@ -52,10 +53,31 @@ type PaymentDetailsRequest struct {
 	RequestEnvelope RequestEnvelope `json:"requestEnvelope"`
 }
 
+type PaymentInfoList struct {
+	PaymentInfo []PaymentInfo
+}
+
+type PaymentInfoReceiver struct {
+	Amount string
+	Email  string
+}
+
+type PaymentInfo struct {
+	PendingReason           string
+	PendingRefund           string
+	Receiver                PaymentInfoReceiver
+	RefundedAmount          string
+	SenderTransactionId     string
+	SenderTransactionStatus string
+	TransactionId           string
+	TransactionStatus       string
+}
+
 type PaymentDetailsResponse struct {
 	ResponseEnvelope ResponseEnvelope
 	Status           string
 	Error            []Error
+	PaymentInfoList  PaymentInfoList
 }
 
 type ExecutePaymentRequest struct {

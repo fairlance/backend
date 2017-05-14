@@ -24,3 +24,4 @@ installARM:
 	env GOOS=linux GOARCH=arm GOARM=7 go build -o ./../bin/messaging_arm github.com/fairlance/backend/cmd/messaging
 	env GOOS=linux GOARCH=arm GOARM=7 go build -o ./../bin/fileserver_arm github.com/fairlance/backend/cmd/fileserver
 	env GOOS=linux GOARCH=arm GOARM=7 go build -o ./../bin/notification_arm github.com/fairlance/backend/cmd/notification
+	env GOOS=linux GOARCH=arm GOARM=7 go build -o ./../bin/payment_arm github.com/fairlance/backend/cmd/payment
