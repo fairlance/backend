@@ -101,7 +101,7 @@ func (p *Payment) ExecutePaymentHandler() http.Handler {
 func (p *Payment) buildReceivers(r *http.Request) ([]Receiver, error) {
 	amountParam := r.URL.Query().Get("amount")
 	if amountParam == "" || !strings.HasSuffix(amountParam, ".00") || len(amountParam) > 8 {
-		return []Receiver{}, fmt.Errorf("amount invalid")
+		return []Receiver{}, fmt.Errorf("amount invalid: %v", amountParam)
 	}
 	amount, err := strconv.ParseFloat(amountParam, 64)
 	if err != nil {
