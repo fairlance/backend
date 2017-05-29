@@ -18,7 +18,7 @@
         <hr>
         <div>
             <h2>Login</h2>
-            <p>port:${applicationPort}</p>
+            <p>path:${applicationPath}</p>
             <label>Email:
                 <input v-model="email">
                 <select v-model="selectedEmail">
@@ -36,33 +36,9 @@
         </div>
 
         <div>
-            <h2>Send Notification <button v-on:click="showSendNotification = !showSendNotification">toggle</button></h2>
-            <div v-show="showSendNotification">
-                <p>URL:<input v-model="sendNotificationUrl"></input>
-                </p>
-                to.id:<input v-model="newNotification.to.id" /> to.type:
-                <select v-model="newNotification.to.type">
-                    <option>freelancer</option>
-                    <option>client</option>
-                </select> from.id: <input v-model="newNotification.from.id" /> from.type:
-                <select v-model="newNotification.from.type">
-                    <option>freelancer</option>
-                    <option>client</option>
-                    <option>system</option>
-                </select> type:
-                <select v-model="newNotification.type">
-                    <option>notification</option>
-                    <option>read</option>
-                    <option>new_message</option>
-                </select> data:
-                <textarea cols="100" rows="3" v-model="newNotification.data"></textarea>
-                <button v-on:click="sendNotification">Send</button>
-            </div>
-        </div>
-        <div>
             <h2>Messaging<span v-if="messagingWs != null"> - OPEN</span></h2>
             <p>
-                port:${messagingPort}
+                path:${messagingPath}
                 <button v-on:click="openMessagingWS">Open</button>
                 <button v-on:click="closeMessagingWS">Close</button>
             </p>
@@ -95,7 +71,7 @@
         <div>
             <h2>Notification<span v-if="notificationWs != null"> - OPEN</span></h2>
             <p>
-                port:${notificationPort}
+                path:${notificationPath}
                 <button v-on:click="openNotificationWS">Open</button>
                 <button v-on:click="closeNotificationWS">Close</button>
             </p>
@@ -133,7 +109,7 @@
         delimiters: ['${', '}'],
         el: '#app',
         data: {
-            baseUrl: 'local.github.com/fairlance',
+            baseUrl: 'local.fairlance.io:8080',
             // login
             emails: ['first@mail.com', 'second@mail.com', 'client@mail.com'],
             passwords: ['Pass', '123456'],
@@ -142,33 +118,18 @@
             email: 'first@mail.com',
             password: 'Pass',
             token: '',
-            applicationPort: '3001',
+            applicationPath: '/api/application',
             // messaging
-            messagingPort: '3005',
+            messagingPath: '/api/messaging',
             messagingMessages: [],
             messagingWs: null,
             messagingMessage: '',
             project_id: 1,
             // notification
-            notificationPort: '3007',
+            notificationPath: '/api/notification',
             notificationMessages: [],
             notificationWs: null,
             notificationMessage: '',
-            // send notification
-            showSendNotification: false,
-            sendNotificationUrl: 'http://local.github.com/fairlance:3007',
-            newNotification: {
-                to: {
-                    id: 1,
-                    type: 'freelancer'
-                },
-                from: {
-                    id: 0,
-                    type: 'system'
-                },
-                data: { projectId: 1, text: "text" },
-                type: 'notification'
-            }
         },
         watch: {
             selectedEmail: function (event) {
@@ -176,12 +137,17 @@
             },
             selectedPassword: function (event) {
                 this.password = this.selectedPassword;
+            },
+        },
+        computed: {
+            sendNotificationUrl: function () {
+                return this.baseUrl + this.notificationPath + '/send'
             }
         },
         methods: {
             login: function (event) {
                 var self = this;
-                axios.post('http://' + this.baseUrl + ':' + this.applicationPort + '/login', {
+                axios.post('http://' + this.baseUrl + this.applicationPath + '/login', {
                     email: this.email,
                     password: this.password,
                 })
@@ -201,7 +167,7 @@
                     return;
                 }
                 var self = this;
-                this.messagingWs = new WebSocket('ws://' + this.baseUrl + ':' + this.messagingPort + "/" + this.project_id + "/ws?token=" + this.token);
+                this.messagingWs = new WebSocket('ws://' + this.baseUrl + this.messagingPath + "/" + this.project_id + "/ws?token=" + this.token);
                 this.messagingWs.onopen = function (event) {
                     console.log("messagingWs.onopen:", event.data);
                 };
@@ -231,7 +197,7 @@
                     return;
                 }
                 var self = this;
-                this.notificationWs = new WebSocket('ws://' + this.baseUrl + ':' + this.notificationPort + "/ws?token=" + this.token);
+                this.notificationWs = new WebSocket('ws://' + this.baseUrl + '/' + this.notificationPath + "/ws?token=" + this.token);
                 this.notificationWs.onopen = function (event) {
                     console.log("notificationWs.onopen:", event.data);
                 };
@@ -251,22 +217,6 @@
                     this.notificationWs = null;
                     this.notificationMessages = [];
                 }
-            },
-            sendNotification: function (event) {
-                var self = this;
-                axios.post(this.sendNotificationUrl + '/send', {
-                    to: [{ id: parseInt(this.newNotification.to.id), type: this.newNotification.to.type }],
-                    from: { id: parseInt(this.newNotification.from.id), type: this.newNotification.from.type },
-                    data: JSON.parse(this.newNotification.data),
-                    type: this.newNotification.type
-                })
-                    .then(function (response) {
-                        console.log("send:", response);
-                    })
-                    .catch(function (error) {
-                        this.closeNotificationWS();
-                        console.log("send:", error);
-                    })
             },
         }
     })
