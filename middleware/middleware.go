@@ -1,8 +1,10 @@
 package middleware
 
 import (
+	"encoding/base64"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	respond "gopkg.in/matryer/respond.v1"
@@ -63,6 +65,43 @@ func RecoverHandler(next http.Handler) http.Handler {
 				respond.With(w, r, http.StatusInternalServerError, nil)
 			}
 		}()
+
+		next.ServeHTTP(w, r)
+	})
+}
+
+type HTTPAuthHandler struct {
+	User     string
+	Password string
+}
+
+func (h HTTPAuthHandler) authenticated(r *http.Request) bool {
+	authCredentials := strings.SplitN(r.Header.Get("Authorization"), " ", 2)
+	if len(authCredentials) != 2 {
+		return false
+	}
+
+	credentials, err := base64.StdEncoding.DecodeString(authCredentials[1])
+	if err != nil {
+		return false
+	}
+
+	userAndPass := strings.SplitN(string(credentials), ":", 2)
+	if len(userAndPass) != 2 {
+		return false
+	}
+
+	return userAndPass[0] == h.User && userAndPass[1] == h.Password
+}
+
+func (h HTTPAuthHandler) Auth(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !h.authenticated(r) {
+			w.Header().Set("WWW-Authenticate", `Basic realm="FAIRLANCE"`)
+			w.WriteHeader(http.StatusUnauthorized)
+			w.Write([]byte("401 Unauthorized\n"))
+			return
+		}
 
 		next.ServeHTTP(w, r)
 	})

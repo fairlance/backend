@@ -275,37 +275,3 @@ func whenIDBelongsToUser(handler http.Handler) http.Handler {
 		handler.ServeHTTP(w, r)
 	})
 }
-
-// func HTTPwhenLoggedIn(next http.Handler) http.Handler {
-// 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-// 		user := "fairlance"
-// 		pass := "fairlance"
-// 		if !authenticated(w, r, user, pass) {
-// 			w.Header().Set("WWW-Authenticate", `Basic realm="FAIRLANCE"`)
-// 			w.WriteHeader(http.StatusUnauthorized)
-// 			w.Write([]byte("401 Unauthorized\n"))
-// 			return
-// 		}
-
-// 		next.ServeHTTP(w, r)
-// 	})
-// }
-
-// func authenticated(w http.ResponseWriter, r *http.Request, user string, pass string) bool {
-// 	authCredentials := strings.SplitN(r.Header.Get("Authorization"), " ", 2)
-// 	if len(authCredentials) != 2 {
-// 		return false
-// 	}
-
-// 	credentials, err := base64.StdEncoding.DecodeString(authCredentials[1])
-// 	if err != nil {
-// 		return false
-// 	}
-
-// 	userAndPass := strings.SplitN(string(credentials), ":", 2)
-// 	if len(userAndPass) != 2 {
-// 		return false
-// 	}
-
-// 	return userAndPass[0] == user && userAndPass[1] == pass
-// }

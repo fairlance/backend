@@ -12,11 +12,13 @@ import (
 )
 
 var (
-	dbHost      string
-	dbName      string
-	dbUser      string
-	dbPass      string
-	searcherURL string
+	dbHost           string
+	dbName           string
+	dbUser           string
+	dbPass           string
+	searcherURL      string
+	httpAuthUser     string
+	httpAuthPassword string
 )
 
 var port = flag.String("port", "3004", "http listen address")
@@ -36,16 +38,19 @@ func main() {
 	flag.StringVar(&dbUser, "dbUser", "fairlance", "DB user.")
 	flag.StringVar(&dbPass, "dbPass", "fairlance", "Db user's password.")
 	flag.StringVar(&searcherURL, "searcherURL", "http://localhost:3003", "Url of the searcher.")
+	flag.StringVar(&httpAuthUser, "httpAuthUser", "", "Auth user.")
+	flag.StringVar(&httpAuthPassword, "httpAuthPassword", "", "Auth password.")
 	flag.Parse()
 
 	// start the HTTP server
 	http.Handle("/", importer.NewRouter(importer.Options{
-		DBHost:      dbHost,
-		DBName:      dbName,
-		DBUser:      dbUser,
-		DBPass:      dbPass,
-		SearcherURL: searcherURL,
+		DBHost:           dbHost,
+		DBName:           dbName,
+		DBUser:           dbUser,
+		DBPass:           dbPass,
+		SearcherURL:      searcherURL,
+		HTTPAuthUser:     httpAuthUser,
+		HTTPAuthPassword: httpAuthPassword,
 	}))
-	http.Handle("/websockettest", importer.NewMessagesHandler())
 	log.Fatal(http.ListenAndServe(":"+*port, nil))
 }
