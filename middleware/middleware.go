@@ -2,11 +2,17 @@ package middleware
 
 import (
 	"encoding/base64"
+	"errors"
+	"fmt"
 	"log"
 	"net/http"
 	"strings"
 	"time"
 
+	"github.com/fairlance/backend/models"
+	"github.com/gorilla/context"
+
+	jwt "github.com/dgrijalva/jwt-go"
 	respond "gopkg.in/matryer/respond.v1"
 )
 
@@ -24,6 +30,17 @@ var opts = &respond.Options{
 	},
 }
 
+type Middleware func(http.Handler) http.Handler
+
+func Chain(outer Middleware, others ...Middleware) Middleware {
+	return func(next http.Handler) http.Handler {
+		for i := len(others) - 1; i >= 0; i-- { // reverse
+			next = others[i](next)
+		}
+		return outer(next)
+	}
+}
+
 func JSONEnvelope(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		opts.Handler(next).ServeHTTP(w, r)
@@ -39,12 +56,10 @@ func CORSHandler(next http.Handler) http.Handler {
 			w.Header().Set("Access-Control-Allow-Headers",
 				"Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
 		}
-
 		// Stop here for a Preflighted OPTIONS request.
 		if r.Method == "OPTIONS" {
 			return
 		}
-
 		next.ServeHTTP(w, r)
 	})
 }
@@ -65,44 +80,113 @@ func RecoverHandler(next http.Handler) http.Handler {
 				respond.With(w, r, http.StatusInternalServerError, nil)
 			}
 		}()
-
 		next.ServeHTTP(w, r)
 	})
 }
 
-type HTTPAuthHandler struct {
-	User     string
-	Password string
+func HTTPAuthHandler(user, password string) Middleware {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if !authenticated(r, user, password) {
+				w.Header().Set("WWW-Authenticate", `Basic realm="FAIRLANCE"`)
+				w.WriteHeader(http.StatusUnauthorized)
+				w.Write([]byte("401 Unauthorized\n"))
+				return
+			}
+			next.ServeHTTP(w, r)
+		})
+	}
 }
 
-func (h HTTPAuthHandler) authenticated(r *http.Request) bool {
+func authenticated(r *http.Request, user, password string) bool {
 	authCredentials := strings.SplitN(r.Header.Get("Authorization"), " ", 2)
 	if len(authCredentials) != 2 {
 		return false
 	}
-
 	credentials, err := base64.StdEncoding.DecodeString(authCredentials[1])
 	if err != nil {
 		return false
 	}
-
 	userAndPass := strings.SplitN(string(credentials), ":", 2)
 	if len(userAndPass) != 2 {
 		return false
 	}
-
-	return userAndPass[0] == h.User && userAndPass[1] == h.Password
+	return userAndPass[0] == user && userAndPass[1] == password
 }
 
-func (h HTTPAuthHandler) Auth(next http.Handler) http.Handler {
+func WithTokenFromHeader(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if !h.authenticated(r) {
-			w.Header().Set("WWW-Authenticate", `Basic realm="FAIRLANCE"`)
-			w.WriteHeader(http.StatusUnauthorized)
-			w.Write([]byte("401 Unauthorized\n"))
+		tokenString := r.Header.Get("Authorization")
+		if tokenString == "" {
+			respond.With(w, r, http.StatusForbidden, errors.New("authorization header missing"))
 			return
 		}
-
+		if tokenString[:7] != "Bearer " {
+			respond.With(w, r, http.StatusForbidden, errors.New("authorization header invalid prefix"))
+			return
+		}
+		context.Set(r, "token", tokenString[7:])
 		next.ServeHTTP(w, r)
+	})
+}
+
+func WithTokenFromParams(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		token := r.URL.Query().Get("token")
+		if token == "" {
+			respond.With(w, r, http.StatusBadRequest, errors.New("valid token is missing from parameters"))
+			return
+		}
+		context.Set(r, "token", token)
+		next.ServeHTTP(w, r)
+	})
+}
+
+func AuthenticateTokenWithClaims(secret string) Middleware {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			tokenFromContext := context.Get(r, "token").(string)
+			token, err := jwt.Parse(tokenFromContext, func(jwtToken *jwt.Token) (interface{}, error) {
+				// Don't forget to validate the alg is what you expect:
+				if _, ok := jwtToken.Method.(*jwt.SigningMethodHMAC); !ok {
+					return nil, fmt.Errorf("Unexpected signing method: %v", jwtToken.Header["alg"])
+				}
+				return []byte(secret), nil
+			})
+			if err != nil {
+				respond.With(w, r, http.StatusUnauthorized, err)
+				return
+			}
+			claims, ok := token.Claims.(jwt.MapClaims)
+			if !ok || !token.Valid {
+				respond.With(w, r, http.StatusUnauthorized, errors.New("not logged in"))
+				return
+			}
+			context.Set(r, "claims", claims)
+			next.ServeHTTP(w, r)
+		})
+	}
+}
+
+func WithUserFromClaims(handler http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		user := &models.User{}
+		claims, ok := context.Get(r, "claims").(jwt.MapClaims)
+		if !ok {
+			respond.With(w, r, http.StatusInternalServerError, errors.New("claims are missing from token"))
+			return
+		}
+		userMap, ok := claims["user"].(map[string]interface{})
+		if !ok {
+			respond.With(w, r, http.StatusInternalServerError, errors.New("valid user is missing from token"))
+			return
+		}
+		user.ID = uint(userMap["id"].(float64))
+		user.Email = userMap["email"].(string)
+		user.FirstName = userMap["firstName"].(string)
+		user.LastName = userMap["lastName"].(string)
+		user.Type = claims["userType"].(string)
+		context.Set(r, "user", user)
+		handler.ServeHTTP(w, r)
 	})
 }
