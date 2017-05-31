@@ -6,9 +6,9 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/dgrijalva/jwt-go"
+	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/gorilla/context"
-	"gopkg.in/matryer/respond.v1"
+	respond "gopkg.in/matryer/respond.v1"
 )
 
 func CreateToken(claims map[string]interface{}, secret string, duration time.Duration) (string, error) {

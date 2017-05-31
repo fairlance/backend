@@ -8,10 +8,11 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/dgrijalva/jwt-go"
 	"github.com/gorilla/context"
 	"github.com/gorilla/mux"
-	"gopkg.in/matryer/respond.v1"
+
+	jwt "github.com/dgrijalva/jwt-go"
+	respond "gopkg.in/matryer/respond.v1"
 )
 
 func withUINT(param string, handler http.Handler) http.Handler {
@@ -130,7 +131,7 @@ func whenLoggedIn(next http.Handler) http.Handler {
 		}
 
 		if tokenString[:7] != "Bearer " {
-			respond.With(w, r, http.StatusForbidden, errors.New("authorization header must start with 'Bearer '"))
+			respond.With(w, r, http.StatusForbidden, errors.New("authorization header invalid prefix"))
 			return
 		}
 
@@ -177,14 +178,11 @@ func WithTokenFromHeader(next http.Handler) http.Handler {
 			respond.With(w, r, http.StatusForbidden, errors.New("authorization header missing"))
 			return
 		}
-
 		if tokenString[:7] != "Bearer " {
-			respond.With(w, r, http.StatusForbidden, errors.New("authorization header must start with 'Bearer '"))
+			respond.With(w, r, http.StatusForbidden, errors.New("authorization header invalid prefix"))
 			return
 		}
-
 		context.Set(r, "token", tokenString[7:])
-
 		next.ServeHTTP(w, r)
 	})
 }
