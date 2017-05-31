@@ -17,12 +17,12 @@ func NewRouter(options Options) *mux.Router {
 	if err != nil {
 		log.Fatal(err)
 	}
-	auth := middleware.HTTPAuthHandler{
-		User:     options.HTTPAuthUser,
-		Password: options.HTTPAuthPassword,
-	}
 
-	router.Handle("/", auth.Auth(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	chain := middleware.Chain(
+		middleware.HTTPAuthHandler(options.HTTPAuthUser, options.HTTPAuthPassword),
+	)
+
+	router.Handle("/", chain(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		t, err := template.New("index").Parse(htmlTemplate)
 		if err != nil {
 			log.Fatal(err)
@@ -33,15 +33,15 @@ func NewRouter(options Options) *mux.Router {
 		}
 	}))).Methods("GET")
 
-	router.Handle("/json", auth.Auth(indexHandlerJSON{
+	router.Handle("/json", chain(indexHandlerJSON{
 		options: options,
 		db:      db,
 	})).Methods("GET")
-	router.Handle("/json", auth.Auth(searchHandler{
+	router.Handle("/json", chain(searchHandler{
 		options: options,
 	})).Methods("POST", "OPTIONS")
 
-	router.Handle("/websockettest", auth.Auth(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	router.Handle("/websockettest", chain(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		main := MustAsset("templates/websockettest.html")
 
 		tmpl, err := template.New("messages").Parse(string(main))
