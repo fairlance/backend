@@ -7,9 +7,9 @@ import (
 	"os"
 	"strconv"
 
-	app "github.com/fairlance/backend/application"
 	"github.com/fairlance/backend/dispatcher"
 	"github.com/fairlance/backend/messaging"
+	"github.com/fairlance/backend/middleware"
 
 	"github.com/gorilla/mux"
 	"github.com/jinzhu/gorm"
@@ -45,6 +45,25 @@ func init() {
 	log.SetOutput(f)
 }
 
+type Project struct {
+	ID          uint
+	Freelancers []Freelancer `json:"freelancers,omitempty" gorm:"many2many:project_freelancers;"`
+	ClientID    uint         `json:"-"`
+	Client      *Client      `json:"client,omitempty"`
+}
+
+type Client struct {
+	ID        uint
+	FirstName string
+	LastName  string
+}
+
+type Freelancer struct {
+	ID        uint
+	FirstName string
+	LastName  string
+}
+
 func main() {
 	db, err := gorm.Open("postgres", "host="+dbHost+" user="+dbUser+" password="+dbPass+" dbname="+dbName+" sslmode=disable")
 	if err != nil {
@@ -52,10 +71,11 @@ func main() {
 	}
 	router := mux.NewRouter()
 
+	// todo: call application service
 	getARoom := func(id string) (*messaging.Room, error) {
 		users := make(map[string]*messaging.User)
 
-		project := app.Project{}
+		project := Project{}
 		err := db.Preload("Client").Preload("Freelancers").Find(&project, id).Error
 		if err != nil {
 			return nil, err
@@ -85,7 +105,7 @@ func main() {
 	go hub.Run()
 
 	// todo: make safe
-	router.Handle("/{username}/{room}/send", app.RecoverHandler(
+	router.Handle("/{username}/{room}/send", middleware.RecoverHandler(
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			room := mux.Vars(r)["room"]
 			username := mux.Vars(r)["username"]
@@ -94,14 +114,14 @@ func main() {
 		})))
 
 	// requires a GET 'token' parameter
-	router.Handle("/{room}/ws",
-		app.RecoverHandler(
-			messaging.WithRoom(
-				hub, messaging.WithTokenFromParams(
-					app.AuthenticateTokenWithClaims(
-						secret, app.WithUserFromClaims(
-							messaging.ValidateUser(
-								hub, messaging.ServeWS(hub))))))))
+	router.Handle("/{room}/ws", middleware.Chain(
+		middleware.RecoverHandler,
+		messaging.WithRoom(hub),
+		messaging.WithTokenFromParams,
+		middleware.AuthenticateTokenWithClaims(secret),
+		middleware.WithUserFromClaims,
+		messaging.ValidateUser(hub),
+	)(messaging.ServeWS(hub)))
 
 	http.Handle("/", router)
 

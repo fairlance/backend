@@ -5,6 +5,6 @@ type User struct {
 	Type      string `json:"type"`
 	FirstName string `json:"firstName"`
 	LastName  string `json:"lastName"`
-	Email     string `json:"email" valid:"required,email"`
+	Email     string `json:"email"`
 	Image     string `json:"image"`
 }

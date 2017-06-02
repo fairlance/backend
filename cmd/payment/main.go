@@ -59,12 +59,12 @@ func main() {
 		PrimaryEmail:        primaryEmail,
 	})
 
-	http.Handle("/deposit",
-		middleware.RecoverHandler(
-			middleware.LoggerHandler(
-				middleware.CORSHandler(
-					middleware.JSONEnvelope(
-						payment.PayPrimaryHandler())))))
+	http.Handle("/deposit", middleware.Chain(
+		middleware.RecoverHandler,
+		middleware.LoggerHandler,
+		middleware.CORSHandler,
+		middleware.JSONEnvelope,
+	)(payment.PayPrimaryHandler()))
 	http.Handle("/check", middleware.JSONEnvelope(payment.PaymentDetailsHandler()))
 	http.Handle("/finalize", middleware.JSONEnvelope(payment.ExecutePaymentHandler()))
 

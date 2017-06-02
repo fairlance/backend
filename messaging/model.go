@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/fairlance/backend/models"
 	"github.com/gorilla/websocket"
 )
 
@@ -73,9 +74,9 @@ func (r *Room) Close() {
 	}
 }
 
-func (r *Room) HasUser(id uint, userType string) bool {
-	for _, user := range r.Users {
-		if id == user.id && userType == user.userType {
+func (r *Room) HasUser(user *models.User) bool {
+	for _, u := range r.Users {
+		if user.ID == u.id && user.Type == u.userType {
 			return true
 		}
 	}
