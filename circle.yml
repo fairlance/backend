@@ -1,10 +1,6 @@
 machine:
   services:
     - docker
-general:
-  artifacts:
-    - ./../bin
-    - ./../src/github.com/fairlance/backend/images
 checkout:
     post:
         - mkdir -p $HOME/src/github.com/fairlance/backend
@@ -18,10 +14,13 @@ test:
     post:
         - make install
         - make installARM
+        - sudo cp * $CIRCLE_ARTIFACTS:
+            pwd: ./../bin
         - make buildAll:
-            pwd:
-                ./../src/github.com/fairlance/backend
-        - mkdir ./../src/github.com/fairlance/backend/images
+            pwd: ./../src/github.com/fairlance/backend
+        - mkdir images:
+            pwd: ./../src/github.com/fairlance/backend
         - make saveImages:
-            pwd:
-                ./../src/github.com/fairlance/backend
+            pwd: ./../src/github.com/fairlance/backend
+        - sudo cp -Rf images $CIRCLE_ARTIFACTS:
+            pwd: ./../src/github.com/fairlance/backend

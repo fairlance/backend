@@ -42,11 +42,11 @@ buildAll:
 	make service=notification build
 	make service=payment build
 saveImages:
-	docker save -o images/application-image fairlance/application
-	docker save -o images/fileserver-image fairlance/fileserver
-	docker save -o images/search-image fairlance/search
-	docker save -o images/searcher-image fairlance/searcher
-	docker save -o images/importer-image fairlance/importer
-	docker save -o images/messaging-image fairlance/messaging
-	docker save -o images/notification-image fairlance/notification
-	docker save -o images/payment-image fairlance/payment
+	docker save -o images/application_image fairlance/application
+	docker save -o images/fileserver_image fairlance/fileserver
+	docker save -o images/search_image fairlance/search
+	docker save -o images/searcher_image fairlance/searcher
+	docker save -o images/importer_image fairlance/importer
+	docker save -o images/messaging_image fairlance/messaging
+	docker save -o images/notification_image fairlance/notification
+	docker save -o images/payment_image fairlance/payment
