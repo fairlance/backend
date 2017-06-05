@@ -21,6 +21,7 @@ test:
         - make buildAll:
             pwd:
                 ./../src/github.com/fairlance/backend
+        - mkdir images
         - make saveImages:
             pwd:
                 ./../src/github.com/fairlance/backend
