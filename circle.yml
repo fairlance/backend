@@ -4,7 +4,7 @@ machine:
 general:
   artifacts:
     - ./../bin
-    - ./images
+    - ./../src/github.com/fairlance/backend/images
 checkout:
     post:
         - mkdir -p $HOME/src/github.com/fairlance/backend
