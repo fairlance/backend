@@ -20,7 +20,7 @@ test:
         - make installARM
         - make buildAll:
             pwd:
-                $HOME/src/github.com/fairlance/backend
+                ./..//src/github.com/fairlance/backend
         - make saveImages:
             pwd:
-                $HOME/src/github.com/fairlance/backend
+                ./../src/github.com/fairlance/backend
