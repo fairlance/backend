@@ -2,10 +2,9 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
 	"net/http"
-	"os"
-	"strconv"
 
 	"github.com/fairlance/backend/application"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
@@ -24,12 +23,11 @@ var (
 )
 
 func init() {
-	f, err := os.OpenFile("/var/log/fairlance/application.log", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
-	if err != nil {
-		log.Fatalf("error opening file: %v", err)
-	}
-	log.SetOutput(f)
-
+	// f, err := os.OpenFile("/var/log/fairlance/application.log", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
+	// if err != nil {
+	// 	log.Fatalf("error opening file: %v", err)
+	// }
+	// log.SetOutput(f)
 	flag.IntVar(&port, "port", 3001, "Specify the port to listen to.")
 	flag.StringVar(&dbHost, "dbHost", "localhost", "DB host.")
 	flag.StringVar(&dbName, "dbName", "application", "DB name.")
@@ -42,7 +40,7 @@ func init() {
 	flag.Parse()
 
 	if dbUser == "" || dbPass == "" {
-		log.Fatal("dbUser or dbPass empty!")
+		log.Fatal("dbUser and dbPass are required")
 	}
 }
 
@@ -67,5 +65,6 @@ func main() {
 	router := application.NewRouter(appContext)
 	http.Handle("/", router)
 
-	log.Fatal(http.ListenAndServe(":"+strconv.Itoa(port), nil))
+	log.Printf("Listening on: %d", port)
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), nil))
 }

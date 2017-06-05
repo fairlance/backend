@@ -2,10 +2,9 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
 	"net/http"
-	"os"
-	"strconv"
 
 	"github.com/fairlance/backend/dispatcher"
 	"github.com/fairlance/backend/messaging"
@@ -38,11 +37,11 @@ func init() {
 	flag.StringVar(&notificationURL, "notificationUrl", "localhost:3007", "Notification service url.")
 	flag.Parse()
 
-	f, err := os.OpenFile("/var/log/fairlance/messaging.log", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
-	if err != nil {
-		log.Fatalf("error opening file: %v", err)
-	}
-	log.SetOutput(f)
+	// f, err := os.OpenFile("/var/log/fairlance/messaging.log", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
+	// if err != nil {
+	// 	log.Fatalf("error opening file: %v", err)
+	// }
+	// log.SetOutput(f)
 }
 
 type Project struct {
@@ -125,6 +124,6 @@ func main() {
 
 	http.Handle("/", router)
 
-	log.Fatal(http.ListenAndServe(":"+strconv.Itoa(port), nil))
-
+	log.Printf("Listening on: %d", port)
+	http.ListenAndServe(fmt.Sprintf(":%d", port), nil)
 }

@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"os"
 
-	app "github.com/fairlance/backend/application"
+	"github.com/fairlance/backend/middleware"
 	respond "gopkg.in/matryer/respond.v1"
 )
 
@@ -27,63 +27,50 @@ func init() {
 		log.Fatalf("error creating folder: %v", err)
 	}
 
-	f, err := os.OpenFile("/var/log/fairlance/fileserver.log", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
-	if err != nil {
-		log.Fatalf("error opening file: %v", err)
-	}
-	log.SetOutput(f)
-
-	opts = &respond.Options{
-		Before: func(w http.ResponseWriter, r *http.Request, status int, data interface{}) (int, interface{}) {
-			dataEnvelope := map[string]interface{}{"code": status}
-			if err, ok := data.(error); ok {
-				dataEnvelope["error"] = err.Error()
-				dataEnvelope["success"] = false
-			} else {
-				dataEnvelope["data"] = data
-				dataEnvelope["success"] = true
-			}
-			return status, dataEnvelope
-		},
-	}
+	// f, err := os.OpenFile("/var/log/fairlance/fileserver.log", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
+	// if err != nil {
+	// 	log.Fatalf("error opening file: %v", err)
+	// }
+	// log.SetOutput(f)
 }
 
 func main() {
-	http.Handle("/",
-		opts.Handler(ensureMethod("GET", index())))
+	http.Handle("/file/", middleware.Chain(
+		ensureMethod("GET"),
+		middleware.JSONEnvelope,
+		middleware.WithTokenFromHeader,
+		middleware.AuthenticateTokenWithClaims(*secret),
+	)(http.StripPrefix("/file/", http.FileServer(http.Dir(*folderPath)))))
 
-	// http.Handle("/file/",
-	// 	opts.Handler(ensureMethod("GET", app.WithTokenFromHeader(
-	// 		app.AuthenticateToken(
-	// 			*secret, http.StripPrefix("/file/", http.FileServer(http.Dir(*folderPath))))))))
+	http.Handle("/upload", middleware.Chain(
+		ensureMethod("POST"),
+		middleware.JSONEnvelope,
+		middleware.WithTokenFromHeader,
+		middleware.AuthenticateTokenWithClaims(*secret),
+	)(upload()))
 
-	http.Handle("/file/",
-		opts.Handler(ensureMethod("GET",
-			http.StripPrefix("/file/", http.FileServer(http.Dir(*folderPath))))))
-
-	http.Handle("/upload",
-		opts.Handler(ensureMethod("POST", app.WithTokenFromHeader(
-			app.AuthenticateTokenWithClaims(*secret, upload())))))
-
+	log.Printf("Listening on: %d", *port)
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", *port), nil))
 }
 
-func ensureMethod(method string, next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Header().Set("Access-Control-Allow-Methods", r.Method+",OPTIONS")
-		w.Header().Set("Access-Control-Allow-Headers",
-			"Accept, Content-Type, Content-Length, Accept-Encoding, Authorization")
-		if r.Method == "OPTIONS" {
-			// Stop here for a Preflighted OPTIONS request.
-			return
-		} else if r.Method != method {
-			respond.With(w, r, http.StatusMethodNotAllowed, fmt.Errorf("bad method, only %s is allowed", method))
-			return
-		}
+func ensureMethod(method string) middleware.Middleware {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Access-Control-Allow-Origin", "*")
+			w.Header().Set("Access-Control-Allow-Methods", r.Method+",OPTIONS")
+			w.Header().Set("Access-Control-Allow-Headers",
+				"Accept, Content-Type, Content-Length, Accept-Encoding, Authorization")
+			if r.Method == "OPTIONS" {
+				// Stop here for a Preflighted OPTIONS request.
+				return
+			} else if r.Method != method {
+				respond.With(w, r, http.StatusMethodNotAllowed, fmt.Errorf("bad method, only %s is allowed", method))
+				return
+			}
 
-		next.ServeHTTP(w, r)
-	})
+			next.ServeHTTP(w, r)
+		})
+	}
 }
 
 func upload() http.Handler {
@@ -160,14 +147,14 @@ func upload() http.Handler {
 	})
 }
 
-func index() http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Add("Content-Type", "text/html")
-		w.Write([]byte(`
-        <form enctype="multipart/form-data" action="/upload" method="post">
-            <input type="file" name="uploadfile" />
-            <input type="submit" value="upload" />
-        </form>
-        `))
-	})
-}
+// func index() http.Handler {
+// 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+// 		w.Header().Add("Content-Type", "text/html")
+// 		w.Write([]byte(`
+//         <form enctype="multipart/form-data" action="/upload" method="post">
+//             <input type="file" name="uploadfile" />
+//             <input type="submit" value="upload" />
+//         </form>
+//         `))
+// 	})
+// }

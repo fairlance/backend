@@ -4,8 +4,8 @@ import (
 	"flag"
 	"log"
 	"net/http"
-	"os"
-	"strconv"
+
+	"fmt"
 
 	"github.com/fairlance/backend/notification"
 )
@@ -24,11 +24,11 @@ func init() {
 	flag.StringVar(&mongoHost, "mongoHost", "localhost", "Mongo host.")
 	flag.Parse()
 
-	f, err := os.OpenFile("/var/log/fairlance/notification.log", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
-	if err != nil {
-		log.Fatalf("error opening file: %v", err)
-	}
-	log.SetOutput(f)
+	// f, err := os.OpenFile("/var/log/fairlance/notification.log", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
+	// if err != nil {
+	// 	log.Fatalf("error opening file: %v", err)
+	// }
+	// log.SetOutput(f)
 }
 
 func main() {
@@ -37,6 +37,6 @@ func main() {
 	http.Handle("/send", notifications.SendHandler())
 	go notifications.Run()
 
-	log.Println("Started...")
-	http.ListenAndServe(":"+strconv.Itoa(port), nil)
+	log.Printf("Listening on: %d", port)
+	http.ListenAndServe(fmt.Sprintf(":%d", port), nil)
 }

@@ -9,12 +9,12 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"os"
 	"strconv"
 	"time"
 
 	respond "gopkg.in/matryer/respond.v1"
 
+	"github.com/fairlance/backend/middleware"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 
 	"github.com/blevesearch/bleve"
@@ -22,122 +22,115 @@ import (
 )
 
 var (
-	port           string
+	port           int
 	searcherURL    string
 	respondOptions *respond.Options
 )
 
 func init() {
-	f, err := os.OpenFile("/var/log/fairlance/search.log", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
-	if err != nil {
-		log.Fatalf("error opening file: %v", err)
-	}
-	log.SetOutput(f)
-
-	respondOptions = &respond.Options{
-		Before: func(w http.ResponseWriter, r *http.Request, status int, data interface{}) (int, interface{}) {
-			dataEnvelope := map[string]interface{}{"code": status}
-			if err, ok := data.(error); ok {
-				dataEnvelope["error"] = err.Error()
-				dataEnvelope["success"] = false
-			} else {
-				dataEnvelope["data"] = data
-				dataEnvelope["success"] = true
-			}
-			return status, dataEnvelope
-		},
-	}
+	// f, err := os.OpenFile("/var/log/fairlance/search.log", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
+	// if err != nil {
+	// 	log.Fatalf("error opening file: %v", err)
+	// }
+	// log.SetOutput(f)
 }
 
 func main() {
-	flag.StringVar(&port, "port", "3002", "Port.")
+	flag.IntVar(&port, "port", 3002, "Port.")
 	flag.StringVar(&searcherURL, "searcherURL", "http://localhost:3003", "Url of the searcher.")
 	flag.Parse()
-	http.Handle("/job", corsHandler(respondOptions.Handler(http.HandlerFunc(jobs))))
-	http.Handle("/job/tags", corsHandler(respondOptions.Handler(http.HandlerFunc(jobTags))))
-	http.Handle("/freelancer", corsHandler(respondOptions.Handler(http.HandlerFunc(freelancers))))
+	http.Handle("/job", middleware.CORSHandler(middleware.JSONEnvelope(jobs())))
+	http.Handle("/job/tags", middleware.CORSHandler(middleware.JSONEnvelope(jobTags())))
+	http.Handle("/freelancer", middleware.CORSHandler(middleware.JSONEnvelope(freelancers())))
 
-	log.Fatal(http.ListenAndServe(":"+port, nil))
+	log.Printf("Listening on: %d", port)
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), nil))
 }
 
-func jobs(w http.ResponseWriter, r *http.Request) {
-	searchRequest, err := getJobSearchRequest(r)
-	if err != nil {
-		respond.With(w, r, http.StatusBadRequest, err)
-		return
-	}
+func jobs() http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		searchRequest, err := getJobSearchRequest(r)
+		if err != nil {
+			respond.With(w, r, http.StatusBadRequest, err)
+			return
+		}
 
-	jobsSearchResults, err := doRequest("jobs", searchRequest)
-	if err != nil {
-		respond.With(w, r, http.StatusBadGateway, err)
-		return
-	}
+		jobsSearchResults, err := doRequest("jobs", searchRequest)
+		if err != nil {
+			respond.With(w, r, http.StatusBadGateway, err)
+			return
+		}
 
-	jobs := []interface{}{}
-	for _, hit := range jobsSearchResults.Hits {
-		jobs = append(jobs, hit.Fields)
-	}
+		jobs := []interface{}{}
+		for _, hit := range jobsSearchResults.Hits {
+			jobs = append(jobs, hit.Fields)
+		}
 
-	respond.With(w, r, http.StatusOK, struct {
-		Total int           `json:"total"`
-		Items []interface{} `json:"items"`
-	}{
-		Total: len(jobs),
-		Items: jobs,
+		respond.With(w, r, http.StatusOK, struct {
+			Total int           `json:"total"`
+			Items []interface{} `json:"items"`
+		}{
+			Total: len(jobs),
+			Items: jobs,
+		})
 	})
 }
 
-func jobTags(w http.ResponseWriter, r *http.Request) {
+func jobTags() http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
-	query := bleve.NewMatchAllQuery()
+		query := bleve.NewMatchAllQuery()
 
-	searchRequest := bleve.NewSearchRequest(query)
-	searchRequest.Fields = []string{"tags"}
+		searchRequest := bleve.NewSearchRequest(query)
+		searchRequest.Fields = []string{"tags"}
 
-	tagsFacet := bleve.NewFacetRequest("tags", 99999)
-	searchRequest.AddFacet("tags", tagsFacet)
+		tagsFacet := bleve.NewFacetRequest("tags", 99999)
+		searchRequest.AddFacet("tags", tagsFacet)
 
-	jobsSearchResults, err := doRequest("jobs", searchRequest)
-	if err != nil {
-		respond.With(w, r, http.StatusInternalServerError, err)
-		return
-	}
+		jobsSearchResults, err := doRequest("jobs", searchRequest)
+		if err != nil {
+			respond.With(w, r, http.StatusInternalServerError, err)
+			return
+		}
 
-	tags := []string{}
-	for _, t := range jobsSearchResults.Facets["tags"].Terms {
-		tags = append(tags, fmt.Sprintf("%s", t.Term))
-	}
+		tags := []string{}
+		for _, t := range jobsSearchResults.Facets["tags"].Terms {
+			tags = append(tags, fmt.Sprintf("%s", t.Term))
+		}
 
-	respond.With(w, r, http.StatusOK, struct {
-		Total int      `json:"total"`
-		Tags  []string `json:"tags"`
-	}{
-		Total: len(tags),
-		Tags:  tags,
+		respond.With(w, r, http.StatusOK, struct {
+			Total int      `json:"total"`
+			Tags  []string `json:"tags"`
+		}{
+			Total: len(tags),
+			Tags:  tags,
+		})
 	})
 }
 
-func freelancers(w http.ResponseWriter, r *http.Request) {
+func freelancers() http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
-	searchRequest := bleve.NewSearchRequest(bleve.NewMatchAllQuery())
-	searchRequest.Fields = []string{"*"}
+		searchRequest := bleve.NewSearchRequest(bleve.NewMatchAllQuery())
+		searchRequest.Fields = []string{"*"}
 
-	freelnacersSearchResults, err := doRequest("freelancers", searchRequest)
-	if err != nil {
-		respond.With(w, r, http.StatusInternalServerError, err)
-		return
-	}
+		freelnacersSearchResults, err := doRequest("freelancers", searchRequest)
+		if err != nil {
+			respond.With(w, r, http.StatusInternalServerError, err)
+			return
+		}
 
-	freelancers := []interface{}{}
-	for _, hit := range freelnacersSearchResults.Hits {
-		freelancers = append(freelancers, hit.Fields)
-	}
-	respond.With(w, r, http.StatusOK, struct {
-		Total uint64        `json:"total"`
-		Items []interface{} `json:"items"`
-	}{
-		Total: freelnacersSearchResults.Total,
-		Items: freelancers,
+		freelancers := []interface{}{}
+		for _, hit := range freelnacersSearchResults.Hits {
+			freelancers = append(freelancers, hit.Fields)
+		}
+		respond.With(w, r, http.StatusOK, struct {
+			Total uint64        `json:"total"`
+			Items []interface{} `json:"items"`
+		}{
+			Total: freelnacersSearchResults.Total,
+			Items: freelancers,
+		})
 	})
 }
 
@@ -266,23 +259,4 @@ func doRequest(index string, searchRequest *bleve.SearchRequest) (bleve.SearchRe
 	}
 
 	return jobsSearchResults, nil
-}
-
-func corsHandler(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if origin := r.Header.Get("Origin"); origin != "" {
-			// todo: make configurable
-			w.Header().Set("Access-Control-Allow-Origin", "*")
-			w.Header().Set("Access-Control-Allow-Methods", "GET,POST,PUT,OPTIONS")
-			w.Header().Set("Access-Control-Allow-Headers",
-				"Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
-		}
-
-		// Stop here for a Preflighted OPTIONS request.
-		if r.Method == "OPTIONS" {
-			return
-		}
-
-		next.ServeHTTP(w, r)
-	})
 }

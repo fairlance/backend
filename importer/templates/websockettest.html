@@ -197,7 +197,7 @@
                     return;
                 }
                 var self = this;
-                this.notificationWs = new WebSocket('ws://' + this.baseUrl + '/' + this.notificationPath + "/ws?token=" + this.token);
+                this.notificationWs = new WebSocket('ws://' + this.baseUrl + this.notificationPath + "/ws?token=" + this.token);
                 this.notificationWs.onopen = function (event) {
                     console.log("notificationWs.onopen:", event.data);
                 };

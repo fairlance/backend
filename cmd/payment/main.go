@@ -2,10 +2,9 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
 	"net/http"
-	"os"
-	"strconv"
 
 	"github.com/fairlance/backend/middleware"
 	"github.com/fairlance/backend/payment"
@@ -26,11 +25,11 @@ var (
 )
 
 func init() {
-	f, err := os.OpenFile("/var/log/fairlance/payment.log", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
-	if err != nil {
-		log.Fatalf("error opening file: %v", err)
-	}
-	log.SetOutput(f)
+	// f, err := os.OpenFile("/var/log/fairlance/payment.log", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
+	// if err != nil {
+	// 	log.Fatalf("error opening file: %v", err)
+	// }
+	// log.SetOutput(f)
 }
 
 func main() {
@@ -59,6 +58,7 @@ func main() {
 		PrimaryEmail:        primaryEmail,
 	})
 
+	// todo: auth
 	http.Handle("/deposit", middleware.Chain(
 		middleware.RecoverHandler,
 		middleware.LoggerHandler,
@@ -68,5 +68,6 @@ func main() {
 	http.Handle("/check", middleware.JSONEnvelope(payment.PaymentDetailsHandler()))
 	http.Handle("/finalize", middleware.JSONEnvelope(payment.ExecutePaymentHandler()))
 
-	log.Fatal(http.ListenAndServe(":"+strconv.Itoa(port), nil))
+	log.Printf("Listening on: %d", port)
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), nil))
 }

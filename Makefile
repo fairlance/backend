@@ -1,3 +1,4 @@
+.PHONY: help installDependencies test install installARM
 help:
 	@echo "Available targets:"
 	@echo "- install: install all services"
@@ -25,3 +26,27 @@ installARM:
 	env GOOS=linux GOARCH=arm GOARM=7 go build -o ./../bin/fileserver_arm github.com/fairlance/backend/cmd/fileserver
 	env GOOS=linux GOARCH=arm GOARM=7 go build -o ./../bin/notification_arm github.com/fairlance/backend/cmd/notification
 	env GOOS=linux GOARCH=arm GOARM=7 go build -o ./../bin/payment_arm github.com/fairlance/backend/cmd/payment
+
+.PHONY: build buildAll saveImages
+build:
+	GOOS=linux go build -o service ./cmd/${service}
+	docker build -t fairlance/${service} .
+	rm -f service
+buildAll:
+	make service=application build
+	make service=fileserver build
+	make service=search build
+	make service=searcher build
+	make service=importer build
+	make service=messaging build
+	make service=notification build
+	make service=payment build
+saveImages:
+	docker save -o images/application-image fairlance/application
+	docker save -o images/fileserver-image fairlance/fileserver
+	docker save -o images/search-image fairlance/search
+	docker save -o images/searcher-image fairlance/searcher
+	docker save -o images/importer-image fairlance/importer
+	docker save -o images/messaging-image fairlance/messaging
+	docker save -o images/notification-image fairlance/notification
+	docker save -o images/payment-image fairlance/payment

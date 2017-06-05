@@ -20,11 +20,11 @@ var port = flag.String("port", "3003", "http listen address")
 var dataDir = flag.String("dataDir", "/tmp/indices", "data directory")
 
 func init() {
-	f, err := os.OpenFile("/var/log/fairlance/searcher.log", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
-	if err != nil {
-		log.Fatalf("error opening file: %v", err)
-	}
-	log.SetOutput(f)
+	// f, err := os.OpenFile("/var/log/fairlance/searcher.log", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
+	// if err != nil {
+	// 	log.Fatalf("error opening file: %v", err)
+	// }
+	// log.SetOutput(f)
 
 	if err := os.MkdirAll(*dataDir, 0755); err != nil {
 		log.Fatalf("error creating data dir: %v", err)
