@@ -29,7 +29,7 @@ installARM:
 
 .PHONY: build buildAll saveImages
 build:
-	GOOS=linux go build -o service ./cmd/${service}
+	GOOS=linux CGO_ENABLED=0 go build -o service ./cmd/${service}
 	docker build -t fairlance/${service} .
 	rm -f service
 buildAll:
