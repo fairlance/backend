@@ -34,7 +34,7 @@ var htmlTemplate = `
         <nav class="navbar navbar-default navbar-static-top">
             <div class="container">
                 <div class="navbar-header">
-                    <a class="navbar-brand" href="#">
+                    <a class="navbar-brand" href="/api/importer">
                             Fairlance Importer
                         </a>
                 </div>
@@ -46,7 +46,7 @@ var htmlTemplate = `
                         <a href="#" v-on:click="tab = 'search'">Search</a>
                     </li>
                     <li>
-                        <a href="/websockettest">Websocket Test</a>
+                        <a href="/api/importer/websockettest">Websocket Test</a>
                     </li>
                 </ul>
             </div>
@@ -234,7 +234,7 @@ var htmlTemplate = `
                     params = params + GETParams;
                 }
                 var app = this;
-                axios.get(location.origin + '/json?' + params)
+                axios.get(location.origin + '/api/importer/json?' + params)
                     .then(function (response) {
                         app.msg = response.data.Message;
                         app.entities = response.data.Entities;
