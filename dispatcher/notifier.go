@@ -34,7 +34,7 @@ type HTTPNotifier struct {
 	NotificationURL string
 }
 
-func NewHTTPNotifier(notificationURL string) *HTTPNotifier {
+func NewHTTPNotifier(notificationURL string) Notifier {
 	return &HTTPNotifier{notificationURL}
 }
 

@@ -12,10 +12,14 @@ import (
 // NewMessage ...
 func NewMessage(userID uint, userType string, username string, text []byte, projectID string) Message {
 	return Message{
-		UserID:    userID,
-		UserType:  userType,
-		Username:  username,
-		Text:      string(bytes.TrimSpace(text)),
+		From: MessageUser{
+			ID:       userID,
+			Type:     userType,
+			Username: username,
+		},
+		Data: map[string]interface{}{
+			"text": string(bytes.TrimSpace(text)),
+		},
 		Timestamp: timeToMillis(time.Now()),
 		ProjectID: projectID,
 	}
@@ -25,13 +29,19 @@ func timeToMillis(t time.Time) int64 {
 	return t.UnixNano() / 1000000
 }
 
+type MessageUser struct {
+	ID       uint   `json:"id"`
+	Type     string `json:"type"`
+	Username string `json:"username"`
+}
+
 type Message struct {
-	UserID    uint   `json:"userId" bson:"userId"`
-	UserType  string `json:"userType" bson:"userType"`
-	Username  string `json:"username" bson:"username"`
-	Text      string `json:"text" bson:"text"`
-	Timestamp int64  `json:"timestamp" bson:"timestamp"`
-	ProjectID string `json:"projectId" bson:"projectId"`
+	From      MessageUser            `json:"from,omitempty"`
+	Type      string                 `json:"type,omitempty"`
+	Data      map[string]interface{} `json:"data,omitempty"`
+	Timestamp int64                  `json:"timestamp,omitempty"`
+	Read      bool                   `json:"read"`
+	ProjectID string                 `json:"projectId" bson:"projectId"`
 }
 
 func NewRoom(id string, users map[string]*User) *Room {
@@ -65,7 +75,7 @@ func (r *Room) ActivateUser(conn *userConn) (*User, error) {
 		return user, nil
 	}
 
-	return nil, fmt.Errorf("user %d not found", conn.id)
+	return nil, fmt.Errorf("user %s not found", conn.id)
 }
 
 func (r *Room) Close() {

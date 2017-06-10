@@ -17,9 +17,6 @@ func NewMessageDB(host string) messageDB {
 	if err != nil {
 		log.Fatalf("open mongo db: %v", err)
 	}
-
-	s.DB("messaging").DropDatabase()
-
 	return &mongoDB{s}
 }
 

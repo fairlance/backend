@@ -1,7 +1,7 @@
 package application
 
 import "github.com/fairlance/backend/dispatcher"
-import "encoding/json"
+
 import "fmt"
 
 type MessagingDispatcher struct {
@@ -12,78 +12,53 @@ func NewMessagingDispatcher(messaging dispatcher.Messaging) *MessagingDispatcher
 	return &MessagingDispatcher{messaging}
 }
 
-func (m *MessagingDispatcher) send(projectID uint, textObject interface{}) error {
-	textBytes, err := json.Marshal(textObject)
-	if err != nil {
-		return err
-	}
+func (m *MessagingDispatcher) send(projectID uint, data map[string]interface{}) error {
 	message := &dispatcher.Message{
-		Text:      string(textBytes),
-		UserID:    0,
-		UserType:  "system",
-		Username:  "system",
+		From: dispatcher.MessageUser{
+			ID:       0,
+			Type:     "system",
+			Username: "system",
+		},
+		Data:      data,
 		ProjectID: fmt.Sprint(projectID),
 	}
 	return m.messaging.Send(message)
 }
 
 func (m *MessagingDispatcher) sendProjectContractProposalAdded(projectID uint, proposal *Proposal) error {
-	msgTextObject := struct {
-		Proposal *Proposal `json:"proposal"`
-		Type     string    `json:"type"`
-	}{
-		proposal,
-		"project_contract_proposal",
-	}
-	return m.send(projectID, msgTextObject)
+	return m.send(projectID, map[string]interface{}{
+		"proposal": proposal,
+		"type":     "project_contract_proposal",
+	})
 }
 
 func (m *MessagingDispatcher) sendProjectContractExtensionProposalAdded(projectID uint, extension *Extension, proposal *Proposal) error {
-	msgTextObject := struct {
-		Proposal  *Proposal  `json:"proposal"`
-		Extension *Extension `json:"extension"`
-		Type      string     `json:"type"`
-	}{
-		proposal,
-		extension,
-		"project_contract_extension_proposal",
-	}
-	return m.send(projectID, msgTextObject)
+	return m.send(projectID, map[string]interface{}{
+		"proposal":  proposal,
+		"extension": extension,
+		"type":      "project_contract_extension_proposal",
+	})
 }
 
 func (m *MessagingDispatcher) sendProjectStateChanged(project *Project) error {
-	msgTextObject := struct {
-		Status string `json:"status"`
-		Type   string `json:"type"`
-	}{
-		project.Status,
-		"project_status_changed",
-	}
-	return m.send(project.ID, msgTextObject)
+	return m.send(project.ID, map[string]interface{}{
+		"status": project.Status,
+		"type":   "project_status_changed",
+	})
 }
 
 func (m *MessagingDispatcher) sendContractAccepted(project *Project, userType string, user *User) error {
-	msgTextObject := struct {
-		User     *User  `json:"user"`
-		UserType string `json:"userType"`
-		Type     string `json:"type"`
-	}{
-		user,
-		userType,
-		"project_contract_accepted",
-	}
-	return m.send(project.ID, msgTextObject)
+	return m.send(project.ID, map[string]interface{}{
+		"user":     user,
+		"userType": userType,
+		"type":     "project_contract_accepted",
+	})
 }
 
 func (m *MessagingDispatcher) sendProjectConcludedByUser(project *Project, userType string, user *User) error {
-	msgTextObject := struct {
-		User     *User  `json:"user"`
-		UserType string `json:"userType"`
-		Type     string `json:"type"`
-	}{
-		user,
-		userType,
-		"project_concluded_by_user",
-	}
-	return m.send(project.ID, msgTextObject)
+	return m.send(project.ID, map[string]interface{}{
+		"user":     user,
+		"userType": userType,
+		"type":     "project_contract_accepted",
+	})
 }

@@ -14,8 +14,6 @@ func newMongoDatabase(mongoHost, dbName string) *mongoDB {
 	if err != nil {
 		log.Fatal("cannot connect to mongo:", err.Error())
 	}
-	s.DB(dbName).DropDatabase() // todo: remove
-
 	return &mongoDB{s, dbName}
 }
 

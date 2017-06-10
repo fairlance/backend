@@ -1,36 +1,49 @@
 package dispatcher
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
-	"net/url"
 )
 
 type Messaging interface {
 	Send(m *Message) error
 }
 
+type MessageUser struct {
+	ID       uint   `json:"id"`
+	Type     string `json:"type"`
+	Username string `json:"username"`
+}
+
 type Message struct {
-	UserID    uint   `json:"userId,omitempty"`
-	UserType  string `json:"userType,omitempty"`
-	Username  string `json:"username,omitempty"`
-	Text      string `json:"text,omitempty"`
-	ProjectID string `json:"projectId,omitempty"`
+	From      MessageUser            `json:"from,omitempty"`
+	Type      string                 `json:"type,omitempty"`
+	Data      map[string]interface{} `json:"data,omitempty"`
+	Timestamp int64                  `json:"timestamp,omitempty"`
+	Read      bool                   `json:"read"`
+	ProjectID string                 `json:"projectId" bson:"projectId"`
 }
 
 type HTTPMessaging struct {
 	MessagingURL string
 }
 
-func NewHTTPMessaging(MessagingURL string) *HTTPMessaging {
+func NewHTTPMessaging(MessagingURL string) Messaging {
 	return &HTTPMessaging{MessagingURL}
 }
 
 func (m *HTTPMessaging) Send(msg *Message) error {
-	url := fmt.Sprintf("http://%s/%s/%s/send?message=%s", m.MessagingURL, msg.Username, msg.ProjectID, url.QueryEscape(msg.Text))
-	request, err := http.NewRequest("GET", url, nil)
+	payload, err := json.Marshal(msg)
+	if err != nil {
+		log.Printf("could not mashall msg: %v", err)
+		return err
+	}
+	url := fmt.Sprintf("http://%s/%s/send", m.MessagingURL, msg.ProjectID)
+	request, err := http.NewRequest("POST", url, bytes.NewReader(payload))
 	if err != nil {
 		log.Println(err)
 		return err

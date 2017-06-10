@@ -58,10 +58,10 @@
                 </thead>
                 <tbody>
                     <tr v-for="msg in messagingMessages">
-                        <td>${msg.userId}</td>
-                        <td>${msg.userType}</td>
-                        <td>${msg.username}</td>
-                        <td>${msg.text}</td>
+                        <td>${msg.from.id}</td>
+                        <td>${msg.from.type}</td>
+                        <td>${msg.from.username}</td>
+                        <td>${msg.data}</td>
                         <td>${msg.timestamp}</td>
                         <td>${msg.projectId}</td>
                     </tr>

@@ -96,12 +96,12 @@ func (h *Hub) removeUser(userToUnregister *User) {
 }
 
 // SendMessage ...
-func (h *Hub) SendMessage(room, name, msg string) {
-	h.broadcast <- NewMessage(0, "system", name, []byte(msg), room)
+func (h *Hub) SendMessage(room string, msg Message) {
+	h.broadcast <- msg
 }
 
 func (h *Hub) notifyUser(u *User, msg Message) {
-	log.Println("notifying", u.username, "with message", msg.Text)
+	log.Printf("notifying %s with %+v", u.username, msg.Data)
 	h.notifier.Notify(&dispatcher.Notification{
 		To: []dispatcher.NotificationUser{
 			dispatcher.NotificationUser{
@@ -110,13 +110,13 @@ func (h *Hub) notifyUser(u *User, msg Message) {
 			},
 		},
 		From: dispatcher.NotificationUser{
-			ID:   msg.UserID,
-			Type: msg.UserType,
+			ID:   msg.From.ID,
+			Type: msg.From.Type,
 		},
 		Type: "new_message",
 		Data: map[string]interface{}{
-			"message":   msg.Text,
-			"username":  msg.Username,
+			"message":   msg,
+			"username":  msg.From.Username,
 			"timestamp": fmt.Sprintf("%d", msg.Timestamp),
 			"time":      time.Unix(0, msg.Timestamp*1000000),
 			"projectId": msg.ProjectID,

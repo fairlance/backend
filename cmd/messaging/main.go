@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
 	"log"
@@ -104,12 +105,17 @@ func main() {
 	go hub.Run()
 
 	// todo: make safe
-	router.Handle("/{username}/{room}/send", middleware.RecoverHandler(
+	router.Handle("/{room}/send", middleware.RecoverHandler(
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			room := mux.Vars(r)["room"]
-			username := mux.Vars(r)["username"]
-			message := r.URL.Query().Get("message")
-			hub.SendMessage(room, username, message)
+			var message messaging.Message
+			if err := json.NewDecoder(r.Body).Decode(&message); err != nil {
+				w.WriteHeader(http.StatusBadRequest)
+				w.Write([]byte("could not reade message from body"))
+				return
+			}
+			r.Body.Close()
+			hub.SendMessage(room, message)
 		})))
 
 	// requires a GET 'token' parameter
