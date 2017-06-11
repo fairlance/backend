@@ -28,6 +28,9 @@ func init() {
 	// 	log.Fatalf("error opening file: %v", err)
 	// }
 	// log.SetOutput(f)
+}
+
+func main() {
 	flag.IntVar(&port, "port", 3001, "Specify the port to listen to.")
 	flag.StringVar(&dbHost, "dbHost", "localhost", "DB host.")
 	flag.StringVar(&dbName, "dbName", "application", "DB name.")
@@ -39,12 +42,6 @@ func init() {
 	flag.StringVar(&searcherURL, "searcherUrl", "localhost:3003", "Url of the searcher.")
 	flag.Parse()
 
-	if dbUser == "" || dbPass == "" {
-		log.Fatal("dbUser and dbPass are required")
-	}
-}
-
-func main() {
 	options := application.ContextOptions{
 		DbHost:          dbHost,
 		DbName:          dbName,

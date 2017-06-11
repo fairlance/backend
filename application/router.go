@@ -1,43 +1,41 @@
 package application
 
 import (
-	"net/http"
-
+	"github.com/fairlance/backend/middleware"
 	"github.com/gorilla/context"
 	"github.com/gorilla/mux"
-	"gopkg.in/matryer/respond.v1"
 )
 
 func NewRouter(appContext *ApplicationContext) *mux.Router {
-
-	opts := &respond.Options{
-		Before: func(w http.ResponseWriter, r *http.Request, status int, data interface{}) (int, interface{}) {
-			dataEnvelope := map[string]interface{}{"code": status}
-			if err, ok := data.(error); ok {
-				dataEnvelope["error"] = err.Error()
-				dataEnvelope["success"] = false
-			} else {
-				dataEnvelope["data"] = data
-				dataEnvelope["success"] = true
-			}
-			return status, dataEnvelope
-		},
-	}
-
 	router := mux.NewRouter()
+	publicRouter := router.PathPrefix("/public").Subrouter()
 	for _, route := range routes {
-		var handler http.Handler
-		handler = opts.Handler(route.Handler)
-		handler = ContextAwareHandler(handler, appContext)
-		handler = CORSHandler(handler)
-		handler = context.ClearHandler(handler)
-		handler = LoggerHandler(RecoverHandler(handler))
-
-		router.
-			Methods([]string{route.Method, "OPTIONS"}...).
+		publicRouter.
+			Methods([]string{route.Method, "OPTIONS"}...). // todo
 			Path(route.Pattern).
 			Name(route.Name).
-			Handler(handler)
+			Handler(middleware.Chain(
+				middleware.RecoverHandler,
+				middleware.LoggerHandler,
+				middleware.JSONEnvelope,
+				middleware.CORSHandler,
+				context.ClearHandler,
+				contextAwareHandler(appContext),
+			)(route.Handler))
+	}
+	privateRouter := router.PathPrefix("/private").Subrouter()
+	for _, route := range privateRoutes {
+		privateRouter.
+			Methods(route.Method).
+			Path(route.Pattern).
+			Name(route.Name).
+			Handler(middleware.Chain(
+				middleware.RecoverHandler,
+				middleware.LoggerHandler,
+				middleware.JSONEnvelope,
+				context.ClearHandler,
+				contextAwareHandler(appContext),
+			)(route.Handler))
 	}
 
 	return router

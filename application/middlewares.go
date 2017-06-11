@@ -12,27 +12,27 @@ import (
 	"github.com/gorilla/mux"
 
 	jwt "github.com/dgrijalva/jwt-go"
+	"github.com/fairlance/backend/middleware"
 	respond "gopkg.in/matryer/respond.v1"
 )
 
-func withUINT(param string, handler http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		vars := mux.Vars(r)
-
-		if vars[param] == "" {
-			respond.With(w, r, http.StatusBadRequest, fmt.Errorf("%s not provided", param))
-			return
-		}
-
-		value, err := strconv.ParseUint(vars[param], 10, 32)
-		if err != nil {
-			respond.With(w, r, http.StatusBadRequest, err)
-			return
-		}
-		context.Set(r, param, uint(value))
-
-		handler.ServeHTTP(w, r)
-	})
+func withUINT(param string) middleware.Middleware {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			vars := mux.Vars(r)
+			if vars[param] == "" {
+				respond.With(w, r, http.StatusBadRequest, fmt.Errorf("%s not provided", param))
+				return
+			}
+			value, err := strconv.ParseUint(vars[param], 10, 32)
+			if err != nil {
+				respond.With(w, r, http.StatusBadRequest, err)
+				return
+			}
+			context.Set(r, param, uint(value))
+			next.ServeHTTP(w, r)
+		})
+	}
 }
 
 func withID(handler http.Handler) http.Handler {
@@ -55,51 +55,13 @@ func withID(handler http.Handler) http.Handler {
 	})
 }
 
-func LoggerHandler(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		start := time.Now()
-		next.ServeHTTP(w, r)
-		log.Printf("%s\t%s\t%s", r.Method, r.RequestURI, time.Since(start))
-	})
-}
-
-func ContextAwareHandler(next http.Handler, appContext *ApplicationContext) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		context.Set(r, "context", appContext)
-		next.ServeHTTP(w, r)
-	})
-}
-
-func CORSHandler(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if origin := r.Header.Get("Origin"); origin != "" {
-			// todo: make configurable
-			w.Header().Set("Access-Control-Allow-Origin", "*")
-			w.Header().Set("Access-Control-Allow-Methods", "GET,POST,PUT,OPTIONS")
-			w.Header().Set("Access-Control-Allow-Headers",
-				"Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
-		}
-
-		// Stop here for a Preflighted OPTIONS request.
-		if r.Method == "OPTIONS" {
-			return
-		}
-
-		next.ServeHTTP(w, r)
-	})
-}
-
-func RecoverHandler(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		defer func() {
-			if err := recover(); err != nil {
-				log.Printf("panic: %+v", err)
-				respond.With(w, r, http.StatusInternalServerError, nil)
-			}
-		}()
-
-		next.ServeHTTP(w, r)
-	})
+func contextAwareHandler(appContext *ApplicationContext) middleware.Middleware {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			context.Set(r, "context", appContext)
+			next.ServeHTTP(w, r)
+		})
+	}
 }
 
 func whenUserType(allowedUserType string, next http.Handler) http.Handler {
@@ -183,36 +145,6 @@ func WithTokenFromHeader(next http.Handler) http.Handler {
 			return
 		}
 		context.Set(r, "token", tokenString[7:])
-		next.ServeHTTP(w, r)
-	})
-}
-
-// AuthenticateTokenWithClaims ...
-func AuthenticateTokenWithClaims(secret string, next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		tokenFromContext := context.Get(r, "token").(string)
-
-		token, err := jwt.Parse(tokenFromContext, func(jwtToken *jwt.Token) (interface{}, error) {
-			// Don't forget to validate the alg is what you expect:
-			if _, ok := jwtToken.Method.(*jwt.SigningMethodHMAC); !ok {
-				return nil, fmt.Errorf("Unexpected signing method: %v", jwtToken.Header["alg"])
-			}
-			return []byte(secret), nil
-		})
-
-		if err != nil {
-			respond.With(w, r, http.StatusUnauthorized, err)
-			return
-		}
-
-		claims, ok := token.Claims.(jwt.MapClaims)
-		if !ok || !token.Valid {
-			respond.With(w, r, http.StatusUnauthorized, errors.New("not logged in"))
-			return
-		}
-
-		context.Set(r, "claims", claims)
-
 		next.ServeHTTP(w, r)
 	})
 }

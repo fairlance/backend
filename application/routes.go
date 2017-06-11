@@ -1,6 +1,7 @@
 package application
 
 import "net/http"
+import "github.com/fairlance/backend/middleware"
 
 type Route struct {
 	Name    string
@@ -105,7 +106,7 @@ var routes = Routes{
 		"POST",
 		"/project/{id}/extension/{extension_id}/agree",
 		whenLoggedIn(withID(whenProjectBelongsToUserByID(
-			withProjectByID(withUINT("extension_id", withExtensionWhenBelongsToProject(
+			withProjectByID(withUINT("extension_id")(withExtensionWhenBelongsToProject(
 				agreeToExtensionTerms())))))),
 	},
 	Route{
@@ -120,9 +121,15 @@ var routes = Routes{
 		"AddProjectContractExtensionProposal",
 		"POST",
 		"/project/{id}/extension/{extension_id}/proposal",
-		whenLoggedIn(withID(whenProjectBelongsToUserByID(
-			withProjectByID(withProposal(withUINT("extension_id", withExtensionWhenBelongsToProject(
-				setProposalToProjectContractExtension()))))))),
+		middleware.Chain(
+			whenLoggedIn,
+			withID,
+			whenProjectBelongsToUserByID,
+			withProjectByID,
+			withProposal,
+			withUINT("extension_id"),
+			withExtensionWhenBelongsToProject,
+		)(setProposalToProjectContractExtension()),
 	},
 	Route{
 		"ConcludeProject",
