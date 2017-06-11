@@ -6,7 +6,6 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/fairlance/backend/middleware"
 	"github.com/fairlance/backend/payment"
 )
 
@@ -22,6 +21,7 @@ var (
 	securityPassword    string
 	securitySignature   string
 	primaryEmail        string
+	applicationUrl      string
 )
 
 func init() {
@@ -44,9 +44,10 @@ func main() {
 	flag.StringVar(&securityPassword, "securityPassword", "", "securityPassword")
 	flag.StringVar(&securitySignature, "securitySignature", "", "securitySignature")
 	flag.StringVar(&primaryEmail, "primaryEmail", "", "primaryEmail")
+	flag.StringVar(&applicationUrl, "applicationUrl", "localhost:3001", "applicationUrl")
 	flag.Parse()
 
-	payment := payment.New(&payment.Options{
+	mux := payment.NewServeMux(&payment.Options{
 		AuthorizationURL:    authorizationURL,
 		AdaptivePaymentsURL: adaptivePaymentsURL,
 		ReturnURL:           returnURL,
@@ -56,18 +57,9 @@ func main() {
 		SecurityPassword:    securityPassword,
 		SecuritySignature:   securitySignature,
 		PrimaryEmail:        primaryEmail,
+		ApplicationURL:      applicationUrl,
 	})
 
-	// todo: auth
-	http.Handle("/deposit", middleware.Chain(
-		middleware.RecoverHandler,
-		middleware.LoggerHandler,
-		middleware.CORSHandler,
-		middleware.JSONEnvelope,
-	)(payment.PayPrimaryHandler()))
-	http.Handle("/check", middleware.JSONEnvelope(payment.PaymentDetailsHandler()))
-	http.Handle("/finalize", middleware.JSONEnvelope(payment.ExecutePaymentHandler()))
-
 	log.Printf("Listening on: %d", port)
-	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), nil))
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), mux))
 }

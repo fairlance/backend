@@ -7,28 +7,36 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/fairlance/backend/dispatcher"
+
+	"encoding/json"
+
 	respond "gopkg.in/matryer/respond.v1"
 )
 
-func New(options *Options) *Payment {
-	return &Payment{
-		primaryEmail:        options.PrimaryEmail,
-		authorizationURL:    options.AuthorizationURL,
-		requester:           &payPalRequester{options},
-		receiversPercentile: 0.92,
+type contextKey string
+
+func newPayment(options *Options) *payment {
+	return &payment{
+		primaryEmail:          options.PrimaryEmail,
+		authorizationURL:      options.AuthorizationURL,
+		requester:             &payPalRequester{options},
+		receiversPercentile:   0.92,
+		applicationDispatcher: dispatcher.NewApplicationDispatcher(options.ApplicationURL),
 	}
 }
 
-type Payment struct {
+type payment struct {
 	primaryEmail                    string
 	authorizationURL                string
 	requester                       *payPalRequester
 	receiversPercentile             float64
 	paymentProviderChargePercentile float64
 	paymentProviderChargeFixed      float64
+	applicationDispatcher           dispatcher.ApplicationDispatcher
 }
 
-func (p *Payment) PayPrimaryHandler() http.Handler {
+func (p *payment) payPrimaryHandler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		receivers, err := p.buildReceivers(r)
 		if err != nil {
@@ -56,7 +64,7 @@ func (p *Payment) PayPrimaryHandler() http.Handler {
 	})
 }
 
-func (p *Payment) PaymentDetailsHandler() http.Handler {
+func (p *payment) paymentDetailsHandler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Query().Get("payKey") == "" { // should be project, and pay key is stored localy
 			respond.With(w, r, http.StatusBadRequest, "payKey missing")
@@ -77,7 +85,7 @@ func (p *Payment) PaymentDetailsHandler() http.Handler {
 	})
 }
 
-func (p *Payment) ExecutePaymentHandler() http.Handler {
+func (p *payment) executePaymentHandler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Query().Get("payKey") == "" { // should be project, and pay key is stored localy
 			respond.With(w, r, http.StatusBadRequest, "payKey missing")
@@ -98,26 +106,41 @@ func (p *Payment) ExecutePaymentHandler() http.Handler {
 	})
 }
 
-func (p *Payment) buildReceivers(r *http.Request) ([]Receiver, error) {
+func (p *payment) buildReceivers(r *http.Request) ([]Receiver, error) {
 	amountParam := r.URL.Query().Get("amount")
 	if amountParam == "" || !strings.HasSuffix(amountParam, ".00") || len(amountParam) > 8 {
-		return []Receiver{}, fmt.Errorf("amount invalid: %v", amountParam)
+		return nil, fmt.Errorf("amount wrong format: %s", amountParam)
 	}
 	amount, err := strconv.ParseFloat(amountParam, 64)
 	if err != nil {
-		return []Receiver{}, err
+		return nil, err
 	}
-
+	projectID, err := strconv.Atoi(r.URL.Query().Get("project"))
+	if err != nil {
+		return nil, err
+	}
+	projectBytes, err := p.applicationDispatcher.GetProject(uint(projectID))
+	if err != nil {
+		return nil, err
+	}
+	var project Project
+	if err := json.Unmarshal(projectBytes, &project); err != nil {
+		if err != nil {
+			return nil, err
+		}
+	}
 	receivers := []Receiver{
-		Receiver{
-			Email:  r.URL.Query().Get("email"),
-			Amount: fmt.Sprintf("%.2f", money(amount*p.receiversPercentile)),
-		},
 		Receiver{
 			Amount:  fmt.Sprintf("%.2f", money(amount)),
 			Email:   p.primaryEmail,
 			Primary: true,
 		},
+	}
+	for _, freelancer := range project.Freelancers {
+		receivers = append(receivers, Receiver{
+			Email:  freelancer.Email,
+			Amount: fmt.Sprintf("%.2f", money(amount*p.receiversPercentile)),
+		})
 	}
 	return receivers, nil
 }

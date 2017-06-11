@@ -10,4 +10,5 @@ type Options struct {
 	SecuritySignature   string
 	ApplicationID       string
 	PrimaryEmail        string
+	ApplicationURL      string
 }
