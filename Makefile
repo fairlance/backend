@@ -26,27 +26,3 @@ installARM:
 	env GOOS=linux GOARCH=arm GOARM=7 go build -o ./../bin/fileserver_arm github.com/fairlance/backend/cmd/fileserver
 	env GOOS=linux GOARCH=arm GOARM=7 go build -o ./../bin/notification_arm github.com/fairlance/backend/cmd/notification
 	env GOOS=linux GOARCH=arm GOARM=7 go build -o ./../bin/payment_arm github.com/fairlance/backend/cmd/payment
-
-.PHONY: build buildAll saveImages
-build:
-	GOOS=linux CGO_ENABLED=0 go build -o service ./cmd/${service}
-	docker build -t fairlance/${service} .
-	rm -f service
-buildAll:
-	make service=application build
-	make service=fileserver build
-	make service=search build
-	make service=searcher build
-	make service=importer build
-	make service=messaging build
-	make service=notification build
-	make service=payment build
-saveImages:
-	docker save -o images/application_image fairlance/application
-	docker save -o images/fileserver_image fairlance/fileserver
-	docker save -o images/search_image fairlance/search
-	docker save -o images/searcher_image fairlance/searcher
-	docker save -o images/importer_image fairlance/importer
-	docker save -o images/messaging_image fairlance/messaging
-	docker save -o images/notification_image fairlance/notification
-	docker save -o images/payment_image fairlance/payment

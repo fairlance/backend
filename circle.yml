@@ -8,6 +8,7 @@ checkout:
 dependencies:
     override:
         - make installDependencies
+        - ./fairlance.sh dependancies
 test:
     override:
         - make test
@@ -16,11 +17,11 @@ test:
         - make installARM
         - sudo cp * $CIRCLE_ARTIFACTS:
             pwd: ./../bin
-        - make buildAll:
+        - ./fairlance.sh buildAll:
             pwd: ./../src/github.com/fairlance/backend
         - mkdir images:
             pwd: ./../src/github.com/fairlance/backend
-        - make saveImages:
+        - ./fairlance.sh saveImages:
             pwd: ./../src/github.com/fairlance/backend
         - sudo cp -Rf images $CIRCLE_ARTIFACTS:
             pwd: ./../src/github.com/fairlance/backend
