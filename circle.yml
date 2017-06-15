@@ -10,7 +10,7 @@ dependencies:
         - make installDependencies
         - sudo chmod +x fairlance.sh:
             pwd: ./../src/github.com/fairlance/backend
-        - ./fairlance.sh dependancies:
+        - ./fairlance.sh dependencies:
             pwd: ./../src/github.com/fairlance/backend
 test:
     override:
