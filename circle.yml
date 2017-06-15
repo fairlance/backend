@@ -16,15 +16,13 @@ test:
     override:
         - make test
     post:
-        - make install
-        - make installARM
-        - sudo cp * $CIRCLE_ARTIFACTS:
-            pwd: ./../bin
+        # - make install
+        # - make installARM
+        # - sudo cp * $CIRCLE_ARTIFACTS:
+        #     pwd: ./../bin
         - ./fairlance.sh buildAll:
-            pwd: ./../src/github.com/fairlance/backend
-        - mkdir images:
             pwd: ./../src/github.com/fairlance/backend
         - ./fairlance.sh saveImages:
             pwd: ./../src/github.com/fairlance/backend
-        - sudo cp -Rf images $CIRCLE_ARTIFACTS:
+        - sudo cp -Rf *_image $CIRCLE_ARTIFACTS:
             pwd: ./../src/github.com/fairlance/backend

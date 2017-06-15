@@ -23,24 +23,24 @@ case $CMD in
         echo "It took $DIFF seconds"
         ;;
     buildAll )
-        ./build.sh build application
-        ./build.sh build fileserver
-        ./build.sh build search
-        ./build.sh build searcher
-        ./build.sh build importer
-        ./build.sh build messaging
-        ./build.sh build notification
-        ./build.sh build payment
+        ./fairlance.sh build application
+        ./fairlance.sh build fileserver
+        ./fairlance.sh build search
+        ./fairlance.sh build searcher
+        ./fairlance.sh build importer
+        ./fairlance.sh build messaging
+        ./fairlance.sh build notification
+        ./fairlance.sh build payment
         ;;
     saveImages )
-        docker save -o images/application_image fairlance/application
-        docker save -o images/fileserver_image fairlance/fileserver
-        docker save -o images/search_image fairlance/search
-        docker save -o images/searcher_image fairlance/searcher
-        docker save -o images/importer_image fairlance/importer
-        docker save -o images/messaging_image fairlance/messaging
-        docker save -o images/notification_image fairlance/notification
-        docker save -o images/payment_image fairlance/payment
+        docker save -o application_image fairlance/application
+        docker save -o fileserver_image fairlance/fileserver
+        docker save -o search_image fairlance/search
+        docker save -o searcher_image fairlance/searcher
+        docker save -o importer_image fairlance/importer
+        docker save -o messaging_image fairlance/messaging
+        docker save -o notification_image fairlance/notification
+        docker save -o payment_image fairlance/payment
         ;;
      *)
         echo $"Usage: $0 {init|dependancies|ssh|build|buildAll|saveImages}"
