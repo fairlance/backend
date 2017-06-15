@@ -5,17 +5,17 @@ case $CMD in
     init )
         echo 'eval $("C:\Program Files\Docker Toolbox\docker-machine.exe" env --shell=bash)'
         ;;
-    dependancies )
-        echo "docker build -t fairlance/backend-dependancies -f dependancies.Dockerfile ."
-        docker build -t fairlance/backend-dependancies -f dependancies.Dockerfile .
+    dependencies )
+        echo "docker build -t fairlance/backend-dependencies -f dependencies.Dockerfile ."
+        docker build -t fairlance/backend-dependencies -f dependencies.Dockerfile .
         ;;
     ssh )
-        echo 'docker run --rm -v "/$(pwd)":/go/src/github.com/fairlance/backend/ -it fairlance/backend-dependancies bash'
-        docker run --rm -v "/$(pwd)":/go/src/github.com/fairlance/backend/ -it fairlance/backend-dependancies bash
+        echo 'docker run --rm -v "/$(pwd)":/go/src/github.com/fairlance/backend/ -it fairlance/backend-dependencies sh'
+        docker run --rm -v "/$(pwd)":/go/src/github.com/fairlance/backend/ -it fairlance/backend-dependencies sh
         ;;
     build )
         START=$(date +%s)
-        docker run --rm -v "/$(pwd)":/go/src/github.com/fairlance/backend/ -it fairlance/backend-dependancies bash -c "GOOS=linux CGO_ENABLED=0 go build -o service ./cmd/$2"
+        docker run --rm -v "/$(pwd)":/go/src/github.com/fairlance/backend/ -it fairlance/backend-dependencies sh -c "GOOS=linux CGO_ENABLED=0 go build -o service ./cmd/$2"
         docker build -t fairlance/$2 .
         rm -f service
         END=$(date +%s)
@@ -23,6 +23,7 @@ case $CMD in
         echo "It took $DIFF seconds"
         ;;
     buildAll )
+        START_ALL=$(date +%s)
         ./fairlance.sh build application
         ./fairlance.sh build fileserver
         ./fairlance.sh build search
@@ -31,6 +32,9 @@ case $CMD in
         ./fairlance.sh build messaging
         ./fairlance.sh build notification
         ./fairlance.sh build payment
+        END_ALL=$(date +%s)
+        DIFF_ALL=$(( $END_ALL - $START_ALL ))
+        echo "It took $DIFF_ALL seconds"
         ;;
     saveImages )
         docker save -o application_image fairlance/application
