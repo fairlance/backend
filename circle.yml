@@ -8,6 +8,7 @@ checkout:
 dependencies:
     override:
         - make installDependencies
+        - sudo chmod +x fairlance.sh
         - ./fairlance.sh dependancies
 test:
     override:
