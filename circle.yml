@@ -8,8 +8,6 @@ checkout:
 dependencies:
     override:
         - make installDependencies
-        - sudo chmod +x fairlance.sh:
-            pwd: ./../src/github.com/fairlance/backend
         - ./fairlance.sh dependencies:
             pwd: ./../src/github.com/fairlance/backend
 test:
