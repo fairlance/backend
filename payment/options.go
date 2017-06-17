@@ -11,4 +11,5 @@ type Options struct {
 	ApplicationID       string
 	PrimaryEmail        string
 	ApplicationURL      string
+	IPNNotificationURL  string
 }

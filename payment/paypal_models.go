@@ -1,13 +1,14 @@
 package payment
 
 type PayRequest struct {
-	ActionType      string          `json:"actionType"`
-	CurrencyCode    string          `json:"currencyCode"`
-	ReceiverList    ReceiverList    `json:"receiverList"`
-	ReturnURL       string          `json:"returnUrl"`
-	CancelURL       string          `json:"cancelUrl"`
-	RequestEnvelope RequestEnvelope `json:"requestEnvelope"`
-	FeesPayer       string          `json:"feesPayer"`
+	ActionType         string          `json:"actionType"`
+	CurrencyCode       string          `json:"currencyCode"`
+	ReceiverList       ReceiverList    `json:"receiverList"`
+	ReturnURL          string          `json:"returnUrl"`
+	CancelURL          string          `json:"cancelUrl"`
+	RequestEnvelope    RequestEnvelope `json:"requestEnvelope"`
+	FeesPayer          string          `json:"feesPayer"`
+	IPNNotificationURL string          `json:"ipnNotificationUrl,omitempty"`
 }
 
 type RequestEnvelope struct {

@@ -21,7 +21,8 @@ var (
 	securityPassword    string
 	securitySignature   string
 	primaryEmail        string
-	applicationUrl      string
+	ipnNotificationURL  string
+	applicationURL      string
 )
 
 func init() {
@@ -35,16 +36,17 @@ func init() {
 func main() {
 	flag.IntVar(&port, "port", 3008, "Port.")
 	flag.StringVar(&secret, "secret", "", "Secret.")
-	flag.StringVar(&authorizationURL, "authorizationURL", "", "authorizationURL")
-	flag.StringVar(&adaptivePaymentsURL, "adaptivePaymentsURL", "", "adaptivePaymentsURL")
-	flag.StringVar(&returnURL, "returnURL", "", "returnURL")
-	flag.StringVar(&cancelURL, "cancelURL", "", "cancelURL")
-	flag.StringVar(&applicationID, "applicationID", "", "applicationID")
-	flag.StringVar(&securityUserID, "securityUserID", "", "securityUserID")
+	flag.StringVar(&authorizationURL, "authorizationUrl", "", "authorizationUrl")
+	flag.StringVar(&adaptivePaymentsURL, "adaptivePaymentsUrl", "", "adaptivePaymentsUrl")
+	flag.StringVar(&returnURL, "returnUrl", "", "returnUrl")
+	flag.StringVar(&cancelURL, "cancelUrl", "", "cancelUrl")
+	flag.StringVar(&ipnNotificationURL, "ipnNotificationUrl", "", "ipnNotificationUrl")
+	flag.StringVar(&applicationID, "applicationId", "", "applicationId")
+	flag.StringVar(&securityUserID, "securityUserId", "", "securityUserId")
 	flag.StringVar(&securityPassword, "securityPassword", "", "securityPassword")
 	flag.StringVar(&securitySignature, "securitySignature", "", "securitySignature")
 	flag.StringVar(&primaryEmail, "primaryEmail", "", "primaryEmail")
-	flag.StringVar(&applicationUrl, "applicationUrl", "localhost:3001", "applicationUrl")
+	flag.StringVar(&applicationURL, "applicationUrl", "localhost:3001", "applicationUrl")
 	flag.Parse()
 
 	mux := payment.NewServeMux(&payment.Options{
@@ -57,7 +59,8 @@ func main() {
 		SecurityPassword:    securityPassword,
 		SecuritySignature:   securitySignature,
 		PrimaryEmail:        primaryEmail,
-		ApplicationURL:      applicationUrl,
+		ApplicationURL:      applicationURL,
+		IPNNotificationURL:  ipnNotificationURL,
 	})
 
 	log.Printf("Listening on: %d", port)

@@ -203,3 +203,15 @@ func WhenUserType(allowedUserType string) Middleware {
 		})
 	}
 }
+
+func HTTPMethod(method string) Middleware {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if r.Method != method {
+				respond.With(w, r, http.StatusMethodNotAllowed, fmt.Errorf("method not allowed"))
+				return
+			}
+			next.ServeHTTP(w, r)
+		})
+	}
+}

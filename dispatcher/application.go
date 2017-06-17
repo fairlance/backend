@@ -1,10 +1,12 @@
 package dispatcher
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
+
+	"github.com/fairlance/backend/models"
 )
 
 type ApplicationDispatcher interface {
@@ -23,17 +25,14 @@ func (d *applicationDispatcher) GetProject(id uint) ([]byte, error) {
 	url := fmt.Sprintf("http://%s/private/project/%d", d.url, id)
 	request, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		log.Println(err)
 		return nil, err
 	}
 	response, err := http.DefaultClient.Do(request)
 	if err != nil {
-		log.Println(err)
 		return nil, err
 	}
 	content, err := ioutil.ReadAll(response.Body)
 	if err != nil {
-		log.Println(err)
 		return nil, err
 	}
 	defer response.Body.Close()
@@ -41,5 +40,13 @@ func (d *applicationDispatcher) GetProject(id uint) ([]byte, error) {
 		err = fmt.Errorf("\nStatus: %s\n Body: %s\nURL: %s", response.Status, content, url)
 		return nil, err
 	}
-	return content, nil
+	var envelope models.JSONEnvelope
+	if err := json.Unmarshal(content, &envelope); err != nil {
+		return nil, err
+	}
+	if envelope.Code != http.StatusOK {
+		err = fmt.Errorf("\nEnvelope: %+v\nURL: %s", envelope, url)
+		return nil, err
+	}
+	return json.Marshal(envelope.Data)
 }

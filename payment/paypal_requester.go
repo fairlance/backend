@@ -32,7 +32,8 @@ func (p *payPalRequester) payPrimary(receivers []Receiver) (*PayResponse, error)
 			ErrorLanguage: "en_US",
 			DetailLevel:   "ReturnAll",
 		},
-		FeesPayer: "PRIMARYRECEIVER",
+		FeesPayer:          "PRIMARYRECEIVER",
+		IPNNotificationURL: p.options.IPNNotificationURL,
 	}
 	req, err := p.newRequest(payPrimaryRequest, payEndpoint)
 	if err != nil {
