@@ -26,3 +26,4 @@ _testmain.go
 .idea
 sftp-config.json
 .vscode
+*_image

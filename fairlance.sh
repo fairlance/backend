@@ -13,6 +13,10 @@ case $CMD in
         echo 'docker run --rm -v "/$(pwd)":/go/src/github.com/fairlance/backend/ -it fairlance/backend-dependencies sh'
         docker run --rm -v "/$(pwd)":/go/src/github.com/fairlance/backend/ -it fairlance/backend-dependencies sh
         ;;
+    test )
+        echo 'docker run --rm -v "/$(pwd)":/go/src/github.com/fairlance/backend/ -it fairlance/backend-dependencies sh -c "go list github.com/fairlance/backend/... | grep -v /cmd/ | xargs go test -v"'
+        docker run --rm -v "/$(pwd)":/go/src/github.com/fairlance/backend/ -it fairlance/backend-dependencies sh -c "go list github.com/fairlance/backend/... | grep -v /cmd/ | xargs go test -v"
+        ;;
     build )
         START=$(date +%s)
         docker run --rm -v "/$(pwd)":/go/src/github.com/fairlance/backend/ -it fairlance/backend-dependencies sh -c "GOOS=linux CGO_ENABLED=0 go build -o service ./cmd/$2"
