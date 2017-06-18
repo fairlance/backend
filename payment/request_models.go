@@ -6,42 +6,55 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+
+	uuid "github.com/nu7hatch/gouuid"
 )
 
 type depositRequest struct {
-	Project      uint   `json:"project"`
-	AmountString string `json:"amount"`
-	amount       float64
-	trackingID   string
+	Project uint
+	Amount  string
 }
 
-func newDepositRequest(r *http.Request) (*depositRequest, error) {
-	var deposit depositRequest
-	if err := json.NewDecoder(r.Body).Decode(&deposit); err != nil {
-		return nil, err
+type deposit struct {
+	project uint
+	amount  float64
+	trackID string
+}
+
+func newDepositFromRequest(r *http.Request) (deposit, error) {
+	var depositReq depositRequest
+	if err := json.NewDecoder(r.Body).Decode(&depositReq); err != nil {
+		return deposit{}, err
 	}
 	r.Body.Close()
-	if deposit.AmountString == "" || !strings.HasSuffix(deposit.AmountString, ".00") || len(deposit.AmountString) > 8 {
-		return nil, fmt.Errorf("amount wrong format: %s", deposit.AmountString)
+	if depositReq.Amount == "" || !strings.HasSuffix(depositReq.Amount, ".00") || len(depositReq.Amount) > 8 {
+		return deposit{}, fmt.Errorf("amount wrong format: %s", depositReq.Amount)
 	}
-	amount, err := strconv.ParseFloat(deposit.AmountString, 64)
+	amount, err := strconv.ParseFloat(depositReq.Amount, 64)
 	if err != nil {
-		return nil, err
+		return deposit{}, err
 	}
-	deposit.amount = amount
-	deposit.trackingID = "generate a unque tracking ID of 127 chars"
-	return &deposit, nil
+	trackID, err := uuid.NewV4()
+	if err != nil {
+		fmt.Printf("could not generate uuid: %v", err)
+		return deposit{}, nil
+	}
+	return deposit{
+		amount:  amount,
+		project: depositReq.Project,
+		trackID: trackID.String(),
+	}, nil
 }
 
-type executeRequest struct {
-	Project uint `json:"project"`
+type execute struct {
+	TrackID string `json:"trackID"`
 }
 
-func newExecuteRequest(r *http.Request) (*executeRequest, error) {
-	var execute executeRequest
-	if err := json.NewDecoder(r.Body).Decode(&execute); err != nil {
-		return nil, err
+func newExecuteFromRequest(r *http.Request) (execute, error) {
+	var executeReq execute
+	if err := json.NewDecoder(r.Body).Decode(&executeReq); err != nil {
+		return execute{}, err
 	}
 	r.Body.Close()
-	return &execute, nil
+	return executeReq, nil
 }

@@ -1,27 +1,26 @@
 package payment
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
 
 	"github.com/fairlance/backend/dispatcher"
-
-	"encoding/json"
-
 	respond "gopkg.in/matryer/respond.v1"
 )
 
 type contextKey string
 
-func newPayment(options *Options) *payment {
+func newPayment(options *Options, db db) *payment {
 	return &payment{
 		primaryEmail:          options.PrimaryEmail,
 		authorizationURL:      options.AuthorizationURL,
 		requester:             &payPalRequester{options},
 		receiversPercentile:   0.92,
 		applicationDispatcher: dispatcher.NewApplicationDispatcher(options.ApplicationURL),
+		db: db,
 	}
 }
 
@@ -33,11 +32,12 @@ type payment struct {
 	paymentProviderChargePercentile float64
 	paymentProviderChargeFixed      float64
 	applicationDispatcher           dispatcher.ApplicationDispatcher
+	db                              db
 }
 
 func (p *payment) payPrimaryHandler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		deposit, err := newDepositRequest(r)
+		deposit, err := newDepositFromRequest(r)
 		if err != nil {
 			log.Printf("could not parse request: %v", err)
 			respond.With(w, r, http.StatusBadRequest, fmt.Errorf("could not parse request: %v", err))
@@ -55,12 +55,31 @@ func (p *payment) payPrimaryHandler() http.Handler {
 			respond.With(w, r, http.StatusInternalServerError, fmt.Errorf("could not execute a payPrimary request: %v", err))
 			return
 		}
+		var paymentReceivers paymentReceivers
+		for _, r := range receivers {
+			paymentReceivers = append(paymentReceivers, paymentReceiver{email: r.Email, amount: r.Amount})
+		}
+		if err := p.db.insert(transaction{
+			trackID:     deposit.trackID,
+			provider:    "paypal",
+			providerKey: response.PayKey,
+			projectID:   deposit.project,
+			amount:      fmt.Sprintf("%.2f", deposit.amount),
+			status:      response.ResponseEnvelope.Ack, // todo: not good enough
+			receivers:   paymentReceivers,              // todo: this is not saved to db
+		}); err != nil {
+			log.Printf("could not save transaction: %v", err)
+			respond.With(w, r, http.StatusInternalServerError, fmt.Errorf("could not save transaction: %v", err))
+			return
+		}
 		if response.ResponseEnvelope.Ack == "Success" {
 			respond.With(w, r, http.StatusOK, struct {
 				RedirectURL string
+				TrackID     string
 				Response    *PayResponse
 			}{
 				RedirectURL: fmt.Sprintf("%s%s", p.authorizationURL, response.PayKey),
+				TrackID:     deposit.trackID,
 				Response:    response,
 			})
 			return
@@ -92,21 +111,28 @@ func (p *payment) paymentDetailsHandler() http.Handler {
 
 func (p *payment) executePaymentHandler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// execute, err := newExecuteRequest(r)
-		// if err != nil {
-		// 	log.Printf("could not parse request: %v", err)
-		// 	respond.With(w, r, http.StatusBadRequest, fmt.Errorf("could not parse request: %v", err))
-		// 	return
-		// }
-		if r.URL.Query().Get("payKey") == "" { // should be project, and pay key is stored localy
-			respond.With(w, r, http.StatusBadRequest, "payKey missing")
+		execute, err := newExecuteFromRequest(r)
+		if err != nil {
+			log.Printf("could not parse request: %v", err)
+			respond.With(w, r, http.StatusBadRequest, fmt.Errorf("could not parse request: %v", err))
 			return
 		}
-		payKey := r.URL.Query().Get("payKey")
-		response, err := p.requester.executePayment(payKey)
+		t, err := p.db.get(execute.TrackID)
+		if err != nil {
+			log.Printf("could not find transaction: %v", err)
+			respond.With(w, r, http.StatusInternalServerError, fmt.Errorf("could not find transaction: %v", err))
+			return
+		}
+		response, err := p.requester.executePayment(t.providerKey)
 		if err != nil {
 			log.Printf("could not execute a executePayment request: %v", err)
 			respond.With(w, r, http.StatusInternalServerError, fmt.Errorf("could not execute a executePayment request: %v", err))
+			return
+		}
+		t.status = response.ResponseEnvelope.Ack // todo: not good enough
+		if err := p.db.update(t); err != nil {
+			log.Printf("could not update transaction: %v", err)
+			respond.With(w, r, http.StatusInternalServerError, fmt.Errorf("could not update transaction: %v", err))
 			return
 		}
 		if response.ResponseEnvelope.Ack == "Success" {
@@ -131,19 +157,19 @@ func (p *payment) ipnNotificationHandler() http.Handler {
 	})
 }
 
-func (p *payment) buildReceivers(deposit *depositRequest) ([]Receiver, error) {
-	project, err := p.getProject(deposit.Project)
+func (p *payment) buildReceivers(d deposit) ([]Receiver, error) {
+	project, err := p.getProject(d.project)
 	if err != nil {
 		return nil, err
 	}
 	receivers := []Receiver{
 		Receiver{
-			Amount:  fmt.Sprintf("%.2f", money(deposit.amount)),
+			Amount:  fmt.Sprintf("%.2f", money(d.amount)),
 			Email:   p.primaryEmail,
 			Primary: true,
 		},
 	}
-	freelancerAmount := deposit.amount * p.receiversPercentile / float64(len(project.Freelancers))
+	freelancerAmount := d.amount * p.receiversPercentile / float64(len(project.Freelancers))
 	for _, freelancer := range project.Freelancers {
 		receivers = append(receivers, Receiver{
 			Email:  freelancer.Email,

@@ -99,7 +99,7 @@ func (p *payPalRequester) newRequest(request interface{}, apiEndpoint string) (*
 
 func (p *payPalRequester) do(req *http.Request, response interface{}) error {
 	client := &http.Client{
-		Timeout: time.Duration(5 * time.Second),
+		Timeout: time.Duration(30 * time.Second),
 	}
 	resp, err := client.Do(req)
 	if err != nil {

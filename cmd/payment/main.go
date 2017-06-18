@@ -1,54 +1,41 @@
 package main
 
 import (
-	"flag"
+	"database/sql"
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/fairlance/backend/payment"
+	_ "github.com/lib/pq"
 )
 
 var (
-	port                int
-	secret              string
-	authorizationURL    string
-	adaptivePaymentsURL string
-	returnURL           string
-	cancelURL           string
-	applicationID       string
-	securityUserID      string
-	securityPassword    string
-	securitySignature   string
-	primaryEmail        string
-	ipnNotificationURL  string
-	applicationURL      string
+	port                = os.Getenv("PORT")
+	secret              = os.Getenv("SECRET")
+	authorizationURL    = os.Getenv("AUTHORIZATION_URL")
+	adaptivePaymentsURL = os.Getenv("ADAPTIVE_PAYMENTS_URL")
+	returnURL           = os.Getenv("RETURN_URL")
+	cancelURL           = os.Getenv("CANCEL_URL")
+	applicationID       = os.Getenv("APPLICATION_ID")
+	securityUserID      = os.Getenv("SECURITY_USER_ID")
+	securityPassword    = os.Getenv("SECURITY_PASSWORD")
+	securitySignature   = os.Getenv("SECURITY_SIGNATURE")
+	primaryEmail        = os.Getenv("PRIMARY_EMAIL")
+	ipnNotificationURL  = os.Getenv("IPN_NOTIFICATION_URL")
+	applicationURL      = os.Getenv("APPLICATION_URL")
+	dbHost              = os.Getenv("DB_HOST")
+	dbUser              = os.Getenv("DB_USER")
+	dbPass              = os.Getenv("DB_PASS")
 )
 
-func init() {
-	// f, err := os.OpenFile("/var/log/fairlance/payment.log", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
-	// if err != nil {
-	// 	log.Fatalf("error opening file: %v", err)
-	// }
-	// log.SetOutput(f)
-}
-
 func main() {
-	flag.IntVar(&port, "port", 3008, "Port.")
-	flag.StringVar(&secret, "secret", "", "Secret.")
-	flag.StringVar(&authorizationURL, "authorizationUrl", "", "authorizationUrl")
-	flag.StringVar(&adaptivePaymentsURL, "adaptivePaymentsUrl", "", "adaptivePaymentsUrl")
-	flag.StringVar(&returnURL, "returnUrl", "", "returnUrl")
-	flag.StringVar(&cancelURL, "cancelUrl", "", "cancelUrl")
-	flag.StringVar(&ipnNotificationURL, "ipnNotificationUrl", "", "ipnNotificationUrl")
-	flag.StringVar(&applicationID, "applicationId", "", "applicationId")
-	flag.StringVar(&securityUserID, "securityUserId", "", "securityUserId")
-	flag.StringVar(&securityPassword, "securityPassword", "", "securityPassword")
-	flag.StringVar(&securitySignature, "securitySignature", "", "securitySignature")
-	flag.StringVar(&primaryEmail, "primaryEmail", "", "primaryEmail")
-	flag.StringVar(&applicationURL, "applicationUrl", "localhost:3001", "applicationUrl")
-	flag.Parse()
-
+	db, err := sql.Open("postgres", fmt.Sprintf("host=%s user=%s password=%s dbname=payment sslmode=disable", dbHost, dbUser, dbPass))
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Close()
 	mux := payment.NewServeMux(&payment.Options{
 		AuthorizationURL:    authorizationURL,
 		AdaptivePaymentsURL: adaptivePaymentsURL,
@@ -61,8 +48,8 @@ func main() {
 		PrimaryEmail:        primaryEmail,
 		ApplicationURL:      applicationURL,
 		IPNNotificationURL:  ipnNotificationURL,
-	})
+	}, db)
 
-	log.Printf("Listening on: %d", port)
-	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), mux))
+	log.Printf("Listening on: %s", port)
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%s", port), mux))
 }

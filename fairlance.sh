@@ -19,7 +19,7 @@ case $CMD in
         ;;
     build )
         START=$(date +%s)
-        docker run --rm -v "/$(pwd)":/go/src/github.com/fairlance/backend/ -it fairlance/backend-dependencies sh -c "GOOS=linux CGO_ENABLED=0 go build -o service ./cmd/$2"
+        docker run --rm -v "/$(pwd)":/go/src/github.com/fairlance/backend/ -it fairlance/backend-dependencies sh -c "GOOS=linux CGO_ENABLED=0 go build -o service ./cmd/$2" || exit 1
         docker build -t fairlance/$2 .
         rm -f service
         END=$(date +%s)

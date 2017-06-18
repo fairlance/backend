@@ -1,12 +1,9 @@
 package dispatcher
 
 import (
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
-
-	"github.com/fairlance/backend/models"
 )
 
 type ApplicationDispatcher interface {
@@ -40,13 +37,5 @@ func (d *applicationDispatcher) GetProject(id uint) ([]byte, error) {
 		err = fmt.Errorf("\nStatus: %s\n Body: %s\nURL: %s", response.Status, content, url)
 		return nil, err
 	}
-	var envelope models.JSONEnvelope
-	if err := json.Unmarshal(content, &envelope); err != nil {
-		return nil, err
-	}
-	if envelope.Code != http.StatusOK {
-		err = fmt.Errorf("\nEnvelope: %+v\nURL: %s", envelope, url)
-		return nil, err
-	}
-	return json.Marshal(envelope.Data)
+	return content, nil
 }

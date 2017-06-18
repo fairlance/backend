@@ -32,7 +32,6 @@ func NewRouter(appContext *ApplicationContext) *mux.Router {
 			Handler(middleware.Chain(
 				middleware.RecoverHandler,
 				middleware.LoggerHandler,
-				middleware.JSONEnvelope,
 				context.ClearHandler,
 				contextAwareHandler(appContext),
 			)(route.Handler))
