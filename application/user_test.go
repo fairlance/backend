@@ -84,5 +84,4 @@ func TestWithUserWithNotAllDataInBody(t *testing.T) {
 	is.Equal(body["lastName"], "non zero value required")
 	is.Equal(body["password"], "non zero value required")
 	is.Equal(body["email"], "non zero value required")
-	is.Equal(body["image"], "non zero value required")
 }

@@ -19,7 +19,7 @@ func withUser(handler http.Handler) http.Handler {
 			LastName  string `json:"lastName" valid:"required"`
 			Password  string `json:"password" valid:"required"`
 			Email     string `json:"email" valid:"required,email"`
-			Image     string `json:"image" valid:"required"`
+			Image     string `json:"image"`
 		}
 
 		if err := decoder.Decode(&body); err != nil {
