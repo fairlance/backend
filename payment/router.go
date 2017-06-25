@@ -19,11 +19,6 @@ func NewServeMux(options *Options, db *sql.DB) *http.ServeMux {
 		middleware.LoggerHandler,
 		middleware.HTTPMethod(http.MethodPost),
 	)(payment.payPrimaryHandler()))
-	mux.Handle("/private/check", middleware.Chain(
-		middleware.RecoverHandler,
-		middleware.LoggerHandler,
-		middleware.HTTPMethod(http.MethodPost),
-	)(payment.paymentDetailsHandler()))
 	mux.Handle("/private/execute", middleware.Chain(
 		middleware.RecoverHandler,
 		middleware.LoggerHandler,

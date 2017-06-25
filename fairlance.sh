@@ -50,7 +50,10 @@ case $CMD in
         docker save -o notification_image fairlance/notification
         docker save -o payment_image fairlance/payment
         ;;
+    ngrok )
+        docker run -p 4040:4040 --net="host" fnichol/ngrok 8888
+        ;;
      *)
-        echo $"Usage: $0 {init|dependancies|ssh|build|buildAll|saveImages}"
+        echo $"Usage: $0 {init|dependencies|ssh|build|buildAll|saveImages|ngrok}"
         exit 1
 esac

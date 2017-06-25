@@ -19,7 +19,9 @@ type payPalRequester struct {
 	options *Options
 }
 
-func (p *payPalRequester) payPrimary(receivers []Receiver) (*PayResponse, error) {
+func (p *payPalRequester) providerID() string { return "paypal" }
+
+func (p *payPalRequester) payPrimary(receivers []Receiver) (*payResponse, error) {
 	payPrimaryRequest := &PayRequest{
 		ActionType:   "PAY_PRIMARY",
 		CurrencyCode: "EUR",
@@ -39,29 +41,18 @@ func (p *payPalRequester) payPrimary(receivers []Receiver) (*PayResponse, error)
 	if err != nil {
 		return nil, fmt.Errorf("could not create request: %v", err)
 	}
-	payResponse := &PayResponse{}
-	err = p.do(req, payResponse)
-	return payResponse, err
-}
-
-func (p *payPalRequester) paymentDetails(payKey string) (*PaymentDetailsResponse, error) {
-	paymentDetailRequest := &PaymentDetailsRequest{
-		PayKey: payKey,
-		RequestEnvelope: RequestEnvelope{
-			ErrorLanguage: "en_US",
-			DetailLevel:   "ReturnAll",
-		},
-	}
-	req, err := p.newRequest(paymentDetailRequest, paymentDetailsEndpont)
+	response := &PayResponse{}
+	err = p.do(req, response)
 	if err != nil {
-		return nil, fmt.Errorf("could not create request: %v", err)
+		return nil, err
 	}
-	paymentDetailsResponse := &PaymentDetailsResponse{}
-	err = p.do(req, paymentDetailsResponse)
-	return paymentDetailsResponse, err
+	return &payResponse{
+		paymentKey: response.PayKey,
+		success:    response.ResponseEnvelope.Ack == "Success",
+	}, err
 }
 
-func (p *payPalRequester) executePayment(payKey string) (*ExecutePaymentResponse, error) {
+func (p *payPalRequester) executePayment(payKey string) (*executeResponse, error) {
 	executePaymentRequest := &ExecutePaymentRequest{
 		PayKey: payKey,
 		RequestEnvelope: RequestEnvelope{
@@ -73,9 +64,14 @@ func (p *payPalRequester) executePayment(payKey string) (*ExecutePaymentResponse
 	if err != nil {
 		return nil, fmt.Errorf("could not create request: %v", err)
 	}
-	executePaymentResponse := &ExecutePaymentResponse{}
-	err = p.do(req, executePaymentResponse)
-	return executePaymentResponse, err
+	response := &ExecutePaymentResponse{}
+	err = p.do(req, response)
+	if err != nil {
+		return nil, err
+	}
+	return &executeResponse{
+		success: response.ResponseEnvelope.Ack == "Success",
+	}, err
 }
 
 func (p *payPalRequester) newRequest(request interface{}, apiEndpoint string) (*http.Request, error) {

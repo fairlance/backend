@@ -21,9 +21,10 @@ type ReceiverList struct {
 }
 
 type Receiver struct {
-	Amount  string `json:"amount"`
-	Email   string `json:"email"`
-	Primary bool   `json:"primary"`
+	Amount      string `json:"amount"`
+	Email       string `json:"email"`
+	Primary     bool   `json:"primary"`
+	fairlanceID uint   // fairlance specific ID, not sent to PAYPAL
 }
 
 type PayResponse struct {
