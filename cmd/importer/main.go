@@ -19,14 +19,6 @@ var (
 	searcherURL string
 )
 
-func init() {
-	// f, err := os.OpenFile("/var/log/fairlance/importer.log", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
-	// if err != nil {
-	// 	log.Fatalf("error opening file: %v", err)
-	// }
-	// log.SetOutput(f)
-}
-
 // Indexed 50000 documents, in 6334.31s (average 126.69ms/doc)
 func main() {
 	flag.IntVar(&port, "port", 3004, "http listen address")
@@ -38,7 +30,7 @@ func main() {
 	flag.Parse()
 
 	// start the HTTP server
-	http.Handle("/", importer.NewRouter(importer.Options{
+	http.Handle("/", importer.NewServeMux(importer.Options{
 		DBHost:      dbHost,
 		DBName:      dbName,
 		DBUser:      dbUser,

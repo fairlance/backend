@@ -1,0 +1,65 @@
+<html>
+
+<head>
+    <title>Payment</title>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u"
+        crossorigin="anonymous">
+</head>
+
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-xs-12">
+                <a href="/api/importer">Home</a>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-xs-12">
+                <form method="POST" action="payment">
+                    <label>Project Id: <input required type="number" name="project_id"/></label>
+                    <label>Status: <select required name="status">
+                        <option>working</option>
+                        <option>finalizing_terms</option>
+                        <option>concluded</option>
+                    </select></label>
+                    <input type="hidden" name="get_params" value="{{ .GETParams }}" />
+                    <button type="submit" class="btn btn-primary">Update</button>
+                </form>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-xs-12">
+                <form method="GET" action="payment">
+                    <button type="submit" name="offset" value="{{prev .Offset .Step}}" class="btn btn-primary">Previous {{ .Step }}</button>
+                    <button type="submit" name="offset" value="{{next .Offset .Step}}" class="btn btn-primary">Next {{ .Step }}</button>
+                </form>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-xs-12">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Status</th>
+                            <th>ClientID</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{ range $key, $p := .Projects }}
+                        <tr>
+                            <td>{{ $p.ID }}</td>
+                            <td>{{ $p.Name }}</td>
+                            <td>{{ $p.Status }}</td>
+                            <td>{{ $p.ClientID }}</td>
+                        </tr>
+                        {{end}}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+</body>
+
+</html>
