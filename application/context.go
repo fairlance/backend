@@ -144,10 +144,10 @@ func (ac *ApplicationContext) FillTables() {
 	})
 
 	ac.db.Create(&Project{
-		Name:        "Project Concluded",
-		Description: "Description Concluded",
+		Name:        "Project Done",
+		Description: "Description Done",
 		ClientID:    1,
-		Status:      projectStatusConcluded,
+		Status:      projectStatusDone,
 		Contract: &Contract{
 			Deadline:            time.Now().Add(24 * time.Hour * 2),
 			PerHour:             5,
@@ -159,10 +159,10 @@ func (ac *ApplicationContext) FillTables() {
 	}).Association("Freelancers").Append([]Freelancer{*f1, *f2})
 
 	ac.db.Create(&Project{
-		Name:        "Project Finilazing Terms",
-		Description: "Description Finilazing Terms",
+		Name:        "Project Finalizing Terms",
+		Description: "Description Finalizing Terms",
 		ClientID:    2,
-		Status:      projectStatusFinilazingTerms,
+		Status:      projectStatusFinalizingTerms,
 		Contract: &Contract{
 			Deadline:            time.Now().Add(24 * time.Hour * 5),
 			PerHour:             15,
@@ -181,10 +181,10 @@ func (ac *ApplicationContext) FillTables() {
 	}).Association("Freelancers").Replace([]Freelancer{*f1})
 
 	ac.db.Create(&Project{
-		Name:        "Project Working",
-		Description: "Description Working",
+		Name:        "Project In Progress",
+		Description: "Description In Progress",
 		ClientID:    1,
-		Status:      projectStatusWorking,
+		Status:      projectStatusInProgress,
 		Contract: &Contract{
 			Deadline:            time.Now().Add(time.Hour),
 			DeadlineFlexibility: 1,

@@ -1,8 +1,11 @@
 package application
 
-import "github.com/fairlance/backend/dispatcher"
+import (
+	"fmt"
+	"time"
 
-import "fmt"
+	"github.com/fairlance/backend/dispatcher"
+)
 
 type MessagingDispatcher struct {
 	messaging dispatcher.Messaging
@@ -21,6 +24,7 @@ func (m *MessagingDispatcher) send(projectID uint, data map[string]interface{}) 
 		},
 		Data:      data,
 		ProjectID: fmt.Sprint(projectID),
+		Timestamp: timeToMillis(time.Now()),
 	}
 	return m.messaging.Send(message)
 }
@@ -61,4 +65,8 @@ func (m *MessagingDispatcher) sendProjectConcludedByUser(project *Project, userT
 		"userType": userType,
 		"type":     "project_contract_accepted",
 	})
+}
+
+func timeToMillis(t time.Time) int64 {
+	return t.UnixNano() / 1000000
 }

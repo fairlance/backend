@@ -77,45 +77,69 @@ var routes = Routes{
 		"GetProject",
 		"GET",
 		"/project/{id}",
-		whenLoggedIn(withID(whenProjectBelongsToUserByID(getProjectByID()))),
+		middleware.Chain(
+			whenLoggedIn,
+			withID,
+			whenProjectBelongsToUserByID,
+		)(getProjectByID()),
 	},
 	Route{
 		"CreateProjectFromJobApplication",
 		"POST",
 		"/project/create_from_job_application/{id}",
-		whenLoggedIn(whenClient(withID(
-			whenJobApplicationBelongsToUser(
-				createProjectFromJobApplication())))),
-	},
-	Route{
-		"AddExtension",
-		"POST",
-		"/project/{id}/extension",
-		whenLoggedIn(whenClient(withID(
-			whenProjectBelongsToUserByID(withExtension(
-				addExtensionToProjectContract()))))),
-	},
-	Route{
-		"AgreeToContractTerms",
-		"POST",
-		"/project/{id}/contract/agree",
-		whenLoggedIn(withID(whenProjectBelongsToUserByID(withProjectByID(agreeToContractTerms())))),
-	},
-	Route{
-		"AgreeToExtensionTerms",
-		"POST",
-		"/project/{id}/extension/{extension_id}/agree",
-		whenLoggedIn(withID(whenProjectBelongsToUserByID(
-			withProjectByID(withUINT("extension_id")(withExtensionWhenBelongsToProject(
-				agreeToExtensionTerms())))))),
+		middleware.Chain(
+			whenLoggedIn,
+			whenClient,
+			withID,
+			whenJobApplicationBelongsToUser,
+		)(createProjectFromJobApplication()),
 	},
 	Route{
 		"AddProjectContractProposal",
 		"POST",
 		"/project/{id}/contract/proposal",
-		whenLoggedIn(withID(whenProjectBelongsToUserByID(
-			withProjectByID(withProposal(
-				setProposalToProjectContract()))))),
+		middleware.Chain(
+			whenLoggedIn,
+			withID,
+			whenProjectBelongsToUserByID,
+			withProjectByID,
+			withProposal,
+		)(setProposalToProjectContract()),
+	},
+	Route{
+		"AgreeToContractTerms",
+		"POST",
+		"/project/{id}/contract/agree",
+		middleware.Chain(
+			whenLoggedIn,
+			withID,
+			whenProjectBelongsToUserByID,
+			withProjectByID,
+		)(agreeToContractTerms()),
+	},
+	Route{
+		"AddExtension",
+		"POST",
+		"/project/{id}/extension",
+		middleware.Chain(
+			whenLoggedIn,
+			whenClient,
+			withID,
+			whenProjectBelongsToUserByID,
+			withExtension,
+		)(addExtensionToProjectContract()),
+	},
+	Route{
+		"AgreeToExtensionTerms",
+		"POST",
+		"/project/{id}/extension/{extension_id}/agree",
+		middleware.Chain(
+			whenLoggedIn,
+			whenProjectBelongsToUserByID,
+			withProjectByID,
+			withUINT("extension_id"),
+			withExtensionWhenBelongsToProject,
+		)(agreeToExtensionTerms()),
 	},
 	Route{
 		"AddProjectContractExtensionProposal",
@@ -132,10 +156,15 @@ var routes = Routes{
 		)(setProposalToProjectContractExtension()),
 	},
 	Route{
-		"ConcludeProject",
+		"FinishProject",
 		"POST",
-		"/project/{id}/conclude",
-		whenLoggedIn(withID(whenProjectBelongsToUserByID(withProjectByID(concludeProject())))),
+		"/project/{id}/finish",
+		middleware.Chain(
+			whenLoggedIn,
+			withID,
+			whenProjectBelongsToUserByID,
+			withProjectByID,
+		)(finishProject()),
 	},
 
 	// Route{

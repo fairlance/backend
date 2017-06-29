@@ -14,9 +14,11 @@ import (
 )
 
 const (
-	projectStatusWorking         = "working"
-	projectStatusFinilazingTerms = "finalizing_terms"
-	projectStatusConcluded       = "concluded"
+	projectStatusFinalizingTerms = "finalizing_terms"
+	projectStatusPendingFunds    = "pending_funds"
+	projectStatusInProgress      = "in_progress"
+	projectStatusPendingFinished = "pending_finished"
+	projectStatusDone            = "done"
 )
 
 func getAllProjects() http.Handler {
@@ -111,16 +113,13 @@ func withProjectByID(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var appContext = context.Get(r, "context").(*ApplicationContext)
 		var id = context.Get(r, "id").(uint)
-
 		project, err := appContext.ProjectRepository.getByID(id)
 		if err != nil {
 			log.Printf("could not find project: %v", err)
 			respond.With(w, r, http.StatusNotFound, fmt.Errorf("could not find project"))
 			return
 		}
-
 		context.Set(r, "project", project)
-
 		next.ServeHTTP(w, r)
 	})
 }
@@ -129,44 +128,33 @@ func createProjectFromJobApplication() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var appContext = context.Get(r, "context").(*ApplicationContext)
 		var id = context.Get(r, "id").(uint)
-
 		jobApplication, err := appContext.JobRepository.GetJobApplication(id)
 		if err != nil {
 			respond.With(w, r, http.StatusNotFound, err)
 			return
 		}
-
 		job, err := appContext.JobRepository.GetJob(jobApplication.JobID)
 		if err != nil {
 			respond.With(w, r, http.StatusNotFound, err)
 			return
 		}
-
 		project := NewProject(job, jobApplication)
-
-		err = appContext.ProjectRepository.add(project)
-		if err != nil {
+		if err = appContext.ProjectRepository.add(project); err != nil {
 			log.Printf("create project: %v\n", err)
 			respond.With(w, r, http.StatusInternalServerError, err)
 			return
 		}
-
-		job.IsActive = false
-		err = appContext.JobRepository.update(job)
-		if err != nil {
+		if err = appContext.JobRepository.update(job); err != nil {
 			log.Printf("deactivate job: %v\n", err)
 			respond.With(w, r, http.StatusInternalServerError, err)
 			return
 		}
-
 		if err := appContext.Indexer.Delete("jobs", fmt.Sprint(job.ID)); err != nil {
 			log.Printf("job could not be deleted from searcher: %v", err)
 		}
-
 		if err := appContext.NotificationDispatcher.notifyJobApplicationAccepted(jobApplication, project); err != nil {
 			log.Printf("could not notifyJobApplicationAccepted: %v", err)
 		}
-
 		respond.With(w, r, http.StatusOK, project)
 	})
 }
@@ -177,13 +165,11 @@ func agreeToContractTerms() http.Handler {
 		user := context.Get(r, "user").(*User)
 		userType := context.Get(r, "userType").(string)
 		project := context.Get(r, "project").(*Project)
-
 		if userType == "client" {
 			project.ClientAgreed = true
 		} else if userType == "freelancer" {
 			project.FreelancersAgreed = append(project.FreelancersAgreed, user.ID)
 		}
-
 		if err := appContext.ProjectRepository.update(project); err != nil {
 			log.Printf("could not update project contract: %v", err)
 			respond.With(w, r, http.StatusInternalServerError, fmt.Errorf("could not update project contract"))
@@ -192,10 +178,9 @@ func agreeToContractTerms() http.Handler {
 		if err := appContext.MessagingDispatcher.sendContractAccepted(project, userType, user); err != nil {
 			log.Printf("could not sendContractAccepted: %v", err)
 		}
-
 		if project.canBeStarted() {
 			project.mergeProposalToContract()
-			project.Status = projectStatusWorking
+			project.Status = projectStatusPendingFunds
 			if err := appContext.ProjectRepository.update(project); err != nil {
 				log.Printf("could not update project: %v", err)
 				respond.With(w, r, http.StatusInternalServerError, fmt.Errorf("could not update project"))
@@ -206,6 +191,23 @@ func agreeToContractTerms() http.Handler {
 			}
 		}
 
+		respond.With(w, r, http.StatusOK, project)
+	})
+}
+
+func projectFunded() http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		appContext := context.Get(r, "context").(*ApplicationContext)
+		project := context.Get(r, "project").(*Project)
+		project.Status = projectStatusInProgress
+		if err := appContext.ProjectRepository.update(project); err != nil {
+			log.Printf("could not update project: %v", err)
+			respond.With(w, r, http.StatusInternalServerError, fmt.Errorf("could not update project"))
+			return
+		}
+		if err := appContext.MessagingDispatcher.sendProjectStateChanged(project); err != nil {
+			log.Printf("could not sendProjectStateChanged: %v", err)
+		}
 		respond.With(w, r, http.StatusOK, project)
 	})
 }
@@ -246,7 +248,7 @@ func setProposalToProjectContract() http.Handler {
 	})
 }
 
-func concludeProject() http.Handler {
+func finishProject() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		appContext := context.Get(r, "context").(*ApplicationContext)
 		user := context.Get(r, "user").(*User)
@@ -269,7 +271,7 @@ func concludeProject() http.Handler {
 		}
 
 		if project.allUsersConcluded() {
-			project.Status = projectStatusConcluded
+			project.Status = projectStatusDone
 			if err := appContext.ProjectRepository.update(project); err != nil {
 				log.Printf("could not update project status: %v", err)
 				respond.With(w, r, http.StatusInternalServerError, fmt.Errorf("could not update project status"))

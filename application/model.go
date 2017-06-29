@@ -76,7 +76,7 @@ func NewProject(job *Job, jobApplication *JobApplication) *Project {
 		Name:        job.Name,
 		Description: job.Details,
 		ClientID:    job.ClientID,
-		Status:      projectStatusFinilazingTerms,
+		Status:      projectStatusFinalizingTerms,
 		Freelancers: []Freelancer{
 			*jobApplication.Freelancer,
 		},

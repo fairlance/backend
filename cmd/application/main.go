@@ -1,47 +1,25 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/fairlance/backend/application"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 )
 
-var (
-	port            int
-	dbHost          string
-	dbName          string
-	dbUser          string
-	dbPass          string
-	secret          string
-	notificationURL string
-	messagingURL    string
-	searcherURL     string
-)
-
-func init() {
-	// f, err := os.OpenFile("/var/log/fairlance/application.log", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
-	// if err != nil {
-	// 	log.Fatalf("error opening file: %v", err)
-	// }
-	// log.SetOutput(f)
-}
-
 func main() {
-	flag.IntVar(&port, "port", 3001, "Specify the port to listen to.")
-	flag.StringVar(&dbHost, "dbHost", "localhost", "DB host.")
-	flag.StringVar(&dbName, "dbName", "application", "DB name.")
-	flag.StringVar(&dbUser, "dbUser", "", "DB user.")
-	flag.StringVar(&dbPass, "dbPass", "", "Db user's password.")
-	flag.StringVar(&secret, "secret", "secret", "Secret string used for JWS.")
-	flag.StringVar(&notificationURL, "notificationUrl", "localhost:3007", "Notification endpoint.")
-	flag.StringVar(&messagingURL, "messagingUrl", "localhost:3007", "Messaging endpoint.")
-	flag.StringVar(&searcherURL, "searcherUrl", "localhost:3003", "Url of the searcher.")
-	flag.Parse()
-
+	var port = os.Getenv("PORT")
+	var dbHost = os.Getenv("DB_HOST")
+	var dbName = os.Getenv("DB_NAME")
+	var dbUser = os.Getenv("DB_USER")
+	var dbPass = os.Getenv("DB_PASS")
+	var secret = os.Getenv("SECRET")
+	var notificationURL = os.Getenv("NOTIFICATION_URL")
+	var messagingURL = os.Getenv("MESSAGING_URL")
+	var searcherURL = os.Getenv("SEARCHER_URL")
 	options := application.ContextOptions{
 		DbHost:          dbHost,
 		DbName:          dbName,
@@ -52,16 +30,12 @@ func main() {
 		MessagingURL:    messagingURL,
 		SearcherURL:     searcherURL,
 	}
-
 	var appContext, err = application.NewContext(options)
 	if err != nil {
 		log.Fatal(err)
 	}
 	appContext.DropCreateFillTables()
-
-	router := application.NewRouter(appContext)
-	http.Handle("/", router)
-
-	log.Printf("Listening on: %d", port)
-	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), nil))
+	http.Handle("/", application.NewRouter(appContext))
+	log.Printf("Listening on: %s", port)
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%s", port), nil))
 }
