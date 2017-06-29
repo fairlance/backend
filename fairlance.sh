@@ -51,7 +51,7 @@ case $CMD in
         docker save -o payment_image fairlance/payment
         ;;
     ngrok )
-        docker run -p 4040:4040 --net="host" fnichol/ngrok 8888
+        docker run -d -p 4040:4040 --net="host" --name ngrok fnichol/ngrok 8000
         ;;
      *)
         echo $"Usage: $0 {init|dependencies|ssh|build|buildAll|saveImages|ngrok}"
