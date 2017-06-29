@@ -18,9 +18,11 @@
                 <form method="POST" action="payment">
                     <label>Project Id: <input required type="number" name="project_id"/></label>
                     <label>Status: <select required name="status">
-                        <option>working</option>
-                        <option>finalizing_terms</option>
-                        <option>concluded</option>
+                        <option disabled>finalizing_terms</option>
+                        <option disabled>pending_funds</option>
+                        <option>in_progress</option>
+                        <option disabled>pending_finished</option>
+                        <option disabled>done</option>
                     </select></label>
                     <input type="hidden" name="get_params" value="{{ .GETParams }}" />
                     <button type="submit" class="btn btn-primary">Update</button>
@@ -40,6 +42,7 @@
                 <table class="table table-striped">
                     <thead>
                         <tr>
+                            <th></th>
                             <th>ID</th>
                             <th>Name</th>
                             <th>Status</th>
@@ -47,8 +50,16 @@
                         </tr>
                     </thead>
                     <tbody>
+                        {{ $params := .GETParams }}
                         {{ range $key, $p := .Projects }}
                         <tr>
+                            <td>
+                                <form method="POST" action="payment" style="margin: 0;">
+                                    <input required type="hidden" value="{{ $p.ID }}" name="project_id"/>
+                                    <input type="hidden" name="get_params" value="{{ $params }}" />
+                                    <button type="submit" class="btn btn-primary">Set In Progress</button>
+                                </form>
+                            </td>
                             <td>{{ $p.ID }}</td>
                             <td>{{ $p.Name }}</td>
                             <td>{{ $p.Status }}</td>

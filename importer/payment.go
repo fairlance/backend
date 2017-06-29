@@ -2,6 +2,7 @@ package importer
 
 import (
 	"database/sql"
+	"fmt"
 	"html/template"
 	"log"
 	"net/http"
@@ -11,7 +12,6 @@ import (
 const (
 	step      = 10
 	selectSQL = `SELECT id, name, status, client_id FROM projects ORDER BY id DESC LIMIT $1 OFFSET $2;`
-	updateSQL = `UPDATE projects SET status=$1 WHERE id=$2;`
 )
 
 type project struct {
@@ -21,7 +21,7 @@ type project struct {
 	ClientID string
 }
 
-func paymentHandler(db *sql.DB) http.Handler {
+func paymentHandler(db *sql.DB, applicationURL string) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var projects []project
 		if r.Method == http.MethodPost {
@@ -30,9 +30,20 @@ func paymentHandler(db *sql.DB) http.Handler {
 			if err != nil {
 				log.Printf("could not parse id: %v", err)
 			}
-			status := r.Form.Get("status")
-			if _, err = db.Exec(updateSQL, status, projectID); err != nil {
-				log.Printf("could not update project: %v", err)
+			url := fmt.Sprintf("%s/private/project/%d/fund", applicationURL, projectID)
+			request, err := http.NewRequest("GET", url, nil)
+			if err != nil {
+				log.Printf("could not create request: %v", err)
+				return
+			}
+			response, err := http.DefaultClient.Do(request)
+			if err != nil {
+				log.Printf("could not do request: %v", err)
+				return
+			}
+			if response.StatusCode != http.StatusOK {
+				log.Printf("bad status code when changing project status: %d", response.StatusCode)
+				return
 			}
 			http.Redirect(w, r, "/api/importer/payment?"+r.Form.Get("get_params"), http.StatusSeeOther)
 			return
