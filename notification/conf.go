@@ -33,7 +33,7 @@ func newRouterConf(users map[string]wsrouter.User, db *mongoDB) wsrouter.RouterC
 }
 
 func register(usr wsrouter.User, users map[string]wsrouter.User, db *mongoDB) []wsrouter.Message {
-	log.Println("registering", usr.Username)
+	log.Println("registering", usr.UniqueID())
 	users[usr.UniqueID()] = usr
 	var messages = []wsrouter.Message{}
 
@@ -47,13 +47,12 @@ func register(usr wsrouter.User, users map[string]wsrouter.User, db *mongoDB) []
 }
 
 func unregister(usr wsrouter.User, users map[string]wsrouter.User) {
-	log.Println("unregistering", usr.Username)
+	log.Println("unregistering", usr.UniqueID())
 	delete(users, usr.UniqueID())
 }
 
 func broadcastTo(msg *wsrouter.Message, users map[string]wsrouter.User) []wsrouter.User {
-	log.Printf("broadcast %v\n", msg)
-
+	log.Printf("broadcast %v", msg)
 	if len(msg.To) == 0 {
 		log.Println("error: message not addressed to anyone")
 		return []wsrouter.User{}
@@ -62,7 +61,7 @@ func broadcastTo(msg *wsrouter.Message, users map[string]wsrouter.User) []wsrout
 	for _, userConf := range msg.To {
 		user, ok := users[userConf.UniqueID()]
 		if !ok {
-			log.Printf("error: user not found [%v]", userConf)
+			log.Printf("user not found [%v]", userConf)
 		} else {
 			u = append(u, user)
 		}
