@@ -54,19 +54,26 @@ func (h *Hub) Run() {
 				log.Println(err)
 				break
 			}
-			log.Println("registering", user.username, "to room:", user.room)
+			log.Println("registering", newConnection.id, "to room:", user.room)
 			h.sendOldMessagesToUser(user)
 		case user := <-h.unregister:
-			log.Println("unregistering", user.username, "from room:", user.room)
+			log.Println("unregistering", user.id, "from room:", user.room)
 			h.removeUser(user)
 		case msg := <-h.broadcast:
 			log.Println("broadcasting message", msg)
 			h.db.save(msg)
 			if h.rooms[msg.ProjectID] == nil {
-				log.Println("sending to unknown room", msg.ProjectID)
+				log.Println("tried to send to room", msg.ProjectID, "but it was not found, trying to accuire it")
+				room, err := h.getARoom(msg.ProjectID)
+				if err != nil {
+					log.Printf("could not find room: %v", err)
+					continue
+				}
+				for _, usr := range room.Users {
+					h.notifyUser(usr, msg)
+				}
 				continue
 			}
-			h.printRooms()
 			for _, usr := range h.rooms[msg.ProjectID].Users {
 				if usr.online {
 					select {
@@ -141,7 +148,7 @@ func (h *Hub) printRooms() {
 	for _, room := range h.rooms {
 		log.Printf("in room %s", room.ID)
 		for _, usr := range room.Users {
-			log.Printf("    %s, online: %b ", usr.username, usr.online)
+			log.Printf("    %s, online: %t ", usr.username, usr.online)
 		}
 	}
 }
