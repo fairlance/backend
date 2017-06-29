@@ -13,9 +13,9 @@ test:
     override:
         - ./fairlance.sh test:
             pwd: ./../src/github.com/fairlance/backend
+    post:
         - ./fairlance.sh buildAll:
             pwd: ./../src/github.com/fairlance/backend
-    post:
         - ./fairlance.sh saveImages:
             pwd: ./../src/github.com/fairlance/backend
         - sudo cp -Rf *_image $CIRCLE_ARTIFACTS:
