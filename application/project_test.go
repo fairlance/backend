@@ -163,7 +163,7 @@ func TestProjectGetByID(t *testing.T) {
 		Name:        "Name1",
 		Description: "Description1",
 		ClientID:    1,
-		Status:      projectStatusConcluded,
+		Status:      projectStatusDone,
 		Contract: &Contract{
 			Deadline:            timeNow,
 			PerHour:             2,
@@ -188,7 +188,7 @@ func TestProjectGetByID(t *testing.T) {
 	is.Equal(body.Name, "Name1")
 	is.Equal(body.Description, "Description1")
 	is.Equal(body.Contract.Deadline.Format(time.RFC3339), timeNow.Format(time.RFC3339))
-	is.Equal(body.Status, projectStatusConcluded)
+	is.Equal(body.Status, projectStatusDone)
 	is.Equal(body.Contract.PerHour, 2)
 	is.Equal(body.Contract.Hours, 3)
 	is.Equal(body.Contract.DeadlineFlexibility, 4)
@@ -270,7 +270,7 @@ func TestCreateProjectFromJobApplication(t *testing.T) {
 	is.Equal(projectRepoMock.AddCall.Receives.Project.Description, "jobDetails")
 	is.Equal(projectRepoMock.AddCall.Receives.Project.ClientID, uint(33))
 	is.Equal(projectRepoMock.AddCall.Receives.Project.Freelancers[0].ID, uint(22))
-	is.Equal(projectRepoMock.AddCall.Receives.Project.Status, projectStatusFinilazingTerms)
+	is.Equal(projectRepoMock.AddCall.Receives.Project.Status, projectStatusFinalizingTerms)
 	is.Equal(projectRepoMock.AddCall.Receives.Project.Contract.Deadline, deadline)
 	is.Equal(projectRepoMock.AddCall.Receives.Project.Contract.Hours, 62)
 	is.Equal(projectRepoMock.AddCall.Receives.Project.Contract.PerHour, 8)
