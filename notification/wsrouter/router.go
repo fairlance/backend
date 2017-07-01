@@ -21,7 +21,7 @@ type MessageUser struct {
 }
 
 func (user *MessageUser) UniqueID() string {
-	return fmt.Sprintf("%s.%d", user.Type, user.ID)
+	return fmt.Sprintf("%s_%d", user.Type, user.ID)
 }
 
 type Message struct {
@@ -41,7 +41,7 @@ type User struct {
 }
 
 func (user *User) UniqueID() string {
-	return fmt.Sprintf("%s.%d", user.Type, user.ID)
+	return fmt.Sprintf("%s_%d", user.Type, user.ID)
 }
 
 type Router struct {
