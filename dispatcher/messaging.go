@@ -42,7 +42,7 @@ func (m *HTTPMessaging) Send(msg *Message) error {
 		log.Printf("could not mashall msg: %v", err)
 		return err
 	}
-	url := fmt.Sprintf("http://%s/%s/send", m.MessagingURL, msg.ProjectID)
+	url := fmt.Sprintf("%s/%s/send", m.MessagingURL, msg.ProjectID)
 	request, err := http.NewRequest("POST", url, bytes.NewReader(payload))
 	if err != nil {
 		log.Println(err)

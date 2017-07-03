@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/fairlance/backend/dispatcher"
+	"github.com/fairlance/backend/models"
 )
 
 type MessagingDispatcher struct {
@@ -29,9 +30,10 @@ func (m *MessagingDispatcher) send(projectID uint, data map[string]interface{}) 
 	return m.messaging.Send(message)
 }
 
-func (m *MessagingDispatcher) sendProjectContractProposalAdded(projectID uint, proposal *Proposal) error {
+func (m *MessagingDispatcher) sendProjectContractProposalAdded(projectID uint, proposal *Proposal, user *models.User) error {
 	return m.send(projectID, map[string]interface{}{
 		"proposal": proposal,
+		"user":     user,
 		"type":     "project_contract_proposal",
 	})
 }
@@ -51,19 +53,24 @@ func (m *MessagingDispatcher) sendProjectStateChanged(project *Project) error {
 	})
 }
 
-func (m *MessagingDispatcher) sendContractAccepted(project *Project, userType string, user *User) error {
+func (m *MessagingDispatcher) sendContractAccepted(project *Project, user *models.User) error {
 	return m.send(project.ID, map[string]interface{}{
-		"user":     user,
-		"userType": userType,
-		"type":     "project_contract_accepted",
+		"user": user,
+		"type": "project_contract_accepted",
 	})
 }
 
-func (m *MessagingDispatcher) sendProjectConcludedByUser(project *Project, userType string, user *User) error {
+func (m *MessagingDispatcher) sendProjectFinishedByFreelancer(project *Project, user *models.User) error {
 	return m.send(project.ID, map[string]interface{}{
-		"user":     user,
-		"userType": userType,
-		"type":     "project_contract_accepted",
+		"user": user,
+		"type": "project_finished_by_freelancer",
+	})
+}
+
+func (m *MessagingDispatcher) sendProjectDone(project *Project, user *models.User) error {
+	return m.send(project.ID, map[string]interface{}{
+		"user": user,
+		"type": "project_done",
 	})
 }
 

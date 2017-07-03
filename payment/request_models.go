@@ -46,8 +46,12 @@ func newDepositFromRequest(r *http.Request) (deposit, error) {
 	}, nil
 }
 
+// type execute struct {
+// 	TrackID string `json:"trackID"`
+// }
+
 type execute struct {
-	TrackID string `json:"trackID"`
+	ProjectID uint `json:"projectID"`
 }
 
 func newExecuteFromRequest(r *http.Request) (execute, error) {

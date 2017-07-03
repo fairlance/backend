@@ -19,7 +19,7 @@ func TestWithUser(t *testing.T) {
             "lastName": "lastname",
 			"email": "email@mail.com",
 			"password": "password",
-			"image": "http://url.for/image"
+			"salutation": "Mr."
 		}
 	`)
 	w := httptest.NewRecorder()
@@ -29,16 +29,16 @@ func TestWithUser(t *testing.T) {
 		nextCalled = true
 	})
 
-	withUser(handler).ServeHTTP(w, r)
+	withUserToAdd(handler).ServeHTTP(w, r)
 
 	is.Equal(w.Code, http.StatusOK)
 	is.Equal(nextCalled, true)
-	u := context.Get(r, "user").(*User)
+	u := context.Get(r, "userToAdd").(*User)
 	is.Equal(u.FirstName, "firstname")
 	is.Equal(u.LastName, "lastname")
 	is.Equal(u.Email, "email@mail.com")
 	is.Equal(u.Password, "password")
-	is.Equal(u.Image, "http://url.for/image")
+	is.Equal(u.Salutation, "Mr.")
 }
 
 var badBodyWithUserTestData = []struct {
@@ -58,7 +58,7 @@ func TestWithUserWithBadBody(t *testing.T) {
 			t.Error("Should not be called")
 		})
 
-		withUser(handler).ServeHTTP(w, r)
+		withUserToAdd(handler).ServeHTTP(w, r)
 
 		is.Equal(w.Code, http.StatusBadRequest)
 		var body map[string]interface{}
@@ -75,7 +75,7 @@ func TestWithUserWithNotAllDataInBody(t *testing.T) {
 		t.Error("Should not be called")
 	})
 
-	withUser(handler).ServeHTTP(w, r)
+	withUserToAdd(handler).ServeHTTP(w, r)
 
 	is.Equal(w.Code, http.StatusBadRequest)
 	var body map[string]interface{}

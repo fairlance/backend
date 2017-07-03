@@ -14,7 +14,7 @@ type Indexer interface {
 }
 
 func NewHTTPIndexer(searcherURL string) *HTTPIndexer {
-	return &HTTPIndexer{"http://" + searcherURL}
+	return &HTTPIndexer{searcherURL}
 }
 
 type HTTPIndexer struct {

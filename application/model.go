@@ -14,11 +14,12 @@ type Model struct {
 
 type User struct {
 	Model
-	FirstName string `json:"firstName"`
-	LastName  string `json:"lastName"`
-	Password  string `json:"-"`
-	Email     string `json:"email" valid:"required,email" sql:"index" gorm:"unique"`
-	Image     string `json:"image"`
+	FirstName  string `json:"firstName"`
+	LastName   string `json:"lastName"`
+	Password   string `json:"-"`
+	Email      string `json:"email" valid:"required,email" sql:"index" gorm:"unique"`
+	Image      string `json:"image"`
+	Salutation string `json:"salutation"`
 }
 
 type Freelancer struct {
@@ -91,6 +92,14 @@ func NewProject(job *Job, jobApplication *JobApplication) *Project {
 		FreelancersConcluded: []uint{},
 	}
 }
+
+func (p *Project) allFreelancersConcluded() bool {
+	if len(p.FreelancersConcluded) == len(p.Freelancers) {
+		return true
+	}
+	return false
+}
+
 func (p *Project) allUsersConcluded() bool {
 	if p.ClientConcluded && len(p.FreelancersConcluded) == len(p.Freelancers) {
 		return true

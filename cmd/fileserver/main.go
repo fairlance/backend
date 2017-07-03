@@ -2,7 +2,6 @@ package main
 
 import (
 	"errors"
-	"flag"
 	"fmt"
 	"io"
 	"log"
@@ -13,64 +12,33 @@ import (
 	respond "gopkg.in/matryer/respond.v1"
 )
 
-var (
-	folderPath = flag.String("folderPath", "/tmp/files", "Storage path.")
-	port       = flag.Int("port", 3006, "Port.")
-	secret     = flag.String("secret", "", "Secret.")
-	opts       *respond.Options
-)
+const folderPath = "/tmp/files"
 
-func init() {
-	flag.Parse()
-	err := os.MkdirAll(*folderPath, 0755)
+func main() {
+	port := os.Getenv("PORT")
+	secret := os.Getenv("SECRET")
+
+	err := os.MkdirAll(folderPath, 0755)
 	if err != nil {
 		log.Fatalf("error creating folder: %v", err)
 	}
 
-	// f, err := os.OpenFile("/var/log/fairlance/fileserver.log", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
-	// if err != nil {
-	// 	log.Fatalf("error opening file: %v", err)
-	// }
-	// log.SetOutput(f)
-}
-
-func main() {
 	http.Handle("/file/", middleware.Chain(
-		ensureMethod("GET"),
+		middleware.CORSHandler,
 		middleware.JSONEnvelope,
-		middleware.WithTokenFromHeader,
-		middleware.AuthenticateTokenWithClaims(*secret),
-	)(http.StripPrefix("/file/", http.FileServer(http.Dir(*folderPath)))))
+		middleware.HTTPMethod("GET"),
+	)(http.StripPrefix("/file/", http.FileServer(http.Dir(folderPath)))))
 
 	http.Handle("/upload", middleware.Chain(
-		ensureMethod("POST"),
+		middleware.CORSHandler,
 		middleware.JSONEnvelope,
 		middleware.WithTokenFromHeader,
-		middleware.AuthenticateTokenWithClaims(*secret),
+		middleware.AuthenticateTokenWithClaims(secret),
+		middleware.HTTPMethod("POST"),
 	)(upload()))
 
-	log.Printf("Listening on: %d", *port)
-	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", *port), nil))
-}
-
-func ensureMethod(method string) middleware.Middleware {
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			w.Header().Set("Access-Control-Allow-Origin", "*")
-			w.Header().Set("Access-Control-Allow-Methods", r.Method+",OPTIONS")
-			w.Header().Set("Access-Control-Allow-Headers",
-				"Accept, Content-Type, Content-Length, Accept-Encoding, Authorization")
-			if r.Method == "OPTIONS" {
-				// Stop here for a Preflighted OPTIONS request.
-				return
-			} else if r.Method != method {
-				respond.With(w, r, http.StatusMethodNotAllowed, fmt.Errorf("bad method, only %s is allowed", method))
-				return
-			}
-
-			next.ServeHTTP(w, r)
-		})
-	}
+	log.Printf("Listening on: %s", port)
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%s", port), nil))
 }
 
 func upload() http.Handler {
@@ -113,7 +81,7 @@ func upload() http.Handler {
 			return
 		}
 
-		f, err := os.Create(*folderPath + "/" + header.Filename)
+		f, err := os.Create(folderPath + "/" + header.Filename)
 		if err != nil {
 			log.Println(err)
 			respond.With(w, r, http.StatusInternalServerError, err)

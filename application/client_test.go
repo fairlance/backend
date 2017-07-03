@@ -126,7 +126,7 @@ func TestAddClientWithError(t *testing.T) {
 			ID: 1,
 		},
 	}
-	context.Set(r, "user", user)
+	context.Set(r, "userToAdd", user)
 
 	addClient().ServeHTTP(w, r)
 
@@ -148,7 +148,7 @@ func TestAddClient(t *testing.T) {
 			ID: 1,
 		},
 	}
-	context.Set(r, "user", user)
+	context.Set(r, "userToAdd", user)
 
 	addClient().ServeHTTP(w, r)
 

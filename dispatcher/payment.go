@@ -11,13 +11,13 @@ import (
 	"log"
 )
 
-type PaymentDispatcher interface {
-	Deposit(amount float64, projectID uint) (string, string, error)
-	Execute(trackID string) error
+type Payment interface {
+	// Deposit(amount float64, projectID uint) (string, string, error)
+	Execute(trackID uint) error
 }
 
-func NewPaymentDispatcher(url string) PaymentDispatcher {
-	return &paymentDispatcher{
+func NewHTTPPayment(url string) Payment {
+	return &httpPayment{
 		url: url,
 		client: &http.Client{
 			Timeout: time.Duration(30 * time.Second),
@@ -25,63 +25,19 @@ func NewPaymentDispatcher(url string) PaymentDispatcher {
 	}
 }
 
-type depositRequest struct {
-	Project uint
-	Amount  string
-}
-
-type depositResponse struct {
-	TrackID     string
-	RedirectURL string
-}
-
 type executeRequest struct {
-	TrackID string
+	ProjectID uint
 }
 
-type paymentDispatcher struct {
+type httpPayment struct {
 	url    string
 	client *http.Client
 }
 
-func (d *paymentDispatcher) Deposit(amount float64, projectID uint) (string, string, error) {
-	url := fmt.Sprintf("http://%s/private/deposit", d.url)
-	b, err := json.Marshal(depositRequest{
-		Amount:  fmt.Sprintf("%.2f", amount),
-		Project: projectID,
-	})
-	if err != nil {
-		return "", "", err
-	}
-	request, err := http.NewRequest("POST", url, bytes.NewReader(b))
-	if err != nil {
-		return "", "", err
-	}
-	response, err := d.client.Do(request)
-	if err != nil {
-		return "", "", err
-	}
-	content, err := ioutil.ReadAll(response.Body)
-	if err != nil {
-		return "", "", err
-	}
-	defer response.Body.Close()
-	if response.StatusCode != http.StatusOK {
-		err = fmt.Errorf("\nStatus: %s\n Body: %s\nURL: %s", response.Status, content, url)
-		log.Printf("could not deposit payment: %v", err)
-		return "", "", err
-	}
-	var responseData depositResponse
-	if err := json.Unmarshal(content, &responseData); err != nil {
-		return "", "", err
-	}
-	return responseData.TrackID, responseData.RedirectURL, nil
-}
-
-func (d *paymentDispatcher) Execute(trackID string) error {
-	url := fmt.Sprintf("http://%s/private/execute", d.url)
+func (p *httpPayment) Execute(projectID uint) error {
+	url := fmt.Sprintf("http://%s/private/execute", p.url)
 	b, err := json.Marshal(executeRequest{
-		TrackID: trackID,
+		ProjectID: projectID,
 	})
 	if err != nil {
 		return err
@@ -90,7 +46,7 @@ func (d *paymentDispatcher) Execute(trackID string) error {
 	if err != nil {
 		return err
 	}
-	response, err := d.client.Do(request)
+	response, err := p.client.Do(request)
 	if err != nil {
 		return err
 	}
@@ -106,3 +62,47 @@ func (d *paymentDispatcher) Execute(trackID string) error {
 	}
 	return nil
 }
+
+// type depositRequest struct {
+// 	Project uint
+// 	Amount  string
+// }
+
+// type depositResponse struct {
+// 	TrackID     string
+// 	RedirectURL string
+// }
+
+// func (d *paymentDispatcher) Deposit(amount float64, projectID uint) (string, string, error) {
+// 	url := fmt.Sprintf("http://%s/private/deposit", d.url)
+// 	b, err := json.Marshal(depositRequest{
+// 		Amount:  fmt.Sprintf("%.2f", amount),
+// 		Project: projectID,
+// 	})
+// 	if err != nil {
+// 		return "", "", err
+// 	}
+// 	request, err := http.NewRequest("POST", url, bytes.NewReader(b))
+// 	if err != nil {
+// 		return "", "", err
+// 	}
+// 	response, err := d.client.Do(request)
+// 	if err != nil {
+// 		return "", "", err
+// 	}
+// 	content, err := ioutil.ReadAll(response.Body)
+// 	if err != nil {
+// 		return "", "", err
+// 	}
+// 	defer response.Body.Close()
+// 	if response.StatusCode != http.StatusOK {
+// 		err = fmt.Errorf("\nStatus: %s\n Body: %s\nURL: %s", response.Status, content, url)
+// 		log.Printf("could not deposit payment: %v", err)
+// 		return "", "", err
+// 	}
+// 	var responseData depositResponse
+// 	if err := json.Unmarshal(content, &responseData); err != nil {
+// 		return "", "", err
+// 	}
+// 	return responseData.TrackID, responseData.RedirectURL, nil
+// }

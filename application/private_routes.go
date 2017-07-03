@@ -7,14 +7,16 @@ var privateRoutes = Routes{
 		"GetProjectPrivate",
 		"GET",
 		"/project/{id}",
-		withID(getProjectByID()),
+		middleware.Chain(
+			withUINT("id"),
+		)(getProjectByID()),
 	},
 	Route{
 		"ProjectFundedPrivate",
 		"GET",
 		"/project/{id}/fund",
 		middleware.Chain(
-			withID,
+			withUINT("id"),
 			withProjectByID,
 		)(projectFunded()),
 	},

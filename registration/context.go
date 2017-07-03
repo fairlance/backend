@@ -8,7 +8,7 @@ import (
 
 type RegistrationContext struct {
 	RegisteredUserRepository *RegisteredUserRepository
-	Mailer                   mailer.Mailer
+	Mailer                   mailer.WelcomeMailer
 }
 
 func NewContext(dbName string) *RegistrationContext {
@@ -20,7 +20,7 @@ func NewContext(dbName string) *RegistrationContext {
 	// Setup context
 	context := &RegistrationContext{
 		RegisteredUserRepository: registeredUserRepository,
-		Mailer: mailer.MailgunMailer{},
+		Mailer: mailer.WelcomeMailgunMailer{},
 	}
 
 	return context

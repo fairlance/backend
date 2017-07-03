@@ -21,7 +21,7 @@ var routes = Routes{
 	},
 
 	// Route{
-	// 	"IndexFreelancer",
+	// 	"AllFreelancers",
 	// 	"GET",
 	// 	"/freelancer",
 	// 	whenLoggedIn(getAllFreelancers()),
@@ -30,48 +30,71 @@ var routes = Routes{
 		"RegisterFreelancer",
 		"PUT",
 		"/freelancer/new",
-		withUser(addFreelancer()),
+		middleware.Chain(
+			withUserToAdd,
+		)(addFreelancer()),
 	},
 	Route{
 		"GetFreelancer",
 		"GET",
 		"/freelancer/{id}",
-		whenLoggedIn(withID(getFreelancerByID())),
+		middleware.Chain(
+			whenLoggedIn,
+			withUINT("id"),
+		)(getFreelancerByID()),
 	},
 	Route{
 		"UpdateFreelancer",
 		"POST",
 		"/freelancer/{id}",
-		whenLoggedIn(whenFreelancer(withID(
-			whenIDBelongsToUser(withFreelancerUpdate(
-				updateFreelancerByID()))))),
+		middleware.Chain(
+			whenLoggedIn,
+			whenFreelancer,
+			withUINT("id"),
+			whenIDBelongsToUser,
+			withFreelancerUpdate,
+		)(updateFreelancerByID()),
 	},
 	Route{
 		"DeleteFreelancer",
 		"DELETE",
 		"/freelancer/{id}",
-		whenLoggedIn(whenFreelancer(withID(
-			whenIDBelongsToUser(deleteFreelancerByID())))),
+		middleware.Chain(
+			whenLoggedIn,
+			whenFreelancer,
+			withUINT("id"),
+			whenIDBelongsToUser,
+		)(deleteFreelancerByID()),
 	},
 	Route{
 		"AddFreelancerReference",
 		"PUT",
 		"/freelancer/{id}/reference",
-		whenLoggedIn(whenFreelancer(withID(
-			withReference(addFreelancerReferenceByID())))),
+		middleware.Chain(
+			whenLoggedIn,
+			whenFreelancer,
+			withUINT("id"),
+			withReference,
+		)(addFreelancerReferenceByID()),
 	},
-	Route{
+	Route{ // todo: reviews should be related to a project?
 		"AddFreelancerReview",
 		"PUT",
 		"/freelancer/{id}/review",
-		whenLoggedIn(withID(withReview(addFreelancerReviewByID()))),
+		middleware.Chain(
+			whenLoggedIn,
+			withUINT("id"),
+			withReview,
+		)(addFreelancerReviewByID()),
 	},
 
 	Route{
-		"IndexProject",
+		"AllProjects",
 		"GET",
 		"/project",
-		whenLoggedIn(getAllProjectsForUser()),
+		middleware.Chain(
+			whenLoggedIn,
+		)(basedOnUserType(getAllProjectsForClient(), getAllProjectsForFreelancer())),
 	},
 	Route{
 		"GetProject",
@@ -79,8 +102,11 @@ var routes = Routes{
 		"/project/{id}",
 		middleware.Chain(
 			whenLoggedIn,
-			withID,
-			whenProjectBelongsToUserByID,
+			withUINT("id"),
+			whenBasedOnUserType(
+				whenProjectBelongsToClientByID,
+				whenProjectBelongsToFreelancerByID,
+			),
 		)(getProjectByID()),
 	},
 	Route{
@@ -90,8 +116,11 @@ var routes = Routes{
 		middleware.Chain(
 			whenLoggedIn,
 			whenClient,
-			withID,
-			whenJobApplicationBelongsToUser,
+			withUINT("id"),
+			whenBasedOnUserType(
+				whenJobApplicationBelongsToClient,
+				whenJobApplicationBelongsToFreelancer,
+			),
 		)(createProjectFromJobApplication()),
 	},
 	Route{
@@ -100,9 +129,13 @@ var routes = Routes{
 		"/project/{id}/contract/proposal",
 		middleware.Chain(
 			whenLoggedIn,
-			withID,
-			whenProjectBelongsToUserByID,
+			withUINT("id"),
+			whenBasedOnUserType(
+				whenProjectBelongsToClientByID,
+				whenProjectBelongsToFreelancerByID,
+			),
 			withProjectByID,
+			whenCurrentProjectStatus(projectStatusFinalizingTerms),
 			withProposal,
 		)(setProposalToProjectContract()),
 	},
@@ -112,9 +145,13 @@ var routes = Routes{
 		"/project/{id}/contract/agree",
 		middleware.Chain(
 			whenLoggedIn,
-			withID,
-			whenProjectBelongsToUserByID,
+			withUINT("id"),
+			whenBasedOnUserType(
+				whenProjectBelongsToClientByID,
+				whenProjectBelongsToFreelancerByID,
+			),
 			withProjectByID,
+			whenCurrentProjectStatus(projectStatusFinalizingTerms),
 		)(agreeToContractTerms()),
 	},
 	Route{
@@ -124,8 +161,11 @@ var routes = Routes{
 		middleware.Chain(
 			whenLoggedIn,
 			whenClient,
-			withID,
-			whenProjectBelongsToUserByID,
+			withUINT("id"),
+			whenBasedOnUserType(
+				whenProjectBelongsToClientByID,
+				whenProjectBelongsToFreelancerByID,
+			),
 			withExtension,
 		)(addExtensionToProjectContract()),
 	},
@@ -135,8 +175,12 @@ var routes = Routes{
 		"/project/{id}/extension/{extension_id}/agree",
 		middleware.Chain(
 			whenLoggedIn,
-			whenProjectBelongsToUserByID,
+			whenBasedOnUserType(
+				whenProjectBelongsToClientByID,
+				whenProjectBelongsToFreelancerByID,
+			),
 			withProjectByID,
+			whenCurrentProjectStatus(projectStatusInProgress),
 			withUINT("extension_id"),
 			withExtensionWhenBelongsToProject,
 		)(agreeToExtensionTerms()),
@@ -147,28 +191,60 @@ var routes = Routes{
 		"/project/{id}/extension/{extension_id}/proposal",
 		middleware.Chain(
 			whenLoggedIn,
-			withID,
-			whenProjectBelongsToUserByID,
+			withUINT("id"),
+			whenBasedOnUserType(
+				whenProjectBelongsToClientByID,
+				whenProjectBelongsToFreelancerByID,
+			),
 			withProjectByID,
+			whenCurrentProjectStatus(projectStatusInProgress),
 			withProposal,
 			withUINT("extension_id"),
 			withExtensionWhenBelongsToProject,
 		)(setProposalToProjectContractExtension()),
 	},
 	Route{
-		"FinishProject",
+		"FundProject",
+		"POST",
+		"/project/{id}/funded",
+		middleware.Chain(
+			whenLoggedIn,
+			whenClient,
+			withUINT("id"),
+			whenProjectBelongsToClientByID,
+			withProjectByID,
+			whenCurrentProjectStatus(projectStatusPendingFunds),
+		)(fundedProject()),
+	},
+	Route{
+		"FinishProjectByFreelancer",
 		"POST",
 		"/project/{id}/finish",
 		middleware.Chain(
 			whenLoggedIn,
-			withID,
-			whenProjectBelongsToUserByID,
+			whenFreelancer,
+			withUINT("id"),
+			whenProjectBelongsToFreelancerByID,
 			withProjectByID,
-		)(finishProject()),
+			whenCurrentProjectStatus(projectStatusInProgress),
+		)(freelancerFinishProject()),
+	},
+	Route{
+		"ProjectDone",
+		"POST",
+		"/project/{id}/done",
+		middleware.Chain(
+			whenLoggedIn,
+			whenClient,
+			withUINT("id"),
+			whenProjectBelongsToClientByID,
+			withProjectByID,
+			whenCurrentProjectStatus(projectStatusPendingFinished),
+		)(freelancerFinishProject()),
 	},
 
 	// Route{
-	// 	"IndexClient",
+	// 	"AllClients",
 	// 	"GET",
 	// 	"/client",
 	// 	whenLoggedIn(getAllClients()),
@@ -177,53 +253,79 @@ var routes = Routes{
 		"RegisterClient",
 		"PUT",
 		"/client/new",
-		withUser(addClient()),
+		middleware.Chain(
+			withUserToAdd,
+		)(addClient()),
 	},
 	Route{
 		"GetClient",
 		"GET",
 		"/client/{id}",
-		whenLoggedIn(withID(getClientByID())),
+		middleware.Chain(
+			whenLoggedIn,
+			withUINT("id"),
+		)(getClientByID()),
 	},
 	Route{
 		"UpdateClient",
 		"POST",
 		"/client/{id}",
-		whenLoggedIn(whenClient(withID(whenIDBelongsToUser(updateClientByID())))),
+		middleware.Chain(
+			whenLoggedIn,
+			whenClient,
+			withUINT("id"),
+			whenIDBelongsToUser,
+		)(updateClientByID()),
 	},
 
 	Route{
-		"IndexJob",
+		"AllJobs",
 		"GET",
 		"/job",
-		whenLoggedIn(getAllJobsForUser()),
+		middleware.Chain(
+			whenLoggedIn,
+		)(getAllJobsForUser()),
 	},
 	Route{
 		"NewJob",
 		"POST",
 		"/job/new",
-		whenLoggedIn(whenClient(withJob(addJob()))),
+		middleware.Chain(
+			whenLoggedIn,
+			whenClient,
+			withJob,
+		)(addJob()),
 	},
 	Route{
 		"GetJob",
 		"GET",
 		"/job/{id}",
-		whenLoggedIn(withID(getJob())),
+		middleware.Chain(
+			whenLoggedIn,
+			withUINT("id"),
+		)(getJob()),
 	},
 	Route{
 		"ApplyForJob", // todo: prevent freelancers to apply twice
 		"PUT",
 		"/job/{id}/apply",
-		whenLoggedIn(whenFreelancer(withID(
-			withClientFromJobID(withJobApplication(
-				addJobApplication()))))),
+		middleware.Chain(
+			whenLoggedIn,
+			whenFreelancer,
+			withUINT("id"),
+			withClientFromJobID,
+			withJobApplication,
+		)(addJobApplication()),
 	},
 	Route{
 		"DeleteJobApplication",
 		"DELETE",
 		"/job_application/{id}",
-		whenLoggedIn(whenFreelancer(
-			whenJobApplicationBelongsToUser(withID(
-				deleteJobApplicationByID())))),
+		middleware.Chain(
+			whenLoggedIn,
+			whenFreelancer,
+			whenJobApplicationBelongsToFreelancer,
+			withUINT("id"),
+		)(deleteJobApplicationByID()),
 	},
 }

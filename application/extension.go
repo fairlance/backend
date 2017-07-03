@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/fairlance/backend/models"
 	"github.com/gorilla/context"
 	respond "gopkg.in/matryer/respond.v1"
 )
@@ -73,7 +74,7 @@ func withExtensionWhenBelongsToProject(next http.Handler) http.Handler {
 func agreeToExtensionTerms() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		appContext := context.Get(r, "context").(*ApplicationContext)
-		user := context.Get(r, "user").(*User)
+		user := context.Get(r, "user").(*models.User)
 		userType := context.Get(r, "userType").(string)
 		extension := context.Get(r, "extension").(*Extension)
 

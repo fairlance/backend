@@ -1,80 +1,48 @@
 package mailer
 
+import mailgun "github.com/mailgun/mailgun-go"
+import "log"
+import "fmt"
+
+// Mailer send emails
 type Mailer interface {
-	SendWelcomeMessage(string) (string, error)
+	SendProjectFunded(id uint, name string, clientID uint, clientName string) error
 }
 
-const WelcomeMessage = `
-Hello,
+// Options holds option needed for the mailgun api
+type Options struct {
+	PublicApiKey string
+	ApiKey       string
+	Domain       string
+	Self         string
+}
 
-Welcome to the Fairlance community.
-We would like to build Fairlance as a community work platform dedicated to establishing a new business paradigm based on principles of responsibility and fairness.
+// NewMailgunMailer creates a new mailer
+func NewMailgun(o Options) Mailer {
+	return &mailer{
+		mailgun: mailgun.NewMailgun(
+			o.Domain,
+			o.ApiKey,
+			o.PublicApiKey,
+		),
+		Self: o.Self,
+	}
+}
 
-But who gets to decide what is fair and what is not….?
+type mailer struct {
+	mailgun mailgun.Mailgun
+	Self    string
+}
 
-Well... all of us!
-
-Therefore we need your thoughts on how to make this system work best for all, your experiences of both good and bad freelance practices, publicly shared and discussed. As we believe that strong communication between freelancers, clients and platform is crucial.
-
-So let's build it!
-
-We are currently working on BETA version and gathering feedback from the get go. Everyone is invited to bring in new ideas and contribute to our efforts.
-
-We will never spam or give out your email and you can unsubscribe at any point without any hassle. We will only send you emails when there are new and exciting updates coming.
-
-Join us on/Talk to us on(Facebook, Linkedin, Twitter, Reddit, )
-
-We would love to hear from you soon,
-
-Fairlance team
-`
-
-const HTMLWelcomeMessage = `
-<html xmlns="http://www.w3.org/1999/xhtml">
-<head>
-    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
-    <title>Fairlance mail</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-</head>
-<body style="margin: 0; padding: 0;">
-<table align="center" border="0" cellpadding="0" cellspacing="0" width="800" >
-    <tr>
-        <td align="center" bgcolor="#f15b24" style="padding: 30px 0;">
-            <img src="http://github.com/fairlance/dist/assets/images/__Logo_top.png" height="80" style="display: block;" />
-        </td>
-    </tr>
-    <tr>
-        <td bgcolor="#ffffff" style="padding: 50px; font-family: Vedrana, sans-serif; font-size: 24px;">
-            <p>Hello,</p>
-            <p>Welcome to the Fairlance community.</p>
-            <p>We would like to build Fairlance as a community work platform dedicated to establishing a new business paradigm based on principles of responsibility and fairness.</p>
-            <p>But who gets to decide what is fair and what is not?</p>
-        </td>
-    </tr>
-    <tr>
-        <td bgcolor="#f7f7f7" style="padding: 50px; font-family: Vedrana, sans-serif; font-size: 24px;">
-            <h2 align="center">Well... all of us!</h2>
-            <p>Therefore we need your thoughts on how to make this system work best for all, your experiences of both good and bad freelance practices, publicly shared and discussed. As we believe that strong communication between freelancers, clients and platform is crucial.</p>
-            <h2 align="center">So let's build it!</h2>
-            <p>We are currently working on BETA version and gathering feedback from the get go. Everyone is invited to bring in new ideas and contribute to our efforts.</p>
-            <p>We would like to hear from you soon,</p>
-            <p>Fairlance team</p>
-            <img src="http://github.com/fairlance/dist/assets/images/__Ilustracija.png" style="padding: 80px 155px;">
-            <p style="font-size: 18px">We will never spam or give out your email and you can unsubscribe at any point without any hassle. We will only send you emails when there are new and exciting updates coming.</p>
-            <p style="font-size: 21px" align="center">Join us on/Talk to us</p>
-            <p align="center">
-                <a href="https://www.facebook.com/fairlance" style="display: inline-block; padding: 10px">
-                    <img src="http://github.com/fairlance/dist/assets/images/__fb_icon.png">
-                </a>
-                <a href="https://twitter.com/fairlance_io" style="display: inline-block; padding: 10px">
-                    <img src="http://github.com/fairlance/dist/assets/images/__tw_icon.png">
-                </a>
-                <a href="https://www.linkedin.com/groups/7039061" style="display: inline-block; padding: 10px">
-                    <img src="http://github.com/fairlance/dist/assets/images/__in_icon.png">
-                </a>
-            </p>
-        </td>
-    </tr>
-</table>
-</body>
-</html>`
+func (m *mailer) SendProjectFunded(projectID uint, projectName string, clientID uint, clientName string) error {
+	title := fmt.Sprintf(projectFundedTitle, clientName, clientID, projectName, projectID)
+	mail := m.mailgun.NewMessage("office@fairlance.io", title, " ", m.Self)
+	mail.AddHeader("Content-Type", "text/html")
+	resp, msgID, err := m.mailgun.Send(mail)
+	if err != nil {
+		log.Printf("could not send email: %v", err)
+		return err
+	}
+	log.Printf("project funded email sent; id: %s;resp: %s => client (%d) has funded project (%d)", msgID, resp, clientID, projectID)
+	return nil
+}

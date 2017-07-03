@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/fairlance/backend/dispatcher"
+	"github.com/fairlance/backend/models"
 
 	respond "gopkg.in/matryer/respond.v1"
 
@@ -84,11 +85,9 @@ func TestGetJobsForClient(t *testing.T) {
 	w := httptest.NewRecorder()
 	r := getRequest(jobContext, "")
 
-	context.Set(r, "userType", "client")
-	context.Set(r, "user", &User{
-		Model: Model{
-			ID: 1,
-		},
+	context.Set(r, "user", &models.User{
+		ID:   1,
+		Type: "client",
 	})
 
 	getAllJobsForUser().ServeHTTP(w, r)
@@ -107,11 +106,9 @@ func TestGetJobsForClientError(t *testing.T) {
 	w := httptest.NewRecorder()
 	r := getRequest(jobContext, "")
 
-	context.Set(r, "userType", "freelancer")
-	context.Set(r, "user", &User{
-		Model: Model{
-			ID: 1,
-		},
+	context.Set(r, "user", &models.User{
+		ID:   1,
+		Type: "freelancer",
 	})
 
 	getAllJobsForUser().ServeHTTP(w, r)
@@ -179,10 +176,8 @@ func TestJobAddJob(t *testing.T) {
 	w := httptest.NewRecorder()
 	r := getRequest(jobContext, "")
 	context.Set(r, "job", job)
-	context.Set(r, "user", &User{
-		Model: Model{
-			ID: 1,
-		},
+	context.Set(r, "user", &models.User{
+		ID: 1,
 	})
 
 	addJob().ServeHTTP(w, r)
@@ -214,8 +209,10 @@ func TestJobGetJobForClientReceivesTheRightParameters(t *testing.T) {
 	w := httptest.NewRecorder()
 	r := getRequest(jobContext, "")
 	context.Set(r, "id", uint(1))
-	context.Set(r, "userType", "client")
-	context.Set(r, "user", &User{Model: Model{ID: 2}})
+	context.Set(r, "user", &models.User{
+		ID:   2,
+		Type: "client",
+	})
 
 	getJob().ServeHTTP(w, r)
 
@@ -233,8 +230,10 @@ func TestJobGetJobForFreelancerReceivesTheRightParameters(t *testing.T) {
 	w := httptest.NewRecorder()
 	r := getRequest(jobContext, "")
 	context.Set(r, "id", uint(1))
-	context.Set(r, "userType", "freelancer")
-	context.Set(r, "user", &User{Model: Model{ID: 2}})
+	context.Set(r, "user", &models.User{
+		ID:   2,
+		Type: "freelancer",
+	})
 
 	getJob().ServeHTTP(w, r)
 
@@ -263,8 +262,10 @@ func TestJobGetJobForClient(t *testing.T) {
 	w := httptest.NewRecorder()
 	r := getRequest(jobContext, "")
 	context.Set(r, "id", uint(123456789))
-	context.Set(r, "userType", "client")
-	context.Set(r, "user", &User{Model: Model{ID: 1}})
+	context.Set(r, "user", &models.User{
+		ID:   1,
+		Type: "client",
+	})
 
 	getJob().ServeHTTP(w, r)
 
@@ -299,8 +300,10 @@ func TestJobGetJobForFreelancer(t *testing.T) {
 	w := httptest.NewRecorder()
 	r := getRequest(jobContext, "")
 	context.Set(r, "id", uint(123456789))
-	context.Set(r, "userType", "freelancer")
-	context.Set(r, "user", &User{Model: Model{ID: 1}})
+	context.Set(r, "user", &models.User{
+		ID:   1,
+		Type: "freelancer",
+	})
 
 	getJob().ServeHTTP(w, r)
 
@@ -325,8 +328,10 @@ func TestJobGetJobByIDError(t *testing.T) {
 	w := httptest.NewRecorder()
 	r := getRequest(jobContext, "")
 	context.Set(r, "id", uint(0))
-	context.Set(r, "userType", "client")
-	context.Set(r, "user", &User{Model: Model{ID: 1}})
+	context.Set(r, "user", &models.User{
+		ID:   1,
+		Type: "client",
+	})
 
 	getJob().ServeHTTP(w, r)
 
@@ -343,7 +348,7 @@ func TestJobAddJobError(t *testing.T) {
 	w := httptest.NewRecorder()
 	r := getRequest(jobContext, "")
 	context.Set(r, "job", &Job{})
-	context.Set(r, "user", &User{})
+	context.Set(r, "user", &models.User{})
 
 	addJob().ServeHTTP(w, r)
 
@@ -381,7 +386,7 @@ func TestJobHandleApplyForJob(t *testing.T) {
 	context.Set(r, "id", uint(1))
 	jobApplication.JobID = 0 // reset jobID because we needed it before
 	context.Set(r, "jobApplication", jobApplication)
-	context.Set(r, "user", &User{Model: Model{ID: 1}})
+	context.Set(r, "user", &models.User{ID: 1})
 	context.Set(r, "client", &Client{User: User{Model: Model{ID: 22}}})
 
 	addJobApplication().ServeHTTP(w, r)
@@ -415,7 +420,7 @@ func TestJobHandleApplyForJobHandlerError(t *testing.T) {
 	r := getRequest(jobContext, "")
 	context.Set(r, "id", uint(1))
 	context.Set(r, "jobApplication", &JobApplication{})
-	context.Set(r, "user", &User{Model: Model{ID: 1}})
+	context.Set(r, "user", &models.User{ID: 1})
 
 	addJobApplication().ServeHTTP(w, r)
 
@@ -612,11 +617,9 @@ func TestDeleteJobApplicationByID(t *testing.T) {
 	r := getRequest(jobContext, "")
 
 	context.Set(r, "id", uint(1))
-	context.Set(r, "userType", "freelancer")
-	context.Set(r, "user", &User{
-		Model: Model{
-			ID: 2,
-		},
+	context.Set(r, "user", &models.User{
+		ID:   2,
+		Type: "freelancer",
 	})
 	deleteJobApplicationByID().ServeHTTP(w, r)
 
@@ -630,8 +633,7 @@ var deleteJobApplicationByIDData = []struct {
 	inJobApplication *JobApplication
 	inGetError       error
 	inDeleteError    error
-	inUserType       string
-	inUser           *User
+	inUser           *models.User
 	outStatus        int
 	out              string
 }{
@@ -645,33 +647,12 @@ var deleteJobApplicationByIDData = []struct {
 		},
 		nil,
 		nil,
-		"client",
-		&User{
-			Model: Model{
-				ID: 2,
-			},
+		&models.User{
+			ID:   3,
+			Type: "freelancer",
 		},
 		http.StatusBadRequest,
-		"user not a freelancer",
-	},
-	{
-		uint(1),
-		&JobApplication{
-			Model: Model{
-				ID: 1,
-			},
-			FreelancerID: 2,
-		},
-		nil,
-		nil,
-		"freelancer",
-		&User{
-			Model: Model{
-				ID: 3,
-			},
-		},
-		http.StatusBadRequest,
-		"user not the owner",
+		"freelancer not the owner",
 	},
 	{
 		uint(5),
@@ -683,11 +664,9 @@ var deleteJobApplicationByIDData = []struct {
 		},
 		errors.New("bad id"),
 		nil,
-		"freelancer",
-		&User{
-			Model: Model{
-				ID: 2,
-			},
+		&models.User{
+			ID:   2,
+			Type: "freelancer",
 		},
 		http.StatusBadRequest,
 		"bad id",
@@ -702,11 +681,9 @@ var deleteJobApplicationByIDData = []struct {
 		},
 		nil,
 		errors.New("cannot delete"),
-		"freelancer",
-		&User{
-			Model: Model{
-				ID: 2,
-			},
+		&models.User{
+			ID:   2,
+			Type: "freelancer",
 		},
 		http.StatusInternalServerError,
 		"cannot delete",
@@ -727,7 +704,6 @@ func TestDeleteJobApplicationByIDWithError(t *testing.T) {
 		r := getRequest(jobContext, "")
 
 		context.Set(r, "id", testCase.inID)
-		context.Set(r, "userType", testCase.inUserType)
 		context.Set(r, "user", testCase.inUser)
 
 		opts := &respond.Options{
@@ -772,7 +748,7 @@ var whenJobApplicationBelongsToClientData = []struct {
 		inError:         nil,
 		outIsNextCalled: false,
 		outStatus:       http.StatusForbidden,
-		out:             "null",
+		out:             `"job application 1 does not belong to freelancer 2"`,
 	},
 	{
 		inOK:            false,
@@ -780,7 +756,7 @@ var whenJobApplicationBelongsToClientData = []struct {
 		inError:         nil,
 		outIsNextCalled: false,
 		outStatus:       http.StatusForbidden,
-		out:             "null",
+		out:             `"job application 1 does not belong to client 2"`,
 	},
 	{
 		inOK:            false,
@@ -807,11 +783,9 @@ func TestWhenJobApplicationBelongsToClient(t *testing.T) {
 		r := getRequest(jobContext, "")
 
 		context.Set(r, "id", uint(1))
-		context.Set(r, "userType", testCase.inUserType)
-		context.Set(r, "user", &User{
-			Model: Model{
-				ID: 2,
-			},
+		context.Set(r, "user", &models.User{
+			ID:   2,
+			Type: testCase.inUserType,
 		})
 
 		opts := &respond.Options{
@@ -832,7 +806,12 @@ func TestWhenJobApplicationBelongsToClient(t *testing.T) {
 			isNextCalled = true
 		})
 
-		opts.Handler(whenJobApplicationBelongsToUser(next)).ServeHTTP(w, r)
+		opts.Handler(
+			whenBasedOnUserType(
+				whenJobApplicationBelongsToClient,
+				whenJobApplicationBelongsToFreelancer,
+			)(next),
+		).ServeHTTP(w, r)
 
 		switch testCase.inUserType {
 		case "client":

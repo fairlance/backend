@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/fairlance/backend/dispatcher"
+	"github.com/fairlance/backend/models"
 
 	isHelper "github.com/cheekybits/is"
 	"github.com/gorilla/context"
@@ -83,13 +84,11 @@ func TestGetAllProjectsForFreelancer(t *testing.T) {
 	r := getRequest(userContext, ``)
 	w := httptest.NewRecorder()
 
-	context.Set(r, "userType", "freelancer")
-	context.Set(r, "user", &User{
-		Model: Model{
-			ID: 1,
-		},
+	context.Set(r, "user", &models.User{
+		ID:   1,
+		Type: "freelancer",
 	})
-	getAllProjectsForUser().ServeHTTP(w, r)
+	getAllProjectsForFreelancer().ServeHTTP(w, r)
 
 	is.Equal(w.Code, http.StatusOK)
 	var body []Project
@@ -121,13 +120,11 @@ func TestGetAllProjectsForClient(t *testing.T) {
 	r := getRequest(userContext, ``)
 	w := httptest.NewRecorder()
 
-	context.Set(r, "userType", "client")
-	context.Set(r, "user", &User{
-		Model: Model{
-			ID: 1,
-		},
+	context.Set(r, "user", &models.User{
+		ID:   1,
+		Type: "client",
 	})
-	getAllProjectsForUser().ServeHTTP(w, r)
+	getAllProjectsForClient().ServeHTTP(w, r)
 
 	is.Equal(w.Code, http.StatusOK)
 	var body []Project
@@ -353,15 +350,20 @@ func TestWhenProjectBelongsToUser(t *testing.T) {
 		w := httptest.NewRecorder()
 		r := getRequest(appContext, "")
 		context.Set(r, "id", uint(2))
-		context.Set(r, "userType", testCase.userType)
-		context.Set(r, "user", &User{Model: Model{ID: testCase.userID}})
+		context.Set(r, "user", &models.User{
+			ID:   testCase.userID,
+			Type: testCase.userType,
+		})
 
 		isNextCalled := false
 		next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			isNextCalled = true
 		})
 
-		whenProjectBelongsToUserByID(next).ServeHTTP(w, r)
+		whenBasedOnUserType(
+			whenProjectBelongsToClientByID,
+			whenProjectBelongsToFreelancerByID,
+		)(next).ServeHTTP(w, r)
 
 		is.Equal(projectRepoMock.GetByIDCall.Receives.ID, uint(2))
 		is.Equal(isNextCalled, testCase.isNextCalled)

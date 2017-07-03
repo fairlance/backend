@@ -61,7 +61,7 @@ func broadcastTo(msg *wsrouter.Message, users map[string]wsrouter.User) []wsrout
 	for _, userConf := range msg.To {
 		user, ok := users[userConf.UniqueID()]
 		if !ok {
-			log.Printf("user not found [%v]", userConf)
+			log.Printf("user not found [%+v]", userConf)
 		} else {
 			u = append(u, user)
 		}
@@ -83,7 +83,7 @@ func buildMessage(b []byte, users map[string]wsrouter.User, db *mongoDB) *wsrout
 
 	err := json.Unmarshal(b, msg)
 	if err != nil {
-		log.Println(err)
+		log.Printf("could not build message: %v", err)
 		return nil
 	}
 
@@ -93,12 +93,12 @@ func buildMessage(b []byte, users map[string]wsrouter.User, db *mongoDB) *wsrout
 	case "read":
 		uniqueIDFrom := msg.From.UniqueID()
 		if _, ok := users[uniqueIDFrom]; !ok {
-			log.Printf("error: user not found [%v]", msg.From)
+			log.Printf("could not find user: %+v", msg.From)
 			return nil
 		}
 		timestampString, ok := msg.Data["timestamp"].(string)
 		if !ok {
-			log.Printf("error: timestamp not provided [%s]", msg.Data["timestamp"])
+			log.Printf("could not parse timestamp: %s", msg.Data["timestamp"])
 			return nil
 		}
 

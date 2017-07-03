@@ -50,14 +50,15 @@
                         </tr>
                     </thead>
                     <tbody>
-                        {{ $params := .GETParams }}
-                        {{ range $key, $p := .Projects }}
+                        {{ $params := .GETParams }} {{ range $key, $p := .Projects }}
                         <tr>
                             <td>
                                 <form method="POST" action="payment" style="margin: 0;">
-                                    <input required type="hidden" value="{{ $p.ID }}" name="project_id"/>
+                                    <input required type="hidden" value="{{ $p.ID }}" name="project_id" />
                                     <input type="hidden" name="get_params" value="{{ $params }}" />
-                                    <button type="submit" class="btn btn-primary">Set In Progress</button>
+                                    {{if eq $p.Status "pending_funds"}}
+                                    <button type="submit" class="btn btn-primary">Funding Received</button>
+                                    {{end}}
                                 </form>
                             </td>
                             <td>{{ $p.ID }}</td>

@@ -2,8 +2,9 @@ package mailer
 
 import (
 	"errors"
-	"github.com/mailgun/mailgun-go"
 	"os"
+
+	"github.com/mailgun/mailgun-go"
 )
 
 var (
@@ -11,10 +12,10 @@ var (
 	emailTitle = "Welcome"
 )
 
-type MailgunMailer struct{}
+type WelcomeMailgunMailer struct{}
 
 // Send welcome message
-func (m MailgunMailer) SendWelcomeMessage(email string) (string, error) {
+func (m WelcomeMailgunMailer) SendWelcomeMessage(email string) (string, error) {
 	var publicApiKey = os.Getenv("MAILGUN_PUBLIC_API_KEY")
 	var apiKey = os.Getenv("MAILGUN_API_KEY")
 	var domain = os.Getenv("MAILGUN_DOMAIN")

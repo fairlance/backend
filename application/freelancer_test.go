@@ -84,7 +84,7 @@ func TestAddFreelancer(t *testing.T) {
 		Email:     "email@mail.com",
 		Image:     "http://url.to/image",
 	}
-	context.Set(r, "user", user)
+	context.Set(r, "userToAdd", user)
 
 	addFreelancer().ServeHTTP(w, r)
 
@@ -105,7 +105,7 @@ func TestAddFreelancerWithError(t *testing.T) {
 
 	r := getRequest(freelancerContext, ``)
 	w := httptest.NewRecorder()
-	context.Set(r, "user", &User{})
+	context.Set(r, "userToAdd", &User{})
 
 	addFreelancer().ServeHTTP(w, r)
 

@@ -7,34 +7,37 @@ import (
 	"os"
 
 	"github.com/fairlance/backend/application"
+	"github.com/fairlance/backend/mailer"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 )
 
 func main() {
 	var port = os.Getenv("PORT")
-	var dbHost = os.Getenv("DB_HOST")
-	var dbName = os.Getenv("DB_NAME")
-	var dbUser = os.Getenv("DB_USER")
-	var dbPass = os.Getenv("DB_PASS")
-	var secret = os.Getenv("SECRET")
-	var notificationURL = os.Getenv("NOTIFICATION_URL")
-	var messagingURL = os.Getenv("MESSAGING_URL")
-	var searcherURL = os.Getenv("SEARCHER_URL")
+	if port == "" {
+		log.Fatal("PORT is missing")
+	}
 	options := application.ContextOptions{
-		DbHost:          dbHost,
-		DbName:          dbName,
-		DbUser:          dbUser,
-		DbPass:          dbPass,
-		Secret:          secret,
-		NotificationURL: notificationURL,
-		MessagingURL:    messagingURL,
-		SearcherURL:     searcherURL,
+		DbHost:          os.Getenv("DB_HOST"),
+		DbName:          os.Getenv("DB_NAME"),
+		DbUser:          os.Getenv("DB_USER"),
+		DbPass:          os.Getenv("DB_PASS"),
+		Secret:          os.Getenv("SECRET"),
+		NotificationURL: os.Getenv("NOTIFICATION_URL"),
+		MessagingURL:    os.Getenv("MESSAGING_URL"),
+		PaymentURL:      os.Getenv("PAYMENT_URL"),
+		SearcherURL:     os.Getenv("SEARCHER_URL"),
+		MailerOptions: mailer.Options{
+			PublicApiKey: os.Getenv("MAILGUN_PUBLIC_API_KEY"),
+			ApiKey:       os.Getenv("MAILGUN_API_KEY"),
+			Domain:       os.Getenv("MAILGUN_DOMAIN"),
+			Self:         os.Getenv("EMAIL_TO_SELF"),
+		},
 	}
 	var appContext, err = application.NewContext(options)
 	if err != nil {
 		log.Fatal(err)
 	}
-	appContext.DropCreateFillTables()
+	appContext.CreateTables()
 	http.Handle("/", application.NewRouter(appContext))
 	log.Printf("Listening on: %s", port)
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%s", port), nil))

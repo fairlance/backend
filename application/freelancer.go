@@ -25,7 +25,7 @@ func getAllFreelancers() http.Handler {
 
 func addFreelancer() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		var user = context.Get(r, "user").(*User)
+		var user = context.Get(r, "userToAdd").(*User)
 		freelancer := &Freelancer{User: *user}
 		var appContext = context.Get(r, "context").(*ApplicationContext)
 		if err := appContext.FreelancerRepository.AddFreelancer(freelancer); err != nil {

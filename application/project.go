@@ -2,11 +2,11 @@ package application
 
 import (
 	"encoding/json"
-	"errors"
 	"log"
 	"net/http"
 	"time"
 
+	"github.com/fairlance/backend/models"
 	"github.com/gorilla/context"
 	respond "gopkg.in/matryer/respond.v1"
 
@@ -34,25 +34,11 @@ func getAllProjects() http.Handler {
 	})
 }
 
-func getAllProjectsForUser() http.Handler {
+func getAllProjectsForFreelancer() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var appContext = context.Get(r, "context").(*ApplicationContext)
-		var user = context.Get(r, "user").(*User)
-		var userType = context.Get(r, "userType").(string)
-		var projects []Project
-		var err error
-		switch userType {
-		case "freelancer":
-			projects, err = appContext.ProjectRepository.getAllProjectsForFreelancer(user.ID)
-		case "client":
-			projects, err = appContext.ProjectRepository.getAllProjectsForClient(user.ID)
-		default:
-			err = fmt.Errorf("found type '%s' unrecognized", userType)
-			if err != nil {
-				respond.With(w, r, http.StatusBadRequest, err)
-				return
-			}
-		}
+		var user = context.Get(r, "user").(*models.User)
+		projects, err := appContext.ProjectRepository.getAllProjectsForFreelancer(user.ID)
 		if err != nil {
 			respond.With(w, r, http.StatusInternalServerError, err)
 			return
@@ -62,35 +48,57 @@ func getAllProjectsForUser() http.Handler {
 	})
 }
 
-func whenProjectBelongsToUserByID(next http.Handler) http.Handler {
+func getAllProjectsForClient() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		var id = context.Get(r, "id").(uint)
-		var user = context.Get(r, "user").(*User)
-		var userType = context.Get(r, "userType").(string)
 		var appContext = context.Get(r, "context").(*ApplicationContext)
-
-		project, err := appContext.ProjectRepository.getByID(id)
+		var user = context.Get(r, "user").(*models.User)
+		projects, err := appContext.ProjectRepository.getAllProjectsForClient(user.ID)
 		if err != nil {
-			log.Printf("whenProjectBelongsToUser: %v", err)
 			respond.With(w, r, http.StatusInternalServerError, err)
 			return
 		}
 
-		if userType == "client" && project.ClientID == user.ID {
+		respond.With(w, r, http.StatusOK, projects)
+	})
+}
+
+func whenProjectBelongsToClientByID(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var id = context.Get(r, "id").(uint)
+		var user = context.Get(r, "user").(*models.User)
+		var appContext = context.Get(r, "context").(*ApplicationContext)
+		project, err := appContext.ProjectRepository.getByID(id)
+		if err != nil {
+			log.Printf("whenProjectBelongsToClientByID: %v", err)
+			respond.With(w, r, http.StatusInternalServerError, err)
+			return
+		}
+		if project.ClientID == user.ID {
 			next.ServeHTTP(w, r)
 			return
 		}
+		respond.With(w, r, http.StatusForbidden, fmt.Errorf("client %d does not work on the project: %d", user.ID, id))
+	})
+}
 
-		if userType == "freelancer" {
-			for _, frelancer := range project.Freelancers {
-				if frelancer.ID == user.ID {
-					next.ServeHTTP(w, r)
-					return
-				}
+func whenProjectBelongsToFreelancerByID(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var id = context.Get(r, "id").(uint)
+		var user = context.Get(r, "user").(*models.User)
+		var appContext = context.Get(r, "context").(*ApplicationContext)
+		project, err := appContext.ProjectRepository.getByID(id)
+		if err != nil {
+			log.Printf("whenProjectBelongsToFreelancerByID: %v", err)
+			respond.With(w, r, http.StatusInternalServerError, err)
+			return
+		}
+		for _, frelancer := range project.Freelancers {
+			if frelancer.ID == user.ID {
+				next.ServeHTTP(w, r)
+				return
 			}
 		}
-
-		respond.With(w, r, http.StatusForbidden, errors.New("user does not work on the project"))
+		respond.With(w, r, http.StatusForbidden, fmt.Errorf("freelancer %d does not work on the project: %d", user.ID, id))
 	})
 }
 
@@ -159,15 +167,15 @@ func createProjectFromJobApplication() http.Handler {
 	})
 }
 
+// todo: !!!
 func agreeToContractTerms() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		appContext := context.Get(r, "context").(*ApplicationContext)
-		user := context.Get(r, "user").(*User)
-		userType := context.Get(r, "userType").(string)
+		user := context.Get(r, "user").(*models.User)
 		project := context.Get(r, "project").(*Project)
-		if userType == "client" {
+		if user.Type == "client" {
 			project.ClientAgreed = true
-		} else if userType == "freelancer" {
+		} else if user.Type == "freelancer" {
 			project.FreelancersAgreed = append(project.FreelancersAgreed, user.ID)
 		}
 		if err := appContext.ProjectRepository.update(project); err != nil {
@@ -175,7 +183,7 @@ func agreeToContractTerms() http.Handler {
 			respond.With(w, r, http.StatusInternalServerError, fmt.Errorf("could not update project contract"))
 			return
 		}
-		if err := appContext.MessagingDispatcher.sendContractAccepted(project, userType, user); err != nil {
+		if err := appContext.MessagingDispatcher.sendContractAccepted(project, user); err != nil {
 			log.Printf("could not sendContractAccepted: %v", err)
 		}
 		if project.canBeStarted() {
@@ -214,8 +222,7 @@ func projectFunded() http.Handler {
 
 func withProposal(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		user := context.Get(r, "user").(*User)
-		userType := context.Get(r, "userType").(string)
+		user := context.Get(r, "user").(*models.User)
 		proposal := &Proposal{}
 		if err := json.NewDecoder(r.Body).Decode(proposal); err != nil {
 			respond.With(w, r, http.StatusBadRequest, err)
@@ -224,7 +231,7 @@ func withProposal(next http.Handler) http.Handler {
 		defer r.Body.Close()
 		proposal.Time = time.Now()
 		proposal.UserID = user.ID
-		proposal.UserType = userType
+		proposal.UserType = user.Type
 		context.Set(r, "proposal", proposal)
 		next.ServeHTTP(w, r)
 	})
@@ -235,53 +242,96 @@ func setProposalToProjectContract() http.Handler {
 		appContext := context.Get(r, "context").(*ApplicationContext)
 		project := context.Get(r, "project").(*Project)
 		proposal := context.Get(r, "proposal").(*Proposal)
-		err := appContext.ProjectRepository.setContractProposal(project.Contract, proposal)
-		if err != nil {
+		user := context.Get(r, "user").(*models.User)
+		if err := appContext.ProjectRepository.setContractProposal(project.Contract, proposal); err != nil {
 			log.Printf("could not set proposal: %v", err)
 			respond.With(w, r, http.StatusInternalServerError, fmt.Errorf("could not set proposal"))
 			return
 		}
-		if err := appContext.MessagingDispatcher.sendProjectContractProposalAdded(project.ID, proposal); err != nil {
+		if err := appContext.MessagingDispatcher.sendProjectContractProposalAdded(project.ID, proposal, user); err != nil {
 			log.Printf("could not sendProjectContractProposalAdded: %v", err)
 		}
 		respond.With(w, r, http.StatusOK, project)
 	})
 }
 
-func finishProject() http.Handler {
+func freelancerFinishProject() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		appContext := context.Get(r, "context").(*ApplicationContext)
-		user := context.Get(r, "user").(*User)
-		userType := context.Get(r, "userType").(string)
+		user := context.Get(r, "user").(*models.User)
 		project := context.Get(r, "project").(*Project)
-
-		if userType == "client" {
-			project.ClientConcluded = true
-		} else if userType == "freelancer" {
-			project.FreelancersConcluded = append(project.FreelancersConcluded, user.ID)
-		}
-
+		project.FreelancersConcluded = append(project.FreelancersConcluded, user.ID)
 		if err := appContext.ProjectRepository.update(project); err != nil {
-			log.Printf("could not update project status: %v", err)
-			respond.With(w, r, http.StatusInternalServerError, fmt.Errorf("could not update project status"))
+			log.Printf("could not update project: %v", err)
+			respond.With(w, r, http.StatusInternalServerError, fmt.Errorf("could not update project"))
 			return
 		}
-		if err := appContext.MessagingDispatcher.sendProjectConcludedByUser(project, userType, user); err != nil {
-			log.Printf("could not sendProjectConcludedByUser: %v", err)
+		if err := appContext.MessagingDispatcher.sendProjectFinishedByFreelancer(project, user); err != nil {
+			log.Printf("could not sendProjectFinishedByFreelancer: %v", err)
 		}
-
-		if project.allUsersConcluded() {
-			project.Status = projectStatusDone
+		if project.allFreelancersConcluded() {
+			project.Status = projectStatusPendingFinished
 			if err := appContext.ProjectRepository.update(project); err != nil {
-				log.Printf("could not update project status: %v", err)
-				respond.With(w, r, http.StatusInternalServerError, fmt.Errorf("could not update project status"))
+				log.Printf("could not update project status to pending_finished: %v", err)
+				respond.With(w, r, http.StatusInternalServerError, fmt.Errorf("could not update project status to pending_finished"))
 				return
 			}
 			if err := appContext.MessagingDispatcher.sendProjectStateChanged(project); err != nil {
-				log.Printf("could not sendProjectStateChanged: %v", err)
+				log.Printf("could not sendProjectStateChanged to pending_finished: %v", err)
 			}
 		}
-
 		respond.With(w, r, http.StatusOK, project)
+	})
+}
+
+func projectDone() http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		appContext := context.Get(r, "context").(*ApplicationContext)
+		user := context.Get(r, "user").(*models.User)
+		project := context.Get(r, "project").(*Project)
+		project.ClientConcluded = true
+		if err := appContext.ProjectRepository.update(project); err != nil {
+			log.Printf("could not update project: %v", err)
+			respond.With(w, r, http.StatusInternalServerError, fmt.Errorf("could not update project"))
+			return
+		}
+		if err := appContext.MessagingDispatcher.sendProjectDone(project, user); err != nil {
+			log.Printf("could not sendProjectDone: %v", err)
+		}
+		if project.allUsersConcluded() {
+			project.Status = projectStatusDone
+			if err := appContext.ProjectRepository.update(project); err != nil {
+				log.Printf("could not update project status to done: %v", err)
+				respond.With(w, r, http.StatusInternalServerError, fmt.Errorf("could not update project status to done"))
+				return
+			}
+			if err := appContext.MessagingDispatcher.sendProjectStateChanged(project); err != nil {
+				log.Printf("could not sendProjectStateChanged to done: %v", err)
+			}
+			if err := appContext.PaymentDispatcher.execute(project.ID); err != nil {
+				log.Printf("could not execute payment for project %d: %v", project.ID, err)
+				respond.With(w, r, http.StatusFailedDependency, fmt.Errorf("payment could not be execued"))
+				return
+			}
+		}
+		respond.With(w, r, http.StatusOK, project)
+	})
+}
+
+func fundedProject() http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		appContext := context.Get(r, "context").(*ApplicationContext)
+		user := context.Get(r, "user").(*models.User)
+		project := context.Get(r, "project").(*Project)
+		if err := appContext.Mailer.SendProjectFunded(
+			project.ID,
+			project.Name,
+			user.ID,
+			fmt.Sprintf("%s %s", user.FirstName, user.LastName),
+		); err != nil {
+			respond.With(w, r, http.StatusFailedDependency, err)
+			return
+		}
+		respond.With(w, r, http.StatusOK, nil)
 	})
 }

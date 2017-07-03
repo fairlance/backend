@@ -194,8 +194,8 @@ func WithUserFromClaims(handler http.Handler) http.Handler {
 func WhenUserType(allowedUserType string) Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			userType := context.Get(r, "userType").(string)
-			if userType != allowedUserType {
+			user := context.Get(r, "user").(*models.User)
+			if user.Type != allowedUserType {
 				respond.With(w, r, http.StatusForbidden, errors.New("unauthorized access"))
 				return
 			}

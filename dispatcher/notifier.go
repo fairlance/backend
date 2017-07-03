@@ -39,7 +39,7 @@ func NewHTTPNotifier(notificationURL string) Notifier {
 }
 
 func (notifier *HTTPNotifier) Notify(n *Notification) error {
-	url := "http://" + notifier.NotificationURL + "/send"
+	url := notifier.NotificationURL + "/send"
 	body, err := json.Marshal(n)
 	if err != nil {
 		log.Println(err)

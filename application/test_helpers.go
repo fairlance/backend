@@ -46,6 +46,16 @@ func (i *testIndexer) Delete(index, docID string) error {
 	return i.deleteCallback(index, docID)
 }
 
+type testPaymentCallback func(projectID uint) error
+
+type testPayment struct {
+	callback testPaymentCallback
+}
+
+func (p *testPayment) Execute(projectID uint) error {
+	return p.callback(projectID)
+}
+
 func getRequest(appContext *ApplicationContext, requestBody string) *http.Request {
 	req, err := http.NewRequest("GET", "http://github.com/fairlance/", bytes.NewBuffer([]byte(requestBody)))
 	if err != nil {
@@ -59,6 +69,11 @@ func getRequest(appContext *ApplicationContext, requestBody string) *http.Reques
 	if appContext.MessagingDispatcher == nil {
 		appContext.MessagingDispatcher = NewMessagingDispatcher(&testMessaging{
 			callback: func(message *dispatcher.Message) error { return nil },
+		})
+	}
+	if appContext.PaymentDispatcher == nil {
+		appContext.PaymentDispatcher = NewPaymentDispatcher(&testPayment{
+			callback: func(projectID uint) error { return nil },
 		})
 	}
 	if appContext.Indexer == nil {

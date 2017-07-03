@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/fairlance/backend/dispatcher"
+	"github.com/fairlance/backend/mailer"
 	"github.com/jinzhu/gorm"
 )
 
@@ -18,7 +19,9 @@ type ApplicationContext struct {
 	JwtSecret              string
 	NotificationDispatcher *NotificationDispatcher
 	MessagingDispatcher    *MessagingDispatcher
+	PaymentDispatcher      *PaymentDispatcher
 	Indexer                Indexer
+	Mailer                 mailer.Mailer
 }
 
 type ContextOptions struct {
@@ -29,7 +32,9 @@ type ContextOptions struct {
 	Secret          string
 	NotificationURL string
 	MessagingURL    string
+	PaymentURL      string
 	SearcherURL     string
+	MailerOptions   mailer.Options
 }
 
 func NewContext(options ContextOptions) (*ApplicationContext, error) {
@@ -56,7 +61,9 @@ func NewContext(options ContextOptions) (*ApplicationContext, error) {
 		JwtSecret:              options.Secret, //base64.StdEncoding.EncodeToString([]byte(options.Secret)),
 		NotificationDispatcher: NewNotificationDispatcher(dispatcher.NewHTTPNotifier(options.NotificationURL)),
 		MessagingDispatcher:    NewMessagingDispatcher(dispatcher.NewHTTPMessaging(options.MessagingURL)),
+		PaymentDispatcher:      NewPaymentDispatcher(dispatcher.NewHTTPPayment(options.PaymentURL)),
 		Indexer:                NewHTTPIndexer(options.SearcherURL),
+		Mailer:                 mailer.NewMailgun(options.MailerOptions),
 	}
 
 	return context, nil
@@ -74,7 +81,7 @@ func (ac *ApplicationContext) DropTables() {
 }
 
 func (ac *ApplicationContext) CreateTables() {
-	ac.db.CreateTable(&Freelancer{}, &Extension{}, &Contract{}, &Project{}, &Client{}, &Job{}, &Review{}, &Reference{}, &Media{}, &JobApplication{}, &Attachment{}, &Example{})
+	ac.db.AutoMigrate(&Freelancer{}, &Extension{}, &Contract{}, &Project{}, &Client{}, &Job{}, &Review{}, &Reference{}, &Media{}, &JobApplication{}, &Attachment{}, &Example{})
 }
 
 func (ac *ApplicationContext) FillTables() {
