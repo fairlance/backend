@@ -69,8 +69,8 @@ func whenProjectBelongsToClientByID(next http.Handler) http.Handler {
 		var appContext = context.Get(r, "context").(*ApplicationContext)
 		project, err := appContext.ProjectRepository.getByID(id)
 		if err != nil {
-			log.Printf("whenProjectBelongsToClientByID: %v", err)
-			respond.With(w, r, http.StatusInternalServerError, err)
+			log.Printf("whenProjectBelongsToClientByID, client(%d), project(%d): %v", user.ID, id, err)
+			respond.With(w, r, http.StatusNotFound, err)
 			return
 		}
 		if project.ClientID == user.ID {
@@ -260,6 +260,10 @@ func freelancerFinishProject() http.Handler {
 		appContext := context.Get(r, "context").(*ApplicationContext)
 		user := context.Get(r, "user").(*models.User)
 		project := context.Get(r, "project").(*Project)
+		if contains(project.FreelancersConcluded, user.ID) {
+			respond.With(w, r, http.StatusBadRequest, fmt.Errorf("freelancer already concluded"))
+			return
+		}
 		project.FreelancersConcluded = append(project.FreelancersConcluded, user.ID)
 		if err := appContext.ProjectRepository.update(project); err != nil {
 			log.Printf("could not update project: %v", err)
