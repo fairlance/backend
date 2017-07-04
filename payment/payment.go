@@ -3,29 +3,31 @@ package payment
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 
-	respond "gopkg.in/matryer/respond.v1"
-
 	"github.com/fairlance/backend/dispatcher"
+	respond "gopkg.in/matryer/respond.v1"
 )
 
 type contextKey string
 
 const (
-	created  = "created"
-	executed = "executed"
+	statusCreated  = "created"
+	statusExecuted = "executed"
+	statusSucess   = "sucess"
+	statusError    = "error"
 )
 
-func newPayment(options *Options /*, db db*/) *payment {
+func newPayment(options *Options, db db) *payment {
 	return &payment{
 		primaryEmail:          options.PrimaryEmail,
 		authorizationURL:      options.AuthorizationURL,
 		requester:             &fakeRequester{},
 		receiversPercentile:   0.92,
 		applicationDispatcher: dispatcher.NewApplicationDispatcher(options.ApplicationURL),
-		// db: db,
+		db: db,
 	}
 }
 
@@ -37,7 +39,7 @@ type payment struct {
 	paymentProviderChargePercentile float64
 	paymentProviderChargeFixed      float64
 	applicationDispatcher           dispatcher.ApplicationDispatcher
-	// db                              db
+	db                              db
 }
 
 func (p *payment) executeHandler() http.Handler {
@@ -48,34 +50,106 @@ func (p *payment) executeHandler() http.Handler {
 			respond.With(w, r, http.StatusBadRequest, fmt.Errorf("could not parse execute request (%+v): %v", execute, err))
 			return
 		}
-		receivers, err := p.buildReceivers(execute.ProjectID)
+		project, err := p.getProject(execute.projectID)
 		if err != nil {
-			log.Printf("could not build receivers: %v", err)
-			respond.With(w, r, http.StatusBadRequest, fmt.Errorf("could not build receivers: %v", err))
+			log.Printf("could not get project %d: %v", execute.projectID, err)
+			respond.With(w, r, http.StatusBadRequest, fmt.Errorf("could not get project %d: %v", execute.projectID, err))
 			return
 		}
-		response, err := p.requester.payPrimary(receivers)
-		if err != nil {
-			log.Printf("could not execute a payPrimary request: %v", err)
-			respond.With(w, r, http.StatusInternalServerError, fmt.Errorf("could not execute a payPrimary request: %v", err))
+		transactionReceivers := p.buildTransactionReceivers(project)
+		t := &transaction{
+			trackID:   execute.trackID,
+			provider:  p.requester.providerID(),
+			projectID: execute.projectID,
+			amount:    fmt.Sprintf("%.2f", project.amount()),
+			status:    statusCreated,
+			receivers: transactionReceivers,
+		}
+		if err := p.db.insert(t); err != nil {
+			log.Printf("could not save transaction: %v", err)
+			respond.With(w, r, http.StatusInternalServerError, fmt.Errorf("could not save transaction: %v", err))
 			return
 		}
-		var paymentReceivers []paymentReceiver
-		for _, r := range receivers {
-			if !r.Primary {
-				paymentReceivers = append(paymentReceivers, paymentReceiver{
-					fairlanceID: r.fairlanceID,
-					email:       r.Email,
-					amount:      r.Amount,
-				})
+		var receivers []Receiver
+		for _, r := range transactionReceivers {
+			receivers = append(receivers, Receiver{
+				Amount:  r.amount,
+				Email:   r.email,
+				Primary: false,
+			})
+		}
+		response, err := p.requester.pay(receivers)
+		if err != nil {
+			log.Printf("could not execute a pay request: %v", err)
+			respond.With(w, r, http.StatusFailedDependency, fmt.Errorf("could not execute a pay request: %v", err))
+			return
+		}
+		defer func(t *transaction) {
+			if err := p.db.updatePaymentKeyAndStatusByTrackID(t.trackID, t.paymentKey, t.status); err != nil {
+				log.Printf("could not update transaction %s, status: %v", t.trackID, err)
+				respond.With(w, r, http.StatusInternalServerError, fmt.Errorf("could not update transaction %s: %v", t.trackID, err))
+				return
 			}
-		}
-		if response.success {
-			respond.With(w, r, http.StatusOK, response)
+		}(t)
+		t.paymentKey = response.paymentKey
+		t.status = statusExecuted
+		if !response.success {
+			t.status = statusError
+			respond.With(w, r, http.StatusFailedDependency, response)
 			return
 		}
-		respond.With(w, r, http.StatusFailedDependency, response)
+		respond.With(w, r, http.StatusOK, response)
 	})
+}
+
+// https://developer.paypal.com/docs/classic/ipn/integration-guide/IPNIntro/#id08CKFJ00JYK
+func (p *payment) ipnNotificationHandler() http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		body, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			log.Printf("could not receive ipn notification: %v", err)
+			return
+		}
+		defer r.Body.Close()
+		log.Printf("IPN notificcation received: %v", string(body))
+		// https://developer.paypal.com/docs/classic/ipn/ht_ipn/
+		if err := p.db.updateStatusByTractID("trackID", statusSucess); err != nil {
+			log.Printf("could not update transaction %s, status: %v", "trackID", err)
+			respond.With(w, r, http.StatusInternalServerError, fmt.Errorf("could not update transaction %s: %v", "trackID", err))
+			return
+		}
+		respond.With(w, r, http.StatusOK, nil)
+	})
+}
+
+func (p *payment) buildTransactionReceivers(proj *Project) []transactionReceiver {
+	freelancerAmount := proj.amount() * p.receiversPercentile / float64(len(proj.Freelancers))
+	var transactionReceivers []transactionReceiver
+	for _, freelancer := range proj.Freelancers {
+		transactionReceivers = append(transactionReceivers, transactionReceiver{
+			fairlanceID: freelancer.ID,
+			email:       freelancer.Email,
+			amount:      fmt.Sprintf("%.2f", money(freelancerAmount)),
+		})
+	}
+	return transactionReceivers
+}
+
+func (p *payment) getProject(projectID uint) (*Project, error) {
+	projectBytes, err := p.applicationDispatcher.GetProject(projectID)
+	if err != nil {
+		return nil, err
+	}
+	var project Project
+	if err := json.Unmarshal(projectBytes, &project); err != nil {
+		return nil, err
+	}
+	return &project, nil
+}
+
+func money(amt float64) float64 {
+	var intAmt = int64(amt * 100)
+	return float64(intAmt) / 100
 }
 
 // func (p *payment) payPrimaryHandler() http.Handler {
@@ -168,57 +242,3 @@ func (p *payment) executeHandler() http.Handler {
 // 		respond.With(w, r, http.StatusFailedDependency, response)
 // 	})
 // }
-
-// // https://developer.paypal.com/docs/classic/ipn/integration-guide/IPNIntro/#id08CKFJ00JYK
-// func (p *payment) ipnNotificationHandler() http.Handler {
-// 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-// 		body, err := ioutil.ReadAll(r.Body)
-// 		if err != nil {
-// 			log.Printf("could not receive ipn notification: %v", err)
-// 			return
-// 		}
-// 		defer r.Body.Close()
-// 		log.Printf("IPN notificcation received: %v", string(body))
-// 		// https://developer.paypal.com/docs/classic/ipn/ht_ipn/
-// 	})
-// }
-
-func (p *payment) buildReceivers(projectID uint) ([]Receiver, error) {
-	project, err := p.getProject(projectID)
-	if err != nil {
-		return nil, err
-	}
-	receivers := []Receiver{
-		Receiver{
-			Amount:  fmt.Sprintf("%.2f", money(project.amount())),
-			Email:   p.primaryEmail,
-			Primary: true,
-		},
-	}
-	freelancerAmount := project.amount() * p.receiversPercentile / float64(len(project.Freelancers))
-	for _, freelancer := range project.Freelancers {
-		receivers = append(receivers, Receiver{
-			Email:       freelancer.Email,
-			Amount:      fmt.Sprintf("%.2f", money(freelancerAmount)),
-			fairlanceID: freelancer.ID,
-		})
-	}
-	return receivers, nil
-}
-
-func (p *payment) getProject(projectID uint) (*Project, error) {
-	projectBytes, err := p.applicationDispatcher.GetProject(projectID)
-	if err != nil {
-		return nil, err
-	}
-	var project Project
-	if err := json.Unmarshal(projectBytes, &project); err != nil {
-		return nil, err
-	}
-	return &project, nil
-}
-
-func money(amt float64) float64 {
-	var intAmt = int64(amt * 100)
-	return float64(intAmt) / 100
-}

@@ -1,6 +1,6 @@
 package payment
 
-type paymentReceiver struct {
+type transactionReceiver struct {
 	id          uint
 	fairlanceID uint
 	email       string

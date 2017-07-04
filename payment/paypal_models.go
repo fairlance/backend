@@ -21,10 +21,9 @@ type ReceiverList struct {
 }
 
 type Receiver struct {
-	Amount      string `json:"amount"`
-	Email       string `json:"email"`
-	Primary     bool   `json:"primary"`
-	fairlanceID uint   // fairlance specific ID, not sent to PAYPAL
+	Amount  string `json:"amount"`
+	Email   string `json:"email"`
+	Primary bool   `json:"primary"`
 }
 
 type PayResponse struct {
@@ -50,44 +49,44 @@ type Error struct {
 	Message   string
 }
 
-type PaymentDetailsRequest struct {
-	PayKey          string          `json:"payKey"`
-	RequestEnvelope RequestEnvelope `json:"requestEnvelope"`
-}
+// type PaymentDetailsRequest struct {
+// 	PayKey          string          `json:"payKey"`
+// 	RequestEnvelope RequestEnvelope `json:"requestEnvelope"`
+// }
 
-type PaymentInfoList struct {
-	PaymentInfo []PaymentInfo
-}
+// type PaymentInfoList struct {
+// 	PaymentInfo []PaymentInfo
+// }
 
-type PaymentInfoReceiver struct {
-	Amount string
-	Email  string
-}
+// type PaymentInfoReceiver struct {
+// 	Amount string
+// 	Email  string
+// }
 
-type PaymentInfo struct {
-	PendingReason           string
-	PendingRefund           string
-	Receiver                PaymentInfoReceiver
-	RefundedAmount          string
-	SenderTransactionId     string
-	SenderTransactionStatus string
-	TransactionId           string
-	TransactionStatus       string
-}
+// type PaymentInfo struct {
+// 	PendingReason           string
+// 	PendingRefund           string
+// 	Receiver                PaymentInfoReceiver
+// 	RefundedAmount          string
+// 	SenderTransactionId     string
+// 	SenderTransactionStatus string
+// 	TransactionId           string
+// 	TransactionStatus       string
+// }
 
-type PaymentDetailsResponse struct {
-	ResponseEnvelope ResponseEnvelope
-	Status           string
-	Error            []Error
-	PaymentInfoList  PaymentInfoList
-}
+// type PaymentDetailsResponse struct {
+// 	ResponseEnvelope ResponseEnvelope
+// 	Status           string
+// 	Error            []Error
+// 	PaymentInfoList  PaymentInfoList
+// }
 
-type ExecutePaymentRequest struct {
-	PayKey          string          `json:"payKey"`
-	RequestEnvelope RequestEnvelope `json:"requestEnvelope"`
-}
+// type ExecutePaymentRequest struct {
+// 	PayKey          string          `json:"payKey"`
+// 	RequestEnvelope RequestEnvelope `json:"requestEnvelope"`
+// }
 
-type ExecutePaymentResponse struct {
-	ResponseEnvelope ResponseEnvelope
-	Error            []Error
-}
+// type ExecutePaymentResponse struct {
+// 	ResponseEnvelope ResponseEnvelope
+// 	Error            []Error
+// }

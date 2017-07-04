@@ -21,7 +21,7 @@ type payPalRequester struct {
 
 func (p *payPalRequester) providerID() string { return "paypal" }
 
-func (p *payPalRequester) payPrimary(receivers []Receiver) (*payResponse, error) {
+func (p *payPalRequester) pay(receivers []Receiver) (*payResponse, error) {
 	payPrimaryRequest := &PayRequest{
 		ActionType:   "PAY_PRIMARY",
 		CurrencyCode: "EUR",
@@ -49,28 +49,6 @@ func (p *payPalRequester) payPrimary(receivers []Receiver) (*payResponse, error)
 	return &payResponse{
 		paymentKey: response.PayKey,
 		success:    response.ResponseEnvelope.Ack == "Success",
-	}, err
-}
-
-func (p *payPalRequester) executePayment(payKey string) (*executeResponse, error) {
-	executePaymentRequest := &ExecutePaymentRequest{
-		PayKey: payKey,
-		RequestEnvelope: RequestEnvelope{
-			ErrorLanguage: "en_US",
-			DetailLevel:   "ReturnAll",
-		},
-	}
-	req, err := p.newRequest(executePaymentRequest, executePaymentEndpoint)
-	if err != nil {
-		return nil, fmt.Errorf("could not create request: %v", err)
-	}
-	response := &ExecutePaymentResponse{}
-	err = p.do(req, response)
-	if err != nil {
-		return nil, err
-	}
-	return &executeResponse{
-		success: response.ResponseEnvelope.Ack == "Success",
 	}, err
 }
 
@@ -111,3 +89,56 @@ func (p *payPalRequester) do(req *http.Request, response interface{}) error {
 	}
 	return nil
 }
+
+// func (p *payPalRequester) payPrimary(receivers []Receiver) (*payResponse, error) {
+// 	payPrimaryRequest := &PayRequest{
+// 		ActionType:   "PAY_PRIMARY",
+// 		CurrencyCode: "EUR",
+// 		ReceiverList: ReceiverList{
+// 			Receiver: receivers,
+// 		},
+// 		ReturnURL: p.options.ReturnURL,
+// 		CancelURL: p.options.CancelURL,
+// 		RequestEnvelope: RequestEnvelope{
+// 			ErrorLanguage: "en_US",
+// 			DetailLevel:   "ReturnAll",
+// 		},
+// 		FeesPayer:          "PRIMARYRECEIVER",
+// 		IPNNotificationURL: p.options.IPNNotificationURL,
+// 	}
+// 	req, err := p.newRequest(payPrimaryRequest, payEndpoint)
+// 	if err != nil {
+// 		return nil, fmt.Errorf("could not create request: %v", err)
+// 	}
+// 	response := &PayResponse{}
+// 	err = p.do(req, response)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	return &payResponse{
+// 		paymentKey: response.PayKey,
+// 		success:    response.ResponseEnvelope.Ack == "Success",
+// 	}, err
+// }
+
+// func (p *payPalRequester) executePayment(payKey string) (*executeResponse, error) {
+// 	executePaymentRequest := &ExecutePaymentRequest{
+// 		PayKey: payKey,
+// 		RequestEnvelope: RequestEnvelope{
+// 			ErrorLanguage: "en_US",
+// 			DetailLevel:   "ReturnAll",
+// 		},
+// 	}
+// 	req, err := p.newRequest(executePaymentRequest, executePaymentEndpoint)
+// 	if err != nil {
+// 		return nil, fmt.Errorf("could not create request: %v", err)
+// 	}
+// 	response := &ExecutePaymentResponse{}
+// 	err = p.do(req, response)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	return &executeResponse{
+// 		success: response.ResponseEnvelope.Ack == "Success",
+// 	}, err
+// }

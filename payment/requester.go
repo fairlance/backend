@@ -2,8 +2,9 @@ package payment
 
 type requester interface {
 	providerID() string
-	payPrimary(receivers []Receiver) (*payResponse, error)
-	executePayment(paymentKey string) (*executeResponse, error)
+	// payPrimary(receivers []Receiver) (*payResponse, error)
+	// executePayment(paymentKey string) (*executeResponse, error)
+	pay(receivers []Receiver) (*payResponse, error)
 }
 
 type payResponse struct {

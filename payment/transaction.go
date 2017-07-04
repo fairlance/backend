@@ -16,5 +16,5 @@ type transaction struct {
 	createdAt  *time.Time
 	updatedAt  *time.Time
 	// receivers table
-	receivers []paymentReceiver
+	receivers []transactionReceiver
 }
