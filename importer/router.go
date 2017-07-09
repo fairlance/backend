@@ -41,6 +41,6 @@ func NewServeMux(options Options) *http.ServeMux {
 		}
 		return
 	}))
-	mux.Handle("/payment", paymentHandler(db.DB(), options.ApplicationURL))
+	mux.Handle("/payment", newPaymentHandler(db.DB(), options.ApplicationURL))
 	return mux
 }
