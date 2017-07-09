@@ -19,7 +19,7 @@ type applicationDispatcher struct {
 }
 
 func (d *applicationDispatcher) GetProject(id uint) ([]byte, error) {
-	url := fmt.Sprintf("http://%s/private/project/%d", d.url, id)
+	url := fmt.Sprintf("%s/private/project/%d", d.url, id)
 	request, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return nil, err
