@@ -240,7 +240,7 @@ var routes = Routes{
 			whenProjectBelongsToClientByID,
 			withProjectByID,
 			whenCurrentProjectStatus(projectStatusPendingFinished),
-		)(freelancerFinishProject()),
+		)(projectDone()),
 	},
 
 	// Route{
