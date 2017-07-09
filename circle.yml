@@ -7,7 +7,7 @@ checkout:
         - cp -Rf ./* ./../src/github.com/fairlance/backend # move to src folder so make executes tasks there
 dependencies:
     override:
-        - ./fairlance.sh dependencies:
+        - ./fairlance.sh deps:
             pwd: ./../src/github.com/fairlance/backend
 test:
     override:
