@@ -5,7 +5,7 @@ case $CMD in
     init )
         echo 'eval $("C:\Program Files\Docker Toolbox\docker-machine.exe" env --shell=bash)'
         ;;
-    dependencies )
+    deps )
         echo "docker build -t fairlance/backend-dependencies -f dependencies.Dockerfile ."
         docker build -t fairlance/backend-dependencies -f dependencies.Dockerfile .
         ;;
@@ -54,6 +54,6 @@ case $CMD in
         docker run -d -p 4040:4040 --net="host" --name ngrok fnichol/ngrok 8000
         ;;
      *)
-        echo $"Usage: $0 {init|dependencies|ssh|build|buildAll|saveImages|ngrok}"
+        echo $"Usage: $0 {init|deps|ssh|build|buildAll|saveImages|ngrok}"
         exit 1
 esac
