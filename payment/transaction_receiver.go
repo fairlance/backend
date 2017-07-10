@@ -1,8 +1,8 @@
 package payment
 
-type transactionReceiver struct {
-	id          uint
-	fairlanceID uint
-	email       string
-	amount      string
+type TransactionReceiver struct {
+	ID          uint
+	FairlanceID uint
+	Email       string
+	Amount      string
 }

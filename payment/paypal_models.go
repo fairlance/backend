@@ -1,92 +1,63 @@
 package payment
 
-type PayRequest struct {
-	ActionType         string          `json:"actionType"`
-	CurrencyCode       string          `json:"currencyCode"`
-	ReceiverList       ReceiverList    `json:"receiverList"`
-	ReturnURL          string          `json:"returnUrl"`
-	CancelURL          string          `json:"cancelUrl"`
-	RequestEnvelope    RequestEnvelope `json:"requestEnvelope"`
-	FeesPayer          string          `json:"feesPayer"`
-	IPNNotificationURL string          `json:"ipnNotificationUrl,omitempty"`
+// "sender_batch_header":{
+//     "sender_batch_id":"2014021801",
+//     "email_subject":"You have a payout!",
+//     "recipient_type":"EMAIL"
+//   },
+//   "items":[
+//     {
+//       "recipient_type":"EMAIL",
+//       "amount":{
+//         "value":"1.0",
+//         "currency":"USD"
+//       },
+//       "note":"Thanks for your patronage!",
+//       "sender_item_id":"201403140001",
+//       "receiver":"anybody01@gmail.com"
+//     }
+//   ]
+// }'
+
+type PayoutRequest struct {
+	SenderBatchHeader PayoutSenderBatchHeader `json:"sender_batch_header"`
+	Items             PayoutItems             `json:"items"`
 }
 
-type RequestEnvelope struct {
-	ErrorLanguage string `json:"errorLanguage"`
-	DetailLevel   string `json:"detailLevel"`
+type PayoutSenderBatchHeader struct {
+	SenderBatchID string `json:"sender_batch_id"`
+	EmailSubject  string `json:"email_subject"`
+	RecipientType string `json:"recipient_type"`
 }
 
-type ReceiverList struct {
-	Receiver []Receiver `json:"receiver"`
+type PayoutItems []PayoutItem
+
+type PayoutItem struct {
+	RecipientType string           `json:"recipient_type"`
+	Amount        PayoutItemAmount `json:"amount"`
+	Note          string           `json:"note"`
+	SenderItemID  string           `json:"sender_item_id"`
+	Receiver      string           `json:"receiver"`
 }
 
-type Receiver struct {
-	Amount  string `json:"amount"`
-	Email   string `json:"email"`
-	Primary bool   `json:"primary"`
+type PayoutItemAmount struct {
+	Value    string `json:"value"`
+	Currency string `json:"currency"`
 }
 
-type PayResponse struct {
-	ResponseEnvelope  ResponseEnvelope
-	Error             []Error
-	PayKey            string
-	PaymentExecStatus string
+// {
+//   "batch_header": {
+//     "sender_batch_header": {
+//       "sender_batch_id": "2014021801",
+//       "email_subject": "You have a payout!"
+//     },
+//     "payout_batch_id": "12345678",
+//     "batch_status": "PENDING"
+//   }
+// }
+
+type PayoutResponse struct {
+	SenderBatchHeader PayoutSenderBatchHeader `json:"sender_batch_header"`
+	PayoutBatchID     string                  `json:"payout_batch_id"`
+	BatchStatus       string                  `json:"batch_status"`
 }
-
-type ResponseEnvelope struct {
-	Timestamp     string
-	Ack           string
-	CorrelationID string
-	Build         string
-}
-
-type Error struct {
-	ErrorID   string
-	Domain    string
-	Subdomain string
-	Severity  string
-	Category  string
-	Message   string
-}
-
-// type PaymentDetailsRequest struct {
-// 	PayKey          string          `json:"payKey"`
-// 	RequestEnvelope RequestEnvelope `json:"requestEnvelope"`
-// }
-
-// type PaymentInfoList struct {
-// 	PaymentInfo []PaymentInfo
-// }
-
-// type PaymentInfoReceiver struct {
-// 	Amount string
-// 	Email  string
-// }
-
-// type PaymentInfo struct {
-// 	PendingReason           string
-// 	PendingRefund           string
-// 	Receiver                PaymentInfoReceiver
-// 	RefundedAmount          string
-// 	SenderTransactionId     string
-// 	SenderTransactionStatus string
-// 	TransactionId           string
-// 	TransactionStatus       string
-// }
-
-// type PaymentDetailsResponse struct {
-// 	ResponseEnvelope ResponseEnvelope
-// 	Status           string
-// 	Error            []Error
-// 	PaymentInfoList  PaymentInfoList
-// }
-
-// type ExecutePaymentRequest struct {
-// 	PayKey          string          `json:"payKey"`
-// 	RequestEnvelope RequestEnvelope `json:"requestEnvelope"`
-// }
-
-// type ExecutePaymentResponse struct {
-// 	ResponseEnvelope ResponseEnvelope
-// 	Error            []Error
-// }

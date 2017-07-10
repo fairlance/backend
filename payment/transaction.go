@@ -4,17 +4,19 @@ import (
 	"time"
 )
 
-type transaction struct {
+type Transaction struct {
 	// transactions table
-	id         uint
-	trackID    string
-	provider   string
-	amount     string
-	paymentKey string //payKey
-	projectID  uint
-	status     string
-	createdAt  *time.Time
-	updatedAt  *time.Time
+	ID             uint
+	TrackID        string
+	Provider       string
+	ProviderStatus string
+	PaymentKey     string
+	Amount         string
+	ProjectID      uint
+	Status         string
+	ErrorMsg       string
+	CreatedAt      *time.Time
+	UpdatedAt      *time.Time
 	// receivers table
-	receivers []transactionReceiver
+	Receivers []TransactionReceiver
 }

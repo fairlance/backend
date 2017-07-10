@@ -1,17 +1,9 @@
 package payment
 
-type fakeRequester struct{}
+type FakeRequester struct{}
 
-func (r *fakeRequester) providerID() string { return "fake" }
+func (r *FakeRequester) ProviderID() string { return "fake" }
 
-// func (r *fakeRequester) payPrimary(receivers []Receiver) (*payResponse, error) {
-// 	return &payResponse{paymentKey: "fakeKey", success: true}, nil
-// }
-
-// func (r *fakeRequester) executePayment(paymentKey string) (*executeResponse, error) {
-// 	return &executeResponse{success: true}, nil
-// }
-
-func (r *fakeRequester) pay(receivers []Receiver) (*payResponse, error) {
-	return &payResponse{paymentKey: "fakeKey", success: true}, nil
+func (r *FakeRequester) Pay(request PayoutRequest) (*PayResponse, error) {
+	return &PayResponse{PaymentKey: "fakeKey", Success: true, Status: "fakeStatus"}, nil
 }

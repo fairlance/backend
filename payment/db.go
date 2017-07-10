@@ -7,15 +7,26 @@ import (
 )
 
 const (
+	createEventsIfNotExistSQL = `CREATE TABLE IF NOT EXISTS events
+    (
+        id SERIAL PRIMARY KEY,
+		transaction_id INTEGER NOT NULL REFERENCES transactions(id),
+        provider_transaction_key VARCHAR(255) NOT NULL,
+        provider_status VARCHAR(255) NOT NULL,
+        status VARCHAR(255) NOT NULL,
+        created_at TIMESTAMP WITH TIME ZONE
+    )`
 	createTransactionsIfNotExistSQL = `CREATE TABLE IF NOT EXISTS transactions
     (
         id SERIAL PRIMARY KEY,
         track_id VARCHAR(127) UNIQUE NOT NULL,
         provider VARCHAR(255) NOT NULL,
         provider_transaction_key VARCHAR(255) NOT NULL,
+        provider_status VARCHAR(255) NOT NULL,
         project_id INTEGER NOT NULL,
         amount VARCHAR(255) NOT NULL,
         status VARCHAR(255) NOT NULL,
+		error_msg VARCHAR(255) NOT NULL,
         created_at TIMESTAMP WITH TIME ZONE,
         updated_at TIMESTAMP WITH TIME ZONE
     )`
@@ -27,23 +38,22 @@ const (
 		email VARCHAR(255) NOT NULL,
 		amount VARCHAR(255) NOT NULL
     )`
+	insertEventSQL       = `INSERT INTO events (transaction_id, provider_transaction_key, provider_status, status, created_at) VALUES ($1,$2,$3,$4,$5)`
+	insertTransactionSQL = `INSERT INTO transactions (track_id, provider, provider_transaction_key, provider_status, project_id, amount, status, created_at, updated_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING id`
 	insertReceiverSQL    = `INSERT INTO receivers (transaction_id, fairlance_id, email, amount) VALUES ($1,$2,$3,$4)`
-	insertTransactionSQL = `INSERT INTO transactions (track_id, provider, provider_transaction_key, project_id, amount, status, created_at, updated_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id`
-	// selectTransactionSQL = `SELECT id, track_id, provider, provider_transaction_key, project_id, amount, status, created_at, updated_at FROM transactions WHERE track_id = $1`
-	// selectReceiverSQL    = `SELECT id, fairlance_id, email, amount FROM receivers WHERE transaction_id = $1`
-	updateTransactionPaymentTransactionKeySQL = `UPDATE transactions SET status=$1,provider_transaction_key=$2, updated_at=$3 WHERE track_id=$4`
-	updateTransactionSatatusSQL               = `UPDATE transactions SET status=$1, updated_at=$2 WHERE track_id=$3`
+	updateTransactionSQL = `UPDATE transactions SET provider_transaction_key=$1, provider_status=$2, status=$3, error_msg=$3, updated_at=$5 WHERE track_id=$6`
+	selectTransactionSQL = `SELECT id, track_id, provider, provider_transaction_key, provider_status, project_id, amount, status, error_msg, created_at, updated_at FROM transactions WHERE project_id = $1`
+	selectReceiverSQL    = `SELECT id, fairlance_id, email, amount FROM receivers WHERE transaction_id = $1`
 )
 
-type db interface {
-	init()
-	// get(trackID string) (transaction, error)
-	insert(t *transaction) error
-	updatePaymentKeyAndStatusByTrackID(trackID, paymentTransactionKey, status string) error
-	updateStatusByTractID(trackID, status string) error
+type DB interface {
+	Init()
+	Insert(t *Transaction) error
+	Update(t *Transaction) error
+	Get(projectID uint) (*Transaction, error)
 }
 
-func newDB(db *sql.DB) db {
+func NewDB(db *sql.DB) DB {
 	return &sqlDB{db}
 }
 
@@ -51,7 +61,7 @@ type sqlDB struct {
 	storage *sql.DB
 }
 
-func (db *sqlDB) init() {
+func (db *sqlDB) Init() {
 	if err := db.storage.Ping(); err != nil {
 		log.Fatalf("could not ping db: %v", err)
 	}
@@ -61,21 +71,24 @@ func (db *sqlDB) init() {
 	if _, err := db.storage.Exec(createReceiversIfNotExistSQL); err != nil {
 		log.Fatalf("could not create receivers table: %v", err)
 	}
+	if _, err := db.storage.Exec(createEventsIfNotExistSQL); err != nil {
+		log.Fatalf("could not create events table: %v", err)
+	}
 }
 
-func (db *sqlDB) insert(t *transaction) error {
+func (db *sqlDB) Insert(t *Transaction) error {
 	txn, err := db.storage.Begin()
 	if err != nil {
 		return err
 	}
 	now := time.Now()
 	var transactionID uint
-	err = db.storage.QueryRow(insertTransactionSQL, t.trackID, t.provider, t.paymentKey, t.projectID, t.amount, t.status, &now, &now).Scan(&transactionID)
+	err = db.storage.QueryRow(insertTransactionSQL, t.TrackID, t.Provider, t.PaymentKey, t.ProviderStatus, t.ProjectID, t.Amount, t.Status, &now, &now).Scan(&transactionID)
 	if err != nil {
 		return err
 	}
-	for _, receiver := range t.receivers {
-		_, err = txn.Exec(insertReceiverSQL, transactionID, receiver.fairlanceID, receiver.email, receiver.amount)
+	for _, receiver := range t.Receivers {
+		_, err = txn.Exec(insertReceiverSQL, transactionID, receiver.FairlanceID, receiver.Email, receiver.Amount)
 		if err != nil {
 			return err
 		}
@@ -84,43 +97,41 @@ func (db *sqlDB) insert(t *transaction) error {
 	if err != nil {
 		return err
 	}
+	if _, err := db.storage.Exec(insertEventSQL, t.ID, t.PaymentKey, t.ProviderStatus, t.Status, time.Now()); err != nil {
+		log.Printf("could not create event for transaction %d: %v", t.ID, err)
+	}
 	return nil
 }
 
-func (db *sqlDB) updatePaymentKeyAndStatusByTrackID(trackID, paymentTransactionKey, status string) error {
-	_, err := db.storage.Exec(updateTransactionPaymentTransactionKeySQL,
-		status, paymentTransactionKey, time.Now(), trackID,
+func (db *sqlDB) Update(t *Transaction) error {
+	_, err := db.storage.Exec(updateTransactionSQL,
+		t.PaymentKey, t.ProviderStatus, t.Status, t.ErrorMsg, time.Now(), t.TrackID,
 	)
+	if _, err := db.storage.Exec(insertEventSQL, t.ID, t.PaymentKey, t.ProviderStatus, t.Status, time.Now()); err != nil {
+		log.Printf("could not create event for transaction %d: %v", t.ID, err)
+	}
 	return err
 }
 
-func (db *sqlDB) updateStatusByTractID(trackID, status string) error {
-	_, err := db.storage.Exec(updateTransactionSatatusSQL,
-		status, time.Now(), trackID,
-	)
-	return err
+func (db *sqlDB) Get(projectID uint) (*Transaction, error) {
+	var t Transaction
+	if err := db.storage.QueryRow(selectTransactionSQL, projectID).Scan(
+		&t.ID, &t.TrackID, &t.Provider, &t.PaymentKey, &t.ProviderStatus, &t.ProjectID, &t.Amount, &t.Status, &t.ErrorMsg, &t.CreatedAt, &t.UpdatedAt,
+	); err != nil {
+		return nil, err
+	}
+	rows, err := db.storage.Query(selectReceiverSQL, t.ID)
+	if err != nil {
+		log.Printf("could not get receivers from db: %v", t)
+		return nil, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var receiver TransactionReceiver
+		if err := rows.Scan(&receiver.ID, &receiver.FairlanceID, &receiver.Email, &receiver.Amount); err != nil {
+			return nil, err
+		}
+		t.Receivers = append(t.Receivers, receiver)
+	}
+	return &t, nil
 }
-
-// func (db *sqlDB) get(trackID string) (transaction, error) {
-// 	var t transaction
-// 	if err := db.storage.QueryRow(selectTransactionSQL, trackID).Scan(
-// 		&t.id, &t.trackID, &t.provider, &t.paymentKey, &t.projectID, &t.amount, &t.status, &t.createdAt, &t.updatedAt,
-// 	); err != nil {
-// 		return transaction{}, err
-// 	}
-// 	rows, err := db.storage.Query(selectReceiverSQL, t.id)
-// 	if err != nil {
-// 		log.Printf("%v", t)
-// 		return transaction{}, err
-// 	}
-// 	defer rows.Close()
-// 	for rows.Next() {
-// 		var receiver paymentReceiver
-// 		err := rows.Scan(&receiver.id, &receiver.fairlanceID, &receiver.email, &receiver.amount)
-// 		if err != nil {
-// 			return transaction{}, err
-// 		}
-// 		t.receivers = append(t.receivers, receiver)
-// 	}
-// 	return t, nil
-// }

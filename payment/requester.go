@@ -1,18 +1,16 @@
 package payment
 
-type requester interface {
-	providerID() string
-	// payPrimary(receivers []Receiver) (*payResponse, error)
-	// executePayment(paymentKey string) (*executeResponse, error)
-	pay(receivers []Receiver) (*payResponse, error)
+type Requester interface {
+	ProviderID() string
+	Pay(request PayoutRequest) (*PayResponse, error)
 }
 
-type payResponse struct {
-	success    bool
-	paymentKey string
-	data       map[string]string
+type PayResponse struct {
+	Success    bool
+	PaymentKey string
+	Status     string
 }
 
-type executeResponse struct {
-	success bool
+type ExecuteResponse struct {
+	Success bool
 }
