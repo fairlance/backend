@@ -63,7 +63,7 @@ func (notifier *HTTPNotifier) Notify(n *Notification) error {
 			return err
 		}
 		err = fmt.Errorf(
-			"bad status: %d\n body: %s\nfor request: %s\nrequest body: %s",
+			"bad status: %d, body: %s, for request: %s, request body: %s",
 			response.StatusCode,
 			contents,
 			url,

@@ -56,7 +56,7 @@ func (p *httpPayment) Execute(projectID uint) error {
 	}
 	defer response.Body.Close()
 	if response.StatusCode != http.StatusOK {
-		err = fmt.Errorf("\nStatus: %s\nBody: %s\nURL: %s", response.Status, content, url)
+		err = fmt.Errorf("status: %s, body: %s, url: %s", response.Status, content, url)
 		log.Printf("could not execute payment: %v", err)
 		return err
 	}
@@ -96,7 +96,7 @@ func (p *httpPayment) Execute(projectID uint) error {
 // 	}
 // 	defer response.Body.Close()
 // 	if response.StatusCode != http.StatusOK {
-// 		err = fmt.Errorf("\nStatus: %s\n Body: %s\nURL: %s", response.Status, content, url)
+// 		err = fmt.Errorf("status: %s, body: %s, url: %s", response.Status, content, url)
 // 		log.Printf("could not deposit payment: %v", err)
 // 		return "", "", err
 // 	}
