@@ -148,12 +148,12 @@ func createProjectFromJobApplication() http.Handler {
 		}
 		project := NewProject(job, jobApplication)
 		if err = appContext.ProjectRepository.add(project); err != nil {
-			log.Printf("create project: %v\n", err)
+			log.Printf("create project: %v", err)
 			respond.With(w, r, http.StatusInternalServerError, err)
 			return
 		}
 		if err = appContext.JobRepository.update(job); err != nil {
-			log.Printf("deactivate job: %v\n", err)
+			log.Printf("deactivate job: %v", err)
 			respond.With(w, r, http.StatusInternalServerError, err)
 			return
 		}

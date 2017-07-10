@@ -121,7 +121,7 @@ func main() {
 	router.Handle("/api/_aliases", aliasHandler).Methods("POST")
 
 	// start the HTTP server
-	log.Printf("listening on :%s\n", *port)
+	log.Printf("listening on :%s", *port)
 	http.Handle("/", router)
 	log.Fatal(http.ListenAndServe(":"+*port, nil))
 }

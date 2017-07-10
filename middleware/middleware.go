@@ -90,7 +90,7 @@ func HTTPAuthHandler(user, password string) Middleware {
 			if !authenticated(r, user, password) {
 				w.Header().Set("WWW-Authenticate", `Basic realm="FAIRLANCE"`)
 				w.WriteHeader(http.StatusUnauthorized)
-				w.Write([]byte("401 Unauthorized\n"))
+				w.Write([]byte("401 Unauthorized"))
 				return
 			}
 			next.ServeHTTP(w, r)

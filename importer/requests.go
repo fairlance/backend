@@ -118,7 +118,7 @@ func importDocs(options Options, index string, docs map[string]interface{}) erro
 	indexDuration := time.Since(startTime)
 	indexDurationSeconds := float64(indexDuration) / float64(time.Second)
 	timePerDoc := float64(indexDuration) / float64(count)
-	log.Printf("Indexed %d documents, in %.2fs (average %.2fms/doc)\n", count, indexDurationSeconds, timePerDoc/float64(time.Millisecond))
+	log.Printf("Indexed %d documents, in %.2fs (average %.2fms/doc)", count, indexDurationSeconds, timePerDoc/float64(time.Millisecond))
 	return nil
 }
 
@@ -196,7 +196,7 @@ func importDocument(options Options, index, docID string, doc interface{}) error
 // 			indexDuration := time.Since(startTime)
 // 			indexDurationSeconds := float64(indexDuration) / float64(time.Second)
 // 			timePerDoc := float64(indexDuration) / float64(count)
-// 			fmt.Printf("Indexed %d documents, in %.2fs (average %.2fms/doc)\n", count, indexDurationSeconds, timePerDoc/float64(time.Millisecond))
+// 			fmt.Printf("Indexed %d documents, in %.2fs (average %.2fms/doc)", count, indexDurationSeconds, timePerDoc/float64(time.Millisecond))
 // 		}
 // 	}
 // 	// flush the last batch
@@ -209,6 +209,6 @@ func importDocument(options Options, index, docID string, doc interface{}) error
 // 	indexDuration := time.Since(startTime)
 // 	indexDurationSeconds := float64(indexDuration) / float64(time.Second)
 // 	timePerDoc := float64(indexDuration) / float64(count)
-// 	fmt.Printf("Indexed %d documents, in %.2fs (average %.2fms/doc)\n", count, indexDurationSeconds, timePerDoc/float64(time.Millisecond))
+// 	fmt.Printf("Indexed %d documents, in %.2fs (average %.2fms/doc)", count, indexDurationSeconds, timePerDoc/float64(time.Millisecond))
 // 	return nil
 // }
