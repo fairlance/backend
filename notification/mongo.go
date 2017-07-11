@@ -53,7 +53,7 @@ func (m mongoDB) loadLastDocs(collection string, num int) ([]wsrouter.Message, e
 		return documents, err
 	}
 
-	query := session.DB(m.dbName).C(collection).Find(nil)
+	query := session.DB(m.dbName).C(collection).Find(bson.M{"read": false})
 	if count > num {
 		query = query.Skip(count - num)
 	}

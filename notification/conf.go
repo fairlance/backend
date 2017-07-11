@@ -53,7 +53,7 @@ func unregister(usr wsrouter.User, users map[string]wsrouter.User) {
 
 func broadcastTo(msg *wsrouter.Message, users map[string]wsrouter.User) []wsrouter.User {
 	log.Printf("broadcast %v", msg)
-	if len(msg.To) == 0 {
+	if msg.Type != "read" && len(msg.To) == 0 {
 		log.Println("error: message not addressed to anyone")
 		return []wsrouter.User{}
 	}
