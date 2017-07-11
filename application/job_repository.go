@@ -99,6 +99,8 @@ func (repo *PostgreJobRepository) GetJobForClient(jobID, clientID uint) (*Job, e
 	if err := repo.db.
 		Preload("JobApplications").
 		Preload("JobApplications.Freelancer").
+		Preload("JobApplications.Examples", "type IN (?)", fileTypeJobApplicationExample).
+		Preload("JobApplications.Attachments", "type IN (?)", fileTypeJobApplicationAttachment).
 		Preload("Examples", "type IN (?)", fileTypeJobExample).
 		Preload("Attachments", "type IN (?)", fileTypeJobAttachment).
 		Preload("Client").
@@ -122,22 +124,10 @@ func (repo *PostgreJobRepository) GetJobForFreelancer(jobID, freelancerID uint) 
 	if err := repo.db.
 		Model(job).
 		Related(&jobApplications).
+		Preload("Examples", "type IN (?)", fileTypeJobApplicationExample).
+		Preload("Attachments", "type IN (?)", fileTypeJobApplicationAttachment).
 		Where("freelancer_id = ?", freelancerID).Error; err != nil {
 		return job, err
-	}
-	for i := range jobApplications {
-		if err := repo.db.
-			Model(&jobApplications[i]).
-			Related(&jobApplications[i].Examples).
-			Where("type IN (?)", fileTypeJobApplicationExample).Error; err != nil {
-			return job, err
-		}
-		if err := repo.db.
-			Model(&jobApplications[i]).
-			Related(&jobApplications[i].Attachments).
-			Where("type IN (?)", fileTypeJobApplicationAttachment).Error; err != nil {
-			return job, err
-		}
 	}
 	return job, nil
 }
