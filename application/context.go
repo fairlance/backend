@@ -200,7 +200,6 @@ func (ac *ApplicationContext) FillTables() {
 		Message:      "I apply",
 		JobID:        1,
 		FreelancerID: 1,
-		Milestones:   stringList{"Milestone1", "Milestone2"},
 		HourPrice:    9.5,
 		Hours:        6,
 	})

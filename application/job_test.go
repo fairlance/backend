@@ -360,7 +360,6 @@ func TestJobHandleApplyForJob(t *testing.T) {
 	jobApplication := &JobApplication{
 		JobID:       1,
 		Message:     "message",
-		Milestones:  []string{"one", "two"},
 		HourPrice:   1.1,
 		Hours:       1,
 		Examples:    []File{{Name: "example", URL: "www.example.com"}},
@@ -395,7 +394,6 @@ func TestJobHandleApplyForJob(t *testing.T) {
 	is.Equal(jobRepositoryMock.AddJobApplicationCall.Receives.JobApplication.JobID, 1)
 	is.Equal(jobRepositoryMock.AddJobApplicationCall.Receives.JobApplication.FreelancerID, 1)
 	is.Equal(jobRepositoryMock.AddJobApplicationCall.Receives.JobApplication.Message, "message")
-	is.Equal(jobRepositoryMock.AddJobApplicationCall.Receives.JobApplication.Milestones, []string{"one", "two"})
 	is.Equal(jobRepositoryMock.AddJobApplicationCall.Receives.JobApplication.HourPrice, 1.1)
 	is.Equal(jobRepositoryMock.AddJobApplicationCall.Receives.JobApplication.Hours, 1)
 	is.Equal(len(jobRepositoryMock.AddJobApplicationCall.Receives.JobApplication.Examples), 1)
@@ -551,7 +549,6 @@ func TestJobWithJobApplication(t *testing.T) {
 	is.Equal(nextCalled, true)
 	jobApplication := context.Get(r, "jobApplication").(*JobApplication)
 	is.Equal(jobApplication.Message, "message")
-	is.Equal(jobApplication.Milestones, []string{"one", "two"})
 	is.Equal(jobApplication.FreelancerID, 0) // ignore provided id
 	is.Equal(jobApplication.Hours, 1)
 	is.Equal(jobApplication.HourPrice, 1.1)

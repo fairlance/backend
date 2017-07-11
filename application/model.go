@@ -249,7 +249,6 @@ func (job *Job) BeforeSave() error {
 type JobApplication struct {
 	Model
 	Message      string      `json:"message"`
-	Milestones   stringList  `json:"milestones" sql:"type:JSONB NOT NULL DEFAULT '{}'::JSONB"`
 	HourPrice    float64     `json:"hourPrice"`
 	Hours        int         `json:"hours"`
 	Freelancer   *Freelancer `json:"freelancer,omitempty"`
