@@ -56,7 +56,6 @@ func (p *payment) depositHandler() http.Handler {
 		transactionReceivers := p.buildTransactionReceivers(project)
 		t := &Transaction{
 			TrackID:   deposit.trackID,
-			Provider:  p.requester.ProviderID(),
 			ProjectID: deposit.projectID,
 			Amount:    fmt.Sprintf("%.2f", project.amount()),
 			Status:    statusDeposited,
@@ -86,54 +85,42 @@ func (p *payment) executeHandler() http.Handler {
 			return
 		}
 		t.Status = statusAwaitingConfirmation
+		t.Provider = p.requester.ProviderID()
 		if err := p.db.Update(t); err != nil {
 			log.Printf("could not update transaction %s, status: %v", t.TrackID, err)
 			respond.With(w, r, http.StatusInternalServerError, fmt.Errorf("could not update transaction %s, status: %v", t.TrackID, err))
 			return
 		}
-		var receivers []PayoutItem
-		for _, r := range t.Receivers {
-			receivers = append(receivers, PayoutItem{
-				RecipientType: "EMAIL",
-				Amount: PayoutItemAmount{
-					Value:    r.Amount,
-					Currency: "EUR",
-				},
-				Note:         fmt.Sprintf("Project %d", t.ProjectID),
-				SenderItemID: fmt.Sprintf("%s_%d", t.TrackID, r.FairlanceID),
-				Receiver:     r.Email,
-			})
-		}
-		response, err := p.requester.Pay(PayoutRequest{
-			SenderBatchHeader: PayoutSenderBatchHeader{
-				SenderBatchID: t.TrackID,
-				RecipientType: "EMAIL",
-				EmailSubject:  fmt.Sprintf("Payment for project %d!", t.ProjectID),
-			},
-			Items: receivers,
-		})
+		response, err := p.requester.Pay(t)
 		if err != nil {
+			t.Status = statusError
+			if err := p.db.Update(t); err != nil {
+				log.Printf("could not update transaction %s: %v", t.TrackID, err)
+				respond.With(w, r, http.StatusInternalServerError, fmt.Errorf("could not update transaction %s: %v", t.TrackID, err))
+				return
+			}
 			log.Printf("could not execute a pay request: %v", err)
 			respond.With(w, r, http.StatusFailedDependency, fmt.Errorf("could not execute a pay request: %v", err))
 			return
 		}
-		t.Status = statusInitiated
-		t.PaymentKey = response.PaymentKey
-		t.ProviderStatus = response.Status
-		if err := p.db.Update(t); err != nil {
-			log.Printf("could not update transaction %s, status: %v", t.TrackID, err)
-			respond.With(w, r, http.StatusInternalServerError, fmt.Errorf("could not update transaction %s: %v", t.TrackID, err))
-			return
-		}
 		if !response.Success {
+			t.ProviderStatus = response.Status
+			t.ErrorMsg = response.ErrorMessage
 			t.Status = statusError
-			t.ErrorMsg = "Bad response from PayPal on execute."
 			if err := p.db.Update(t); err != nil {
 				log.Printf("could not update transaction %s, status: %v", t.TrackID, err)
 				respond.With(w, r, http.StatusInternalServerError, fmt.Errorf("could not update transaction %s: %v", t.TrackID, err))
 				return
 			}
 			respond.With(w, r, http.StatusFailedDependency, response)
+			return
+		}
+		t.ProviderStatus = response.Status
+		t.PaymentKey = response.PaymentKey
+		t.Status = statusInitiated
+		if err := p.db.Update(t); err != nil {
+			log.Printf("could not update transaction %s, status: %v", t.TrackID, err)
+			respond.With(w, r, http.StatusInternalServerError, fmt.Errorf("could not update transaction %s: %v", t.TrackID, err))
 			return
 		}
 		respond.With(w, r, http.StatusOK, response)

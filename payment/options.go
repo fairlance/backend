@@ -2,9 +2,8 @@ package payment
 
 type Options struct {
 	PaymentURL         string
-	SecurityUserID     string
-	SecurityPassword   string
-	SecuritySignature  string
-	ApplicationID      string
+	ClientID           string
+	Secret             string
+	OAuth2URL          string
 	IPNNotificationURL string
 }

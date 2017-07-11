@@ -2,13 +2,15 @@ package payment
 
 type Requester interface {
 	ProviderID() string
-	Pay(request PayoutRequest) (*PayResponse, error)
+	// should be something else other than Transaction, but yeah...
+	Pay(t *Transaction) (*PayResponse, error)
 }
 
 type PayResponse struct {
-	Success    bool
-	PaymentKey string
-	Status     string
+	Success      bool
+	PaymentKey   string
+	Status       string
+	ErrorMessage string
 }
 
 type ExecuteResponse struct {

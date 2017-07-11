@@ -73,10 +73,7 @@ func TestDepositHandler(t *testing.T) {
 				Email: "freelancer@email.com",
 			},
 		},
-		Contract: struct {
-			Hours   int     `json:"hours"`
-			PerHour float64 `json:"perHour"`
-		}{
+		Contract: payment.Contract{
 			Hours:   2,
 			PerHour: 8,
 		},
@@ -101,9 +98,6 @@ func TestDepositHandler(t *testing.T) {
 	}
 	if transaction.Status != "deposited" {
 		t.Fatal("Error: Returned transaction Status", transaction.Status, "instead of", "deposited")
-	}
-	if transaction.Provider != "fake" {
-		t.Fatal("Error: Returned transaction Provider", transaction.Provider, "instead of", "fake")
 	}
 	if transaction.Amount != "16.00" {
 		t.Fatal("Error: Returned transaction Amount", transaction.Amount, "instead of", "16.00")
@@ -160,6 +154,9 @@ func TestExecuteHandler(t *testing.T) {
 	}
 	if firstTransactionUpdate.ProviderStatus != "" {
 		t.Fatal("Error: ProviderStatus is", firstTransactionUpdate.ProviderStatus, "instead of", "")
+	}
+	if firstTransactionUpdate.Provider != "fake" {
+		t.Fatal("Error: Returned transaction Provider", firstTransactionUpdate.Provider, "instead of", "fake")
 	}
 	if secondTransactionUpdate.Status != "initiated" {
 		t.Fatal("Error: Status is", secondTransactionUpdate.Status, "instead of", "initiated")

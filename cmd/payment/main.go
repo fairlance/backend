@@ -15,12 +15,11 @@ import (
 var (
 	port               = os.Getenv("PORT")
 	secret             = os.Getenv("SECRET")
-	paymentURL         = os.Getenv("PAYMENT_URL")
-	applicationID      = os.Getenv("APPLICATION_ID")
-	securityUserID     = os.Getenv("SECURITY_USER_ID")
-	securityPassword   = os.Getenv("SECURITY_PASSWORD")
-	securitySignature  = os.Getenv("SECURITY_SIGNATURE")
-	ipnNotificationURL = os.Getenv("IPN_NOTIFICATION_URL")
+	payPalPaymentURL   = os.Getenv("PAYPAL_PAYMENT_URL")
+	payPalClientID     = os.Getenv("PAYPAL_CLIENT_ID")
+	payPalSecret       = os.Getenv("PAYPAL_SECRET")
+	payPalOAuth2URL    = os.Getenv("PAYPAL_OAUTH2_URL")
+	ipnNotificationURL = os.Getenv("PAYPAL_IPN_NOTIFICATION_URL")
 	applicationURL     = os.Getenv("APPLICATION_URL")
 	dbHost             = os.Getenv("DB_HOST")
 	dbUser             = os.Getenv("DB_USER")
@@ -34,11 +33,10 @@ func main() {
 	}
 	defer db.Close()
 	options := &payment.Options{
-		PaymentURL:         paymentURL,
-		ApplicationID:      applicationID,
-		SecurityUserID:     securityUserID,
-		SecurityPassword:   securityPassword,
-		SecuritySignature:  securitySignature,
+		PaymentURL:         payPalPaymentURL,
+		ClientID:           payPalClientID,
+		Secret:             payPalSecret,
+		OAuth2URL:          payPalOAuth2URL,
 		IPNNotificationURL: ipnNotificationURL,
 	}
 	paymentDB := payment.NewDB(db)

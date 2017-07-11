@@ -3,10 +3,7 @@ package payment
 type Project struct {
 	ID          uint         `json:"id"`
 	Freelancers []Freelancer `json:"freelancers"`
-	Contract    struct {
-		Hours   int     `json:"hours"`
-		PerHour float64 `json:"perHour"`
-	} `json:"contract"`
+	Contract    Contract     `json:"contract"`
 }
 
 func (p *Project) amount() float64 {
@@ -15,5 +12,10 @@ func (p *Project) amount() float64 {
 
 type Freelancer struct {
 	ID    uint   `json:"id"`
-	Email string `json:"email"`
+	Email string `json:"payPalEmail"`
+}
+
+type Contract struct {
+	Hours   int     `json:"hours"`
+	PerHour float64 `json:"perHour"`
 }
