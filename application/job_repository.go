@@ -32,13 +32,25 @@ func NewJobRepository(db *gorm.DB) (JobRepository, error) {
 
 func (repo *PostgreJobRepository) GetAllJobs() ([]Job, error) {
 	jobs := []Job{}
-	err := repo.db.Preload("JobApplications").Preload("JobApplications.Freelancer").Preload("JobApplications.Examples").Preload("JobApplications.Attachments").Preload("Examples").Preload("Attachments").Preload("Client").Find(&jobs).Error
+	err := repo.db.
+		Preload("JobApplications").
+		Preload("JobApplications.Freelancer").
+		Preload("Examples", "type IN (?)", fileTypeJobExample).
+		Preload("Attachments", "type IN (?)", fileTypeJobAttachment).
+		Preload("Client").
+		Find(&jobs).Error
 	return jobs, err
 }
 
-func (repo *PostgreJobRepository) GetAllJobsForClient(id uint) ([]Job, error) {
+func (repo *PostgreJobRepository) GetAllJobsForClient(clientID uint) ([]Job, error) {
 	jobs := []Job{}
-	err := repo.db.Preload("JobApplications").Preload("JobApplications.Freelancer").Preload("JobApplications.Examples").Preload("JobApplications.Attachments").Preload("Examples").Preload("Attachments").Preload("Client").Find(&jobs).Where("client_id = ?", id).Error
+	err := repo.db.
+		Preload("JobApplications").
+		Preload("JobApplications.Freelancer").
+		Preload("Examples", "type IN (?)", fileTypeJobExample).
+		Preload("Attachments", "type IN (?)", fileTypeJobAttachment).
+		Preload("Client").
+		Find(&jobs).Where("client_id = ?", clientID).Error
 	return jobs, err
 }
 
@@ -46,50 +58,97 @@ func (repo *PostgreJobRepository) AddJob(job *Job) error {
 	return repo.db.Create(job).Error
 }
 
-func (repo *PostgreJobRepository) DeleteJob(id uint) error {
-	return repo.db.Where("id = ?", id).Delete(&Job{}).Error
+func (repo *PostgreJobRepository) DeleteJob(jobID uint) error {
+	tx := repo.db.Begin()
+	if err := tx.Where("owner_type = 'jobs' AND owner_id = ?", jobID).Delete(&File{}).Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+	if err := repo.db.Where("job_id = ?", jobID).Delete(&JobApplication{}).Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+	if err := repo.db.Where("id = ?", jobID).Delete(&Job{}).Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+	tx.Commit()
+	return nil
 }
 
 func (repo *PostgreJobRepository) update(job *Job) error {
 	return repo.db.Save(job).Error
 }
 
-func (repo *PostgreJobRepository) GetJob(id uint) (*Job, error) {
+func (repo *PostgreJobRepository) GetJob(jobID uint) (*Job, error) {
 	job := &Job{}
-	if err := repo.db.Preload("JobApplications").Preload("JobApplications.Freelancer").Preload("JobApplications.Examples").Preload("JobApplications.Attachments").Preload("Examples").Preload("Attachments").Preload("Client").Find(job, id).Error; err != nil {
+	if err := repo.db.
+		Preload("JobApplications").
+		Preload("JobApplications.Freelancer").
+		Preload("Examples", "type IN (?)", fileTypeJobExample).
+		Preload("Attachments", "type IN (?)", fileTypeJobAttachment).
+		Preload("Client").
+		Find(job, jobID).Error; err != nil {
 		return job, err
 	}
 	return job, nil
 }
 
-func (repo *PostgreJobRepository) GetJobForClient(id, clientID uint) (*Job, error) {
+func (repo *PostgreJobRepository) GetJobForClient(jobID, clientID uint) (*Job, error) {
 	job := &Job{}
-	if err := repo.db.Preload("JobApplications").Preload("JobApplications.Freelancer").Preload("JobApplications.Examples").Preload("JobApplications.Attachments").Preload("Examples").Preload("Attachments").Preload("Client").Where("client_id = ?", clientID).Find(job, id).Error; err != nil {
+	if err := repo.db.
+		Preload("JobApplications").
+		Preload("JobApplications.Freelancer").
+		Preload("Examples", "type IN (?)", fileTypeJobExample).
+		Preload("Attachments", "type IN (?)", fileTypeJobAttachment).
+		Preload("Client").
+		Where("client_id = ?", clientID).
+		Find(job, jobID).Error; err != nil {
 		return job, err
 	}
 	return job, nil
 }
 
-func (repo *PostgreJobRepository) GetJobForFreelancer(id, freelancerID uint) (*Job, error) {
+func (repo *PostgreJobRepository) GetJobForFreelancer(jobID, freelancerID uint) (*Job, error) {
 	job := &Job{}
-	if err := repo.db.Preload("Examples").Preload("Attachments").Preload("Client").Find(job, id).Error; err != nil {
+	if err := repo.db.
+		Preload("Examples", "type IN (?)", fileTypeJobExample).
+		Preload("Attachments", "type IN (?)", fileTypeJobAttachment).
+		Preload("Client").
+		Find(job, jobID).Error; err != nil {
 		return job, err
 	}
-
 	var jobApplications []JobApplication
-	if err := repo.db.Preload("Examples").Preload("Attachments").Where("freelancer_id = ?", freelancerID).Model(job).Related(&jobApplications).Error; err != nil {
+	if err := repo.db.
+		Model(job).
+		Related(&jobApplications).
+		Where("freelancer_id = ?", freelancerID).Error; err != nil {
 		return job, err
 	}
-
-	job.JobApplications = jobApplications
-
+	for i := range jobApplications {
+		if err := repo.db.
+			Model(&jobApplications[i]).
+			Related(&jobApplications[i].Examples).
+			Where("type IN (?)", fileTypeJobApplicationExample).Error; err != nil {
+			return job, err
+		}
+		if err := repo.db.
+			Model(&jobApplications[i]).
+			Related(&jobApplications[i].Attachments).
+			Where("type IN (?)", fileTypeJobApplicationAttachment).Error; err != nil {
+			return job, err
+		}
+	}
 	return job, nil
 }
 
-func (repo *PostgreJobRepository) GetJobApplication(id uint) (*JobApplication, error) {
+func (repo *PostgreJobRepository) GetJobApplication(jobApplicationID uint) (*JobApplication, error) {
 	var jobApplication JobApplication
-	err := repo.db.Preload("Freelancer").Find(&jobApplication, id).Error
-
+	err := repo.db.
+		Preload("Freelancer").
+		Preload("Examples", "type IN (?)", fileTypeJobApplicationExample).
+		Preload("Attachments", "type IN (?)", fileTypeJobApplicationAttachment).
+		Find(&jobApplication, jobApplicationID).Error
 	return &jobApplication, err
 }
 
@@ -97,13 +156,23 @@ func (repo *PostgreJobRepository) AddJobApplication(jobApplication *JobApplicati
 	return repo.db.Save(jobApplication).Error
 }
 
-func (repo *PostgreJobRepository) DeleteJobApplication(id uint) error {
-	return repo.db.Where("id = ?", id).Delete(&JobApplication{}).Error
+func (repo *PostgreJobRepository) DeleteJobApplication(jobApplicationID uint) error {
+	tx := repo.db.Begin()
+	if err := tx.Where("id = ?", jobApplicationID).Delete(&JobApplication{}).Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+	if err := tx.Where("owner_type = job_applications AND owner_id = ?", jobApplicationID).Delete(&File{}).Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+	tx.Commit()
+	return nil
 }
 
-func (repo *PostgreJobRepository) jobApplicationBelongsToClient(id uint, clientID uint) (bool, error) {
+func (repo *PostgreJobRepository) jobApplicationBelongsToClient(jobApplicationID uint, clientID uint) (bool, error) {
 	var jobApplication JobApplication
-	if err := repo.db.Find(&jobApplication, id).Error; err != nil {
+	if err := repo.db.Find(&jobApplication, jobApplicationID).Error; err != nil {
 		return false, err
 	}
 
@@ -119,9 +188,9 @@ func (repo *PostgreJobRepository) jobApplicationBelongsToClient(id uint, clientI
 	return false, nil
 }
 
-func (repo *PostgreJobRepository) jobApplicationBelongsToFreelancer(id uint, freelancerID uint) (bool, error) {
+func (repo *PostgreJobRepository) jobApplicationBelongsToFreelancer(jobApplicationID uint, freelancerID uint) (bool, error) {
 	var jobApplication JobApplication
-	if err := repo.db.Find(&jobApplication, id).Error; err != nil {
+	if err := repo.db.Find(&jobApplication, jobApplicationID).Error; err != nil {
 		return false, err
 	}
 

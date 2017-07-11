@@ -33,13 +33,13 @@ func TestJobIndexJob(t *testing.T) {
 				ClientID: 1,
 				IsActive: true,
 				Price:    100,
-				Examples: []Example{
+				Examples: []File{
 					{
-						Description: "example",
-						URL:         "www.example.com",
+						Name: "example",
+						URL:  "www.example.com",
 					},
 				},
-				Attachments: []Attachment{
+				Attachments: []File{
 					{
 						Name: "attachment",
 						URL:  "www.attachment.com",
@@ -68,7 +68,7 @@ func TestJobIndexJob(t *testing.T) {
 	is.Equal(body[0].IsActive, true)
 	is.Equal(body[0].Price, 100)
 	is.Equal(len(body[0].Examples), 1)
-	is.Equal(body[0].Examples[0].Description, "example")
+	is.Equal(body[0].Examples[0].Name, "example")
 	is.Equal(body[0].Examples[0].URL, "www.example.com")
 	is.Equal(len(body[0].Attachments), 1)
 	is.Equal(body[0].Attachments[0].Name, "attachment")
@@ -157,13 +157,13 @@ func TestJobAddJob(t *testing.T) {
 		ClientID: 1,
 		IsActive: true,
 		Price:    100,
-		Examples: []Example{
+		Examples: []File{
 			{
-				Description: "example",
-				URL:         "www.example.com",
+				Name: "example",
+				URL:  "www.example.com",
 			},
 		},
-		Attachments: []Attachment{
+		Attachments: []File{
 			{
 				Name: "attachment",
 				URL:  "www.attachment.com",
@@ -190,7 +190,7 @@ func TestJobAddJob(t *testing.T) {
 	is.Equal(jobRepositoryMock.AddJobCall.Receives.Job.IsActive, true)
 	is.Equal(jobRepositoryMock.AddJobCall.Receives.Job.Price, 100)
 	is.Equal(len(jobRepositoryMock.AddJobCall.Receives.Job.Examples), 1)
-	is.Equal(jobRepositoryMock.AddJobCall.Receives.Job.Examples[0].Description, "example")
+	is.Equal(jobRepositoryMock.AddJobCall.Receives.Job.Examples[0].Name, "example")
 	is.Equal(jobRepositoryMock.AddJobCall.Receives.Job.Examples[0].URL, "www.example.com")
 	is.Equal(len(jobRepositoryMock.AddJobCall.Receives.Job.Attachments), 1)
 	is.Equal(jobRepositoryMock.AddJobCall.Receives.Job.Attachments[0].Name, "attachment")
@@ -363,8 +363,8 @@ func TestJobHandleApplyForJob(t *testing.T) {
 		Milestones:  []string{"one", "two"},
 		HourPrice:   1.1,
 		Hours:       1,
-		Examples:    []Example{{Description: "example", URL: "www.example.com"}},
-		Attachments: []Attachment{{Name: "attachment", URL: "www.attachment.com"}},
+		Examples:    []File{{Name: "example", URL: "www.example.com"}},
+		Attachments: []File{{Name: "attachment", URL: "www.attachment.com"}},
 	}
 	jobRepositoryMock.GetJobApplicationCall.Returns.JobApplication = jobApplication
 	var notifiedClientID uint
@@ -399,7 +399,7 @@ func TestJobHandleApplyForJob(t *testing.T) {
 	is.Equal(jobRepositoryMock.AddJobApplicationCall.Receives.JobApplication.HourPrice, 1.1)
 	is.Equal(jobRepositoryMock.AddJobApplicationCall.Receives.JobApplication.Hours, 1)
 	is.Equal(len(jobRepositoryMock.AddJobApplicationCall.Receives.JobApplication.Examples), 1)
-	is.Equal(jobRepositoryMock.AddJobApplicationCall.Receives.JobApplication.Examples[0].Description, "example")
+	is.Equal(jobRepositoryMock.AddJobApplicationCall.Receives.JobApplication.Examples[0].Name, "example")
 	is.Equal(jobRepositoryMock.AddJobApplicationCall.Receives.JobApplication.Examples[0].URL, "www.example.com")
 	is.Equal(len(jobRepositoryMock.AddJobApplicationCall.Receives.JobApplication.Attachments), 1)
 	is.Equal(jobRepositoryMock.AddJobApplicationCall.Receives.JobApplication.Attachments[0].Name, "attachment")
@@ -436,7 +436,7 @@ func TestJobWithJob(t *testing.T) {
 		"details": "Details1",
 		"summary": "Summary1",
 		"examples": [
-			{"description": "example", "url": "www.example.com"}
+			{"name": "example", "url": "www.example.com"}
 		],
 		"attachments": [
 			{"name": "attachment", "url": "www.attachment.com"}
@@ -457,7 +457,7 @@ func TestJobWithJob(t *testing.T) {
 	is.Equal(job.Details, "Details1")
 	is.Equal(job.Summary, "Summary1")
 	is.Equal(len(job.Examples), 1)
-	is.Equal(job.Examples[0].Description, "example")
+	is.Equal(job.Examples[0].Name, "example")
 	is.Equal(job.Examples[0].URL, "www.example.com")
 	is.Equal(len(job.Attachments), 1)
 	is.Equal(job.Attachments[0].Name, "attachment")
@@ -532,7 +532,7 @@ func TestJobWithJobApplication(t *testing.T) {
 		"hours": 1,
 		"hourPrice": 1.1,
 		"examples": [
-			{"description": "example", "url": "www.example.com"}
+			{"name": "example", "url": "www.example.com"}
 		],
 		"attachments": [
 			{"name": "attachment", "url": "www.attachment.com"}
@@ -556,7 +556,7 @@ func TestJobWithJobApplication(t *testing.T) {
 	is.Equal(jobApplication.Hours, 1)
 	is.Equal(jobApplication.HourPrice, 1.1)
 	is.Equal(len(jobApplication.Examples), 1)
-	is.Equal(jobApplication.Examples[0].Description, "example")
+	is.Equal(jobApplication.Examples[0].Name, "example")
 	is.Equal(jobApplication.Examples[0].URL, "www.example.com")
 	is.Equal(len(jobApplication.Attachments), 1)
 	is.Equal(jobApplication.Attachments[0].Name, "attachment")

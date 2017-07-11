@@ -14,12 +14,16 @@ type Model struct {
 
 type User struct {
 	Model
-	FirstName  string `json:"firstName"`
-	LastName   string `json:"lastName"`
-	Password   string `json:"-"`
-	Email      string `json:"email" valid:"required,email" sql:"index" gorm:"unique"`
-	Image      string `json:"image"`
-	Salutation string `json:"salutation"`
+	LastLogin        *time.Time `json:"lastLogin"`
+	ProfileCompleted bool       `json:"profileCompleted"`
+	FirstName        string     `json:"firstName"`
+	LastName         string     `json:"lastName"`
+	Password         string     `json:"-"`
+	Email            string     `json:"email" valid:"required,email" sql:"index" gorm:"unique"`
+	Image            string     `json:"image"`
+	Salutation       string     `json:"salutation"`
+	IsCompany        bool       `json:"isCompany"`
+	CompanyName      string     `json:"companyName"`
 }
 
 type Freelancer struct {
@@ -27,22 +31,44 @@ type Freelancer struct {
 	Rating          float64          `json:"rating"`
 	Timezone        string           `json:"timezone"`
 	Skills          stringList       `json:"skills" sql:"type:JSONB NOT NULL DEFAULT '{}'::JSONB"`
-	IsAvailable     bool             `json:"isAvailable"`
-	HourlyRateFrom  uint             `json:"hourlyRateFrom"`
-	HourlyRateTo    uint             `json:"hourlyRateTo"`
 	Projects        []Project        `json:"projects" gorm:"many2many:project_freelancers;"`
 	Reviews         []Review         `json:"reviews"`
 	References      []Reference      `json:"references"`
 	JobApplications []JobApplication `json:"jobApplications"`
 	About           string           `json:"about"`
+	PayPalEmail     string           `json:"payPalEmail"`
+	Phone           string           `json:"phone"`
+	AdditionalFiles []File           `json:"additionalFiles" gorm:"polymorphic:Owner;"`
+	PortfolioItems  []File           `json:"portfolioItems" gorm:"polymorphic:Owner;"`
+	PortfolioLinks  []File           `json:"portfolioLinks" gorm:"polymorphic:Owner;"`
+	Birthdate       string           `json:"birthdate"`
+}
+
+// BeforeSave updates file types before saving
+func (freelancer *Freelancer) BeforeSave() error {
+	for i := range freelancer.AdditionalFiles {
+		freelancer.AdditionalFiles[i].Type = fileTypeFreelancerAdditionalField
+	}
+	for i := range freelancer.PortfolioItems {
+		freelancer.PortfolioItems[i].Type = fileTypeFreelancerPortfolioItems
+	}
+	for i := range freelancer.PortfolioLinks {
+		freelancer.PortfolioLinks[i].Type = fileTypeFreelancerPortfolioLinks
+	}
+	return nil
 }
 
 type FreelancerUpdate struct {
-	Skills         stringList `json:"skills" sql:"type:JSONB NOT NULL DEFAULT '{}'::JSONB"`
-	Timezone       string     `json:"timezone"`
-	IsAvailable    bool       `json:"isAvailable"`
-	HourlyRateFrom uint       `json:"hourlyRateFrom"`
-	HourlyRateTo   uint       `json:"hourlyRateTo"`
+	Image           string     `json:"image" valid:"required"`
+	About           string     `json:"about" valid:"required"`
+	Timezone        string     `json:"timezone" valid:"required"`
+	PayPalEmail     string     `json:"payPalEmail" valid:"required"`
+	Phone           string     `json:"phone"`
+	Skills          stringList `json:"skills" sql:"type:JSONB NOT NULL DEFAULT '{}'::JSONB"`
+	AdditionalFiles []File     `json:"additionalFiles"`
+	PortfolioItems  []File     `json:"portfolioItems"`
+	PortfolioLinks  []File     `json:"portfolioLinks"`
+	Birthdate       string     `json:"birthdate"`
 }
 
 type Client struct {
@@ -54,6 +80,7 @@ type Client struct {
 	Jobs     []Job     `json:"jobs"`
 	Projects []Project `json:"projects"`
 	Reviews  []Review  `json:"reviews"`
+	Phone    string    `json:"phone"`
 }
 
 type Project struct {
@@ -104,7 +131,6 @@ func (p *Project) allUsersConcluded() bool {
 	if p.ClientConcluded && len(p.FreelancersConcluded) == len(p.Freelancers) {
 		return true
 	}
-
 	return false
 }
 
@@ -112,7 +138,6 @@ func (p *Project) canBeStarted() bool {
 	if p.ClientAgreed && len(p.FreelancersAgreed) == len(p.Freelancers) {
 		return true
 	}
-
 	if p.Contract.Proposal != nil {
 		freelancersNotAgree := uintList{}
 		for _, f := range p.Freelancers {
@@ -120,21 +145,18 @@ func (p *Project) canBeStarted() bool {
 				freelancersNotAgree = append(freelancersNotAgree, f.ID)
 			}
 		}
-
 		if p.ClientAgreed &&
 			len(freelancersNotAgree) == 1 &&
 			p.Contract.Proposal.UserType == "freelancer" &&
 			p.Contract.Proposal.UserID == freelancersNotAgree[0] {
 			return true
 		}
-
 		if len(freelancersNotAgree) == 0 &&
 			!p.ClientAgreed &&
 			p.Contract.Proposal.UserType == "client" {
 			return true
 		}
 	}
-
 	return false
 }
 
@@ -192,7 +214,7 @@ type Extension struct {
 	PerHour             float64   `json:"perHour"`
 	Deadline            time.Time `json:"deadline"`
 	DeadlineFlexibility int       `json:"deadlineFlexibility"`
-	ClientAgreed        bool      `json:"clientAgreed""`
+	ClientAgreed        bool      `json:"clientAgreed"`
 	FreelancersAgreed   uintList  `json:"freelancersAgreed" sql:"type:JSONB NOT NULL DEFAULT '{}'::JSONB"`
 }
 
@@ -209,21 +231,43 @@ type Job struct {
 	Deadline        time.Time        `json:"deadline"`
 	Tags            stringList       `json:"tags" sql:"type:JSONB NOT NULL DEFAULT '{}'::JSONB"`
 	JobApplications []JobApplication `json:"jobApplications"`
-	Attachments     []Attachment     `json:"attachments" gorm:"polymorphic:Owner;"`
-	Examples        []Example        `json:"examples" gorm:"polymorphic:Owner;"`
+	Attachments     []File           `json:"attachments" gorm:"polymorphic:Owner;"`
+	Examples        []File           `json:"examples" gorm:"polymorphic:Owner;"`
+}
+
+// BeforeSave updates file types before saving
+func (job *Job) BeforeSave() error {
+	for i := range job.Attachments {
+		job.Attachments[i].Type = fileTypeJobAttachment
+	}
+	for i := range job.Examples {
+		job.Examples[i].Type = fileTypeJobExample
+	}
+	return nil
 }
 
 type JobApplication struct {
 	Model
-	Message      string       `json:"message"`
-	Milestones   stringList   `json:"milestones" sql:"type:JSONB NOT NULL DEFAULT '{}'::JSONB"`
-	HourPrice    float64      `json:"hourPrice"`
-	Hours        int          `json:"hours"`
-	Freelancer   *Freelancer  `json:"freelancer,omitempty"`
-	FreelancerID uint         `json:"-"`
-	JobID        uint         `json:"-"`
-	Attachments  []Attachment `json:"attachments" gorm:"polymorphic:Owner;"`
-	Examples     []Example    `json:"examples" gorm:"polymorphic:Owner;"`
+	Message      string      `json:"message"`
+	Milestones   stringList  `json:"milestones" sql:"type:JSONB NOT NULL DEFAULT '{}'::JSONB"`
+	HourPrice    float64     `json:"hourPrice"`
+	Hours        int         `json:"hours"`
+	Freelancer   *Freelancer `json:"freelancer,omitempty"`
+	FreelancerID uint        `json:"-"`
+	JobID        uint        `json:"-"`
+	Attachments  []File      `json:"attachments" gorm:"polymorphic:Owner;"`
+	Examples     []File      `json:"examples" gorm:"polymorphic:Owner;"`
+}
+
+// BeforeSave updates file types before saving
+func (jobApplication *JobApplication) BeforeSave() error {
+	for i := range jobApplication.Attachments {
+		jobApplication.Attachments[i].Type = fileTypeJobApplicationAttachment
+	}
+	for i := range jobApplication.Examples {
+		jobApplication.Examples[i].Type = fileTypeJobApplicationExample
+	}
+	return nil
 }
 
 type Review struct {
@@ -253,18 +297,22 @@ type Media struct {
 	ReferenceID uint   `json:"referenceId"`
 }
 
-type Attachment struct {
-	Model
-	Name      string `json:"name"`
-	URL       string `json:"url"`
-	OwnerID   int    `json:"-"`
-	OwnerType string `json:"-"`
-}
+const (
+	fileTypeFreelancerAdditionalField = "freelancer_additional_field"
+	fileTypeFreelancerPortfolioItems  = "freelancer_portfolio_items"
+	fileTypeFreelancerPortfolioLinks  = "freelancer_portfolio_links"
+	fileTypeJobApplicationAttachment  = "job_application_attachment"
+	fileTypeJobApplicationExample     = "job_application_example"
+	fileTypeJobAttachment             = "job_attachment"
+	fileTypeJobExample                = "job_example"
+)
 
-type Example struct {
+type File struct {
 	Model
-	URL         string `json:"url"`
+	Name        string `json:"name"`
 	Description string `json:"description"`
+	URL         string `json:"url"`
+	Type        string `json:"-"`
 	OwnerID     int    `json:"-"`
 	OwnerType   string `json:"-"`
 }

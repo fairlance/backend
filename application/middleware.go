@@ -171,7 +171,7 @@ func whenIDBelongsToUser(handler http.Handler) http.Handler {
 		var id = context.Get(r, "id").(uint)
 		var user = context.Get(r, "user").(*models.User)
 		if id != user.ID {
-			respond.With(w, r, http.StatusForbidden, nil)
+			respond.With(w, r, http.StatusForbidden, fmt.Errorf("user not allowed to access this entity"))
 			return
 		}
 		handler.ServeHTTP(w, r)

@@ -2,6 +2,9 @@ package application
 
 import (
 	"errors"
+	"time"
+
+	"fmt"
 
 	"github.com/jinzhu/gorm"
 	"golang.org/x/crypto/bcrypt"
@@ -9,6 +12,7 @@ import (
 
 type UserRepository interface {
 	CheckCredentials(email string, password string) (User, string, error)
+	LoggedIn(ID uint, userType string) error
 }
 
 type PostgreUserRepository struct {
@@ -51,4 +55,17 @@ func (repo *PostgreUserRepository) getUserByEmail(email string) (User, string, e
 	}
 
 	return user, userType, nil
+}
+
+func (repo *PostgreUserRepository) LoggedIn(ID uint, userType string) error {
+	user := User{Model: Model{ID: ID}}
+	var db *gorm.DB
+	if userType == "client" {
+		db = repo.db.Model(&Client{User: user})
+	} else if userType == "freelancer" {
+		db = repo.db.Model(&Freelancer{User: user})
+	} else {
+		return fmt.Errorf("user type not regnized: %s", userType)
+	}
+	return db.Update("last_login", time.Now()).Error
 }

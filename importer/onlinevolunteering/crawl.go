@@ -55,8 +55,8 @@ func GetJobs() []application.Job {
 			Details: body,
 			Price:   0,
 			Tags:    tags,
-			Attachments: []application.Attachment{
-				application.Attachment{
+			Attachments: []application.File{
+				{
 					Name: linkText,
 					URL:  link,
 				},

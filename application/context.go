@@ -76,12 +76,12 @@ func (ac *ApplicationContext) DropCreateFillTables() {
 }
 
 func (ac *ApplicationContext) DropTables() {
-	ac.db.DropTableIfExists(&Freelancer{}, &Extension{}, &Contract{}, &Project{}, &Client{}, &Job{}, &Review{}, &Reference{}, &Media{}, &JobApplication{}, &Attachment{}, &Example{})
+	ac.db.DropTableIfExists(&Freelancer{}, &Extension{}, &Contract{}, &Project{}, &Client{}, &Job{}, &Review{}, &Reference{}, &Media{}, &JobApplication{}, &File{})
 	ac.db.DropTableIfExists("project_freelancers") //, "job_applications")
 }
 
 func (ac *ApplicationContext) CreateTables() {
-	ac.db.AutoMigrate(&Freelancer{}, &Extension{}, &Contract{}, &Project{}, &Client{}, &Job{}, &Review{}, &Reference{}, &Media{}, &JobApplication{}, &Attachment{}, &Example{})
+	ac.db.AutoMigrate(&Freelancer{}, &Extension{}, &Contract{}, &Project{}, &Client{}, &Job{}, &Review{}, &Reference{}, &Media{}, &JobApplication{}, &File{})
 }
 
 func (ac *ApplicationContext) FillTables() {
@@ -92,11 +92,9 @@ func (ac *ApplicationContext) FillTables() {
 			Password:  "Pass",
 			Email:     "first@mail.com",
 		},
-		HourlyRateFrom: 3,
-		HourlyRateTo:   55,
-		Skills:         stringList{"man", "dude", "boyyyy"},
-		Timezone:       "UTC",
-		About:          "Contrary to popular belief, Lorem Ipsum is not simply random text. It has roots in a piece of classical Latin literature from 45 BC, making it over 2000 years old.",
+		Skills:   stringList{"man", "dude", "boyyyy"},
+		Timezone: "UTC",
+		About:    "Contrary to popular belief, Lorem Ipsum is not simply random text. It has roots in a piece of classical Latin literature from 45 BC, making it over 2000 years old.",
 	}
 	ac.FreelancerRepository.AddFreelancer(f1)
 
@@ -121,11 +119,9 @@ func (ac *ApplicationContext) FillTables() {
 			Password:  "123456",
 			Email:     "second@mail.com",
 		},
-		HourlyRateFrom: 12,
-		HourlyRateTo:   22,
-		Timezone:       "CET",
-		Skills:         stringList{"good", "bad", "ugly"},
-		About:          "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged.",
+		Timezone: "CET",
+		Skills:   stringList{"good", "bad", "ugly"},
+		About:    "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged.",
 	}
 	ac.FreelancerRepository.AddFreelancer(f2)
 
@@ -208,8 +204,8 @@ func (ac *ApplicationContext) FillTables() {
 		HourPrice:    9.5,
 		Hours:        6,
 	})
-	jobApplication.Association("Attachments").Replace([]Attachment{{Name: "job application attachment", URL: "www.google.com"}})
-	jobApplication.Association("Examples").Replace([]Example{{Description: "Some job application example", URL: "www.google.com"}})
+	jobApplication.Association("Attachments").Replace([]File{{Name: "job application attachment", URL: "www.google.com"}})
+	jobApplication.Association("Examples").Replace([]File{{Name: "Some job application example", URL: "www.google.com"}})
 
 	ac.ClientRepository.AddClient(&Client{
 		User: User{
@@ -246,8 +242,8 @@ func (ac *ApplicationContext) FillTables() {
 		Deadline: time.Now().Add(time.Hour * 24 * 5),
 		IsActive: true,
 	})
-	job.Association("Attachments").Replace([]Attachment{{Name: "job attachment", URL: "www.google.com"}})
-	job.Association("Examples").Replace([]Example{{Description: "Some job example", URL: "www.google.com"}})
+	job.Association("Attachments").Replace([]File{{Name: "job attachment", URL: "www.google.com"}})
+	job.Association("Examples").Replace([]File{{Name: "Some job example", URL: "www.google.com"}})
 
 	ac.FreelancerRepository.AddFreelancer(&Freelancer{
 		User: User{
@@ -256,9 +252,7 @@ func (ac *ApplicationContext) FillTables() {
 			Password:  "Pass",
 			Email:     "third@mail.com",
 		},
-		HourlyRateFrom: 3,
-		HourlyRateTo:   55,
-		Timezone:       "UTC",
+		Timezone: "UTC",
 	})
 
 	ac.FreelancerRepository.AddReview(3, &Review{

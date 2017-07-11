@@ -52,7 +52,7 @@ func CORSHandler(next http.Handler) http.Handler {
 		if origin := r.Header.Get("Origin"); origin != "" {
 			// todo: make configurable
 			w.Header().Set("Access-Control-Allow-Origin", "*")
-			w.Header().Set("Access-Control-Allow-Methods", "GET,POST,PUT,OPTIONS")
+			w.Header().Set("Access-Control-Allow-Methods", "GET,POST,PUT,OPTIONS,DELETE")
 			w.Header().Set("Access-Control-Allow-Headers",
 				"Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
 		}

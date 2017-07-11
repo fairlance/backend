@@ -46,7 +46,7 @@ var routes = Routes{
 	Route{
 		"UpdateFreelancer",
 		"POST",
-		"/freelancer/{id}",
+		"/freelancer/{id}/complete_profile",
 		middleware.Chain(
 			whenLoggedIn,
 			whenFreelancer,

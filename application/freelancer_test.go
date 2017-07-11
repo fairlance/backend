@@ -199,30 +199,38 @@ func TestWithFreelancerUpdate(t *testing.T) {
 	is := isHelper.New(t)
 	w := httptest.NewRecorder()
 	requestBody := `{
-		"hourlyRateFrom": 11,
-		"hourlyRateTo": 22,
-		"isAvailable": true,
+		"image": "image",
+		"about": "about",
 		"timezone": "timez",
-		"skills": ["one", "two"]
+		"payPalEmail": "payPalEmail",
+		"phone": "phone",
+		"skills": ["one", "two"],
+		"birthdate": "birthdate",
+		"additionalFiles": [
+			{ "name": "nameAF", "description": "descriptionAF", "url": "urlAF" }
+		],
+		"portfolioItems": [
+			{ "name": "namePI", "description": "descriptionPI", "url": "urlPI" }
+		],
+		"portfolioLinks": [
+			{ "name": "namePL", "description": "descriptionPL", "url": "urlPL" }
+		]
 	}`
 	r := getRequest(freelancerContext, requestBody)
-
 	nextCalled := false
-	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		nextCalled = true
-	})
-
+	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { nextCalled = true })
 	withFreelancerUpdate(next).ServeHTTP(w, r)
-
 	is.Equal(w.Code, http.StatusOK)
 	is.Equal(nextCalled, true)
 	freelancerUpdate := context.Get(r, "freelancerUpdate").(*FreelancerUpdate)
-	is.Equal(freelancerUpdate.HourlyRateFrom, 11)
-	is.Equal(freelancerUpdate.HourlyRateTo, 22)
-	is.Equal(freelancerUpdate.IsAvailable, true)
+	is.Equal(freelancerUpdate.Image, "image")
+	is.Equal(freelancerUpdate.About, "about")
 	is.Equal(freelancerUpdate.Timezone, "timez")
+	is.Equal(freelancerUpdate.PayPalEmail, "payPalEmail")
+	is.Equal(freelancerUpdate.Phone, "phone")
 	is.Equal(freelancerUpdate.Skills[0], "one")
 	is.Equal(freelancerUpdate.Skills[1], "two")
+	is.Equal(freelancerUpdate.Birthdate, "birthdate")
 }
 
 func TestWithFreelancerUpdateWithErrorMaxSkills(t *testing.T) {
@@ -279,6 +287,7 @@ func TestWithFreelancerUpdateWithBadBody(t *testing.T) {
 	}
 }
 
+// todo: update
 func TestUpdateFreelancerHandler(t *testing.T) {
 	is := isHelper.New(t)
 	freelancerRepositoryMock := &FreelancerRepositoryMock{}
@@ -296,11 +305,8 @@ func TestUpdateFreelancerHandler(t *testing.T) {
 	r := getRequest(freelancerContext, ``)
 	context.Set(r, "id", uint(1))
 	context.Set(r, "freelancerUpdate", &FreelancerUpdate{
-		HourlyRateFrom: 11,
-		HourlyRateTo:   22,
-		IsAvailable:    true,
-		Timezone:       "timez",
-		Skills:         stringList{"one", "two"},
+		Timezone: "timez",
+		Skills:   stringList{"one", "two"},
 	})
 
 	updateFreelancerByID().ServeHTTP(w, r)
@@ -308,9 +314,6 @@ func TestUpdateFreelancerHandler(t *testing.T) {
 	freelancer := freelancerRepositoryMock.UpdateFreelancerCall.Receives.Freelancer
 	is.Equal(w.Code, http.StatusOK)
 	is.Equal(freelancerRepositoryMock.GetFreelancerCall.Receives.ID, uint(1))
-	is.Equal(freelancer.HourlyRateFrom, 11)
-	is.Equal(freelancer.HourlyRateTo, 22)
-	is.Equal(freelancer.IsAvailable, true)
 	is.Equal(freelancer.Timezone, "timez")
 	is.Equal(freelancer.Skills[0], "one")
 	is.Equal(freelancer.Skills[1], "two")
@@ -336,8 +339,8 @@ func TestUpdateFreelancerHandlerFailedUpdate(t *testing.T) {
 
 	updateFreelancerByID().ServeHTTP(w, r)
 
-	if w.Code != http.StatusBadRequest {
-		t.Errorf("Bad status code %d, expected %d", w.Code, http.StatusBadRequest)
+	if w.Code != http.StatusInternalServerError {
+		t.Errorf("Bad status code %d, expected %d", w.Code, http.StatusInternalServerError)
 	}
 }
 
@@ -469,7 +472,7 @@ func TestWithReview(t *testing.T) {
 //		withReview(next).ServeHTTP(w, r)
 //
 //		if w.Code != data.out {
-//			t.Errorf("Bad status code %d, expected %d\nFor request body: %s\nResponse body: %s", w.Code, data.out, data.in, w.Body.String())
+//			t.Errorf("bad status code %d, expected %d, for request body: %s, response body: %s", w.Code, data.out, data.in, w.Body.String())
 //		}
 //	}
 //}
@@ -596,7 +599,7 @@ func TestWithReference(t *testing.T) {
 //		withReference(next).ServeHTTP(w, r)
 //
 //		if w.Code != data.out {
-//			t.Errorf("Bad status code %d, expected %d\nFor request body: %s\nResponse body: %s", w.Code, data.out, data.in, w.Body.String())
+//			t.Errorf("Bad status code %d, expected %d, for request body: %s, response body: %s", w.Code, data.out, data.in, w.Body.String())
 //		}
 //	}
 //}

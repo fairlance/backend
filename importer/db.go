@@ -37,9 +37,7 @@ func reGenerateTestData(db gorm.DB, selectedType string) error {
 					Password:  fmt.Sprintf("Pass %d", i),
 					Email:     fmt.Sprintf("email%d@mail.com", i),
 				},
-				HourlyRateFrom: 3,
-				HourlyRateTo:   55,
-				Timezone:       "UTC",
+				Timezone: "UTC",
 			}).Error; err != nil {
 				return err
 			}
@@ -52,8 +50,8 @@ func reGenerateTestData(db gorm.DB, selectedType string) error {
 func deleteAllFromDB(db gorm.DB, selectedType string) error {
 	switch selectedType {
 	case "jobs":
-		db.DropTableIfExists(&application.Job{}, &application.Example{}, &application.Attachment{})
-		db.CreateTable(&application.Job{}, &application.Example{}, &application.Attachment{})
+		db.DropTableIfExists(&application.Job{}, &application.File{})
+		db.CreateTable(&application.Job{}, &application.File{})
 	case "freelancers":
 		db.DropTableIfExists(&application.Freelancer{})
 		db.CreateTable(&application.Freelancer{})
@@ -166,11 +164,8 @@ func getDocFromDB(db gorm.DB, docType, docID string) (map[string]interface{}, er
 		docMap["ID"] = entity.ID
 		docMap["FirstName"] = entity.FirstName
 		docMap["LastName"] = entity.LastName
-		docMap["IsAvailable"] = entity.IsAvailable
 		docMap["CreatedAt"] = entity.CreatedAt
 		docMap["Email"] = entity.Email
-		docMap["HourlyRateFrom"] = entity.HourlyRateFrom
-		docMap["HourlyRateTo"] = entity.HourlyRateTo
 		docMap["Rating"] = entity.Rating
 		docMap["UpdatedAt"] = entity.UpdatedAt
 		docMap["Number of applications"] = len(entity.JobApplications)
