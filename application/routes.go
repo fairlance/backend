@@ -269,7 +269,7 @@ var routes = Routes{
 	Route{
 		"UpdateClient",
 		"POST",
-		"/client/{id}",
+		"/client/{id}/complete_profile",
 		middleware.Chain(
 			whenLoggedIn,
 			whenClient,
