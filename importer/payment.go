@@ -42,7 +42,7 @@ func (p *paymentHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			log.Printf("could not parse id: %v", err)
 		}
-		if err := p.dispatcher.SetProjectFunded(projectID); err != nil {
+		if err := p.dispatcher.SetProjectFunded(uint(projectID)); err != nil {
 			log.Printf("could not set project status to funded: %v", err)
 			return
 		}
