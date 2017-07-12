@@ -91,7 +91,7 @@ func (p *payment) executeHandler() http.Handler {
 			respond.With(w, r, http.StatusInternalServerError, fmt.Errorf("could not update transaction %s, status: %v", t.TrackID, err))
 			return
 		}
-		response, err := p.requester.Pay(t)
+		response, err := p.requester.Pay(p.buildPayRequest(t))
 		if err != nil {
 			t.Status = statusError
 			if err := p.db.Update(t); err != nil {
@@ -128,7 +128,7 @@ func (p *payment) executeHandler() http.Handler {
 }
 
 // https://developer.paypal.com/docs/classic/ipn/integration-guide/IPNIntro/#id08CKFJ00JYK
-func (p *payment) ipnNotificationHandler() http.Handler {
+func (p *payment) notificationHandler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		body, err := ioutil.ReadAll(r.Body)
 		if err != nil {
@@ -177,6 +177,20 @@ func (p *payment) getProject(projectID uint) (*Project, error) {
 		return nil, err
 	}
 	return &project, nil
+}
+
+func (p *payment) buildPayRequest(t *Transaction) *PayRequest {
+	var receivers []PayRequestReceiver
+	for _, r := range t.Receivers {
+		receivers = append(receivers, PayRequestReceiver{
+			Email:  r.Email,
+			Amount: r.Amount,
+		})
+	}
+	return &PayRequest{
+		ProjectID: t.ProjectID,
+		Receivers: receivers,
+	}
 }
 
 func money(amt float64) float64 {

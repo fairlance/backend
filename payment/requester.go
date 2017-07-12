@@ -2,8 +2,17 @@ package payment
 
 type Requester interface {
 	ProviderID() string
-	// should be something else other than Transaction, but yeah...
-	Pay(t *Transaction) (*PayResponse, error)
+	Pay(request *PayRequest) (*PayResponse, error)
+}
+
+type PayRequest struct {
+	ProjectID uint
+	Receivers []PayRequestReceiver
+}
+
+type PayRequestReceiver struct {
+	Amount string
+	Email  string
 }
 
 type PayResponse struct {

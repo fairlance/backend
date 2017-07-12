@@ -21,33 +21,12 @@ type PayPalRequester struct {
 
 func (p *PayPalRequester) ProviderID() string { return "paypal" }
 
-func (p *PayPalRequester) Pay(t *Transaction) (*PayResponse, error) {
-	var receivers []PayoutItem
-	for _, r := range t.Receivers {
-		receivers = append(receivers, PayoutItem{
-			RecipientType: "EMAIL",
-			Amount: PayoutItemAmount{
-				Value:    r.Amount,
-				Currency: "EUR",
-			},
-			Note:         fmt.Sprintf("Project %d", t.ProjectID),
-			SenderItemID: time.Now().String(),
-			Receiver:     r.Email,
-		})
-	}
-	request := PayoutRequest{
-		SenderBatchHeader: PayoutSenderBatchHeader{
-			// SenderBatchID: t.TrackID,
-			RecipientType: "EMAIL",
-			EmailSubject:  fmt.Sprintf("Payment for project %d!", t.ProjectID),
-		},
-		Items: receivers,
-	}
+func (p *PayPalRequester) Pay(r *PayRequest) (*PayResponse, error) {
 	token, err := p.getToken()
 	if err != nil {
 		return nil, fmt.Errorf("could not get Auth token: %v", err)
 	}
-	req, err := p.newRequest(token, payEndpoint, request)
+	req, err := p.newHTTPRequest(token, payEndpoint, p.buildPayoutRequest(r))
 	if err != nil {
 		return nil, fmt.Errorf("could not create request: %v", err)
 	}
@@ -61,7 +40,7 @@ func (p *PayPalRequester) Pay(t *Transaction) (*PayResponse, error) {
 		return nil, fmt.Errorf("could not read response: %v", err)
 	}
 	if resp.StatusCode != http.StatusCreated {
-		payoutErrorResponse := &PayoutErrorResponse{}
+		payoutErrorResponse := &PayPalPayoutErrorResponse{}
 		if err := json.Unmarshal(body, payoutErrorResponse); err != nil {
 			return nil, fmt.Errorf("could not unmarshal error response: %v", err)
 		}
@@ -71,7 +50,7 @@ func (p *PayPalRequester) Pay(t *Transaction) (*PayResponse, error) {
 			ErrorMessage: payoutErrorResponse.Message,
 		}, nil
 	}
-	payoutResponse := &PayoutResponse{}
+	payoutResponse := &PayPalPayoutResponse{}
 	if err := json.Unmarshal(body, payoutResponse); err != nil {
 		return nil, fmt.Errorf("could not unmarshal response: %v", err)
 	}
@@ -104,14 +83,14 @@ func (p *PayPalRequester) getToken() (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("could not read response: %v", err)
 	}
-	authTokenResponse := &AuthTokenResponse{}
+	authTokenResponse := &PayPalAuthTokenResponse{}
 	if err := json.Unmarshal(body, authTokenResponse); err != nil {
 		return "", fmt.Errorf("could not unmarshal response: %v", err)
 	}
 	return authTokenResponse.AccessToken, nil
 }
 
-func (p *PayPalRequester) newRequest(token, apiEndpoint string, request interface{}) (*http.Request, error) {
+func (p *PayPalRequester) newHTTPRequest(token, apiEndpoint string, request interface{}) (*http.Request, error) {
 	body, err := json.Marshal(request)
 	if err != nil {
 		return nil, fmt.Errorf("could not create request body: %v", err)
@@ -135,4 +114,28 @@ func (p *PayPalRequester) do(req *http.Request) (*http.Response, error) {
 		return nil, fmt.Errorf("could not execute request: %v", err)
 	}
 	return resp, nil
+}
+
+func (p *PayPalRequester) buildPayoutRequest(r *PayRequest) *PayPalPayoutRequest {
+	var receivers []PayPalPayoutItem
+	for _, receiver := range r.Receivers {
+		receivers = append(receivers, PayPalPayoutItem{
+			RecipientType: "EMAIL",
+			Amount: PayPalPayoutItemAmount{
+				Value:    receiver.Amount,
+				Currency: "EUR",
+			},
+			Note:         fmt.Sprintf("Project %d", r.ProjectID),
+			SenderItemID: time.Now().String(),
+			Receiver:     receiver.Email,
+		})
+	}
+	return &PayPalPayoutRequest{
+		SenderBatchHeader: PayPalPayoutSenderBatchHeader{
+			// SenderBatchID: t.TrackID,
+			RecipientType: "EMAIL",
+			EmailSubject:  fmt.Sprintf("Payment for project %d!", r.ProjectID),
+		},
+		Items: receivers,
+	}
 }

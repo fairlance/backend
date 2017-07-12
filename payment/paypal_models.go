@@ -19,28 +19,28 @@ package payment
 //   ]
 // }'
 
-type PayoutRequest struct {
-	SenderBatchHeader PayoutSenderBatchHeader `json:"sender_batch_header"`
-	Items             PayoutItems             `json:"items"`
+type PayPalPayoutRequest struct {
+	SenderBatchHeader PayPalPayoutSenderBatchHeader `json:"sender_batch_header"`
+	Items             PayPalPayoutItems             `json:"items"`
 }
 
-type PayoutSenderBatchHeader struct {
+type PayPalPayoutSenderBatchHeader struct {
 	// SenderBatchID string `json:"sender_batch_id"`
 	EmailSubject  string `json:"email_subject"`
 	RecipientType string `json:"recipient_type"`
 }
 
-type PayoutItems []PayoutItem
+type PayPalPayoutItems []PayPalPayoutItem
 
-type PayoutItem struct {
-	RecipientType string           `json:"recipient_type"`
-	Amount        PayoutItemAmount `json:"amount"`
-	Note          string           `json:"note"`
-	SenderItemID  string           `json:"sender_item_id"`
-	Receiver      string           `json:"receiver"`
+type PayPalPayoutItem struct {
+	RecipientType string                 `json:"recipient_type"`
+	Amount        PayPalPayoutItemAmount `json:"amount"`
+	Note          string                 `json:"note"`
+	SenderItemID  string                 `json:"sender_item_id"`
+	Receiver      string                 `json:"receiver"`
 }
 
-type PayoutItemAmount struct {
+type PayPalPayoutItemAmount struct {
 	Value    string `json:"value"`
 	Currency string `json:"currency"`
 }
@@ -56,14 +56,14 @@ type PayoutItemAmount struct {
 //   }
 // }
 
-type PayoutResponse struct {
-	BatchHeader BatchHeader `json:"batch_header"`
+type PayPalPayoutResponse struct {
+	BatchHeader PayPalBatchHeader `json:"batch_header"`
 }
 
-type BatchHeader struct {
-	SenderBatchHeader PayoutSenderBatchHeader `json:"sender_batch_header"`
-	PayoutBatchID     string                  `json:"payout_batch_id"`
-	BatchStatus       string                  `json:"batch_status"`
+type PayPalBatchHeader struct {
+	SenderBatchHeader PayPalPayoutSenderBatchHeader `json:"sender_batch_header"`
+	PayoutBatchID     string                        `json:"payout_batch_id"`
+	BatchStatus       string                        `json:"batch_status"`
 }
 
 // {
@@ -73,7 +73,7 @@ type BatchHeader struct {
 // 	"information_link":"https://developer.paypal.com/docs/api/payments.payouts-batch/#errors"
 // }
 
-type PayoutErrorResponse struct {
+type PayPalPayoutErrorResponse struct {
 	Name    string `json:"name"`
 	Message string `json:"message"`
 }
@@ -87,7 +87,7 @@ type PayoutErrorResponse struct {
 //   "expires_in": 32398
 // }
 
-type AuthTokenResponse struct {
+type PayPalAuthTokenResponse struct {
 	Scope       string `json:"scope"`
 	Nonce       string `json:"nonce"`
 	AccessToken string `json:"access_token"`
