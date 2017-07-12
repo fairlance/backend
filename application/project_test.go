@@ -271,7 +271,7 @@ func TestCreateProjectFromJobApplication(t *testing.T) {
 	is.Equal(projectRepoMock.AddCall.Receives.Project.Contract.Deadline, deadline)
 	is.Equal(projectRepoMock.AddCall.Receives.Project.Contract.Hours, 62)
 	is.Equal(projectRepoMock.AddCall.Receives.Project.Contract.PerHour, 8)
-	is.Equal(jobRepoMock.UpdateCall.Receives.Job.Name, "jobName")
+	is.Equal(jobRepoMock.DeleteJobCall.Receives.ID, 4)
 	is.Equal(notifiedFreelancerID, uint(22))
 	is.Equal(notificationType, "job_application_accepted")
 	is.Equal(indexName, "jobs")

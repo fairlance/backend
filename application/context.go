@@ -239,7 +239,6 @@ func (ac *ApplicationContext) FillTables() {
 		ClientID: 1,
 		Tags:     stringList{"tag"},
 		Deadline: time.Now().Add(time.Hour * 24 * 5),
-		IsActive: true,
 	})
 	job.Association("Attachments").Replace([]File{{Name: "job attachment", URL: "www.google.com"}})
 	job.Association("Examples").Replace([]File{{Name: "Some job example", URL: "www.google.com"}})

@@ -31,7 +31,6 @@ func TestJobIndexJob(t *testing.T) {
 				Summary:  "Summary1",
 				Details:  "Details1",
 				ClientID: 1,
-				IsActive: true,
 				Price:    100,
 				Examples: []File{
 					{
@@ -65,7 +64,6 @@ func TestJobIndexJob(t *testing.T) {
 	is.Equal(body[0].Name, "Name1")
 	is.Equal(body[0].Summary, "Summary1")
 	is.Equal(body[0].Details, "Details1")
-	is.Equal(body[0].IsActive, true)
 	is.Equal(body[0].Price, 100)
 	is.Equal(len(body[0].Examples), 1)
 	is.Equal(body[0].Examples[0].Name, "example")
@@ -135,7 +133,6 @@ func TestJobAddJob(t *testing.T) {
 		Summary:  "Summary1",
 		Details:  "Details1",
 		ClientID: 1,
-		IsActive: true,
 		Price:    100,
 		Examples: []File{
 			{
@@ -167,7 +164,6 @@ func TestJobAddJob(t *testing.T) {
 	is.Equal(jobRepositoryMock.AddJobCall.Receives.Job.Summary, "Summary1")
 	is.Equal(jobRepositoryMock.AddJobCall.Receives.Job.Details, "Details1")
 	is.Equal(jobRepositoryMock.AddJobCall.Receives.Job.ClientID, 1)
-	is.Equal(jobRepositoryMock.AddJobCall.Receives.Job.IsActive, true)
 	is.Equal(jobRepositoryMock.AddJobCall.Receives.Job.Price, 100)
 	is.Equal(len(jobRepositoryMock.AddJobCall.Receives.Job.Examples), 1)
 	is.Equal(jobRepositoryMock.AddJobCall.Receives.Job.Examples[0].Name, "example")
@@ -232,7 +228,6 @@ func TestJobGetJobForClient(t *testing.T) {
 		Summary:  "Summary1",
 		Details:  "Details1",
 		ClientID: 1,
-		IsActive: true,
 		Price:    100,
 	}
 	var jobContext = &ApplicationContext{
@@ -256,7 +251,6 @@ func TestJobGetJobForClient(t *testing.T) {
 	is.Equal(body.Name, "Name1")
 	is.Equal(body.Summary, "Summary1")
 	is.Equal(body.Details, "Details1")
-	is.Equal(body.IsActive, true)
 	is.Equal(body.Price, 100)
 }
 
@@ -270,7 +264,6 @@ func TestJobGetJobForFreelancer(t *testing.T) {
 		Summary:  "Summary1",
 		Details:  "Details1",
 		ClientID: 1,
-		IsActive: true,
 		Price:    100,
 	}
 	var jobContext = &ApplicationContext{
@@ -294,7 +287,6 @@ func TestJobGetJobForFreelancer(t *testing.T) {
 	is.Equal(body.Name, "Name1")
 	is.Equal(body.Summary, "Summary1")
 	is.Equal(body.Details, "Details1")
-	is.Equal(body.IsActive, true)
 	is.Equal(body.Price, 100)
 }
 
