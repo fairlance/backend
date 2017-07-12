@@ -73,7 +73,6 @@ type FreelancerUpdate struct {
 
 type Client struct {
 	User
-	Image     string    `json:"image" valid:"required"`
 	Timezone  string    `json:"timezone"`
 	About     string    `json:"about"`
 	Birthdate string    `json:"birthdate"`
