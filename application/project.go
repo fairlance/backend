@@ -152,8 +152,8 @@ func createProjectFromJobApplication() http.Handler {
 			respond.With(w, r, http.StatusInternalServerError, err)
 			return
 		}
-		if err = appContext.JobRepository.update(job); err != nil {
-			log.Printf("deactivate job: %v", err)
+		if err = appContext.JobRepository.DeleteJob(job.ID); err != nil {
+			log.Printf("could not delete job: %v", err)
 			respond.With(w, r, http.StatusInternalServerError, err)
 			return
 		}
