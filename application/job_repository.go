@@ -50,7 +50,8 @@ func (repo *PostgreJobRepository) GetAllJobsForClient(clientID uint) ([]Job, err
 		Preload("Examples", "type IN (?)", fileTypeJobExample).
 		Preload("Attachments", "type IN (?)", fileTypeJobAttachment).
 		Preload("Client").
-		Find(&jobs).Where("client_id = ?", clientID).Error
+		Where("client_id = ?", clientID).
+		Find(&jobs).Error
 	return jobs, err
 }
 

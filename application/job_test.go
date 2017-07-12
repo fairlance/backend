@@ -90,30 +90,10 @@ func TestGetJobsForClient(t *testing.T) {
 		Type: "client",
 	})
 
-	getAllJobsForUser().ServeHTTP(w, r)
+	getAllJobsForClient().ServeHTTP(w, r)
 
 	is.Equal(w.Code, http.StatusOK)
 	is.Equal(jobRepositoryMock.GetAllJobsForClientCall.Receives.ID, 1)
-}
-
-func TestGetJobsForClientError(t *testing.T) {
-	jobRepositoryMock := JobRepositoryMock{}
-	var jobContext = &ApplicationContext{
-		JobRepository: &jobRepositoryMock,
-	}
-
-	is := isHelper.New(t)
-	w := httptest.NewRecorder()
-	r := getRequest(jobContext, "")
-
-	context.Set(r, "user", &models.User{
-		ID:   1,
-		Type: "freelancer",
-	})
-
-	getAllJobsForUser().ServeHTTP(w, r)
-
-	is.Equal(w.Code, http.StatusBadRequest)
 }
 
 func TestJobIndexJobError(t *testing.T) {

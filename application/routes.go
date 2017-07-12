@@ -284,7 +284,8 @@ var routes = Routes{
 		"/job",
 		middleware.Chain(
 			whenLoggedIn,
-		)(getAllJobsForUser()),
+			whenClient,
+		)(getAllJobsForClient()),
 	},
 	Route{
 		"NewJob",
