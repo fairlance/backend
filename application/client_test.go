@@ -174,14 +174,13 @@ func TestUpdateClientByIDWithBadBody(t *testing.T) {
 	userContext := &ApplicationContext{
 		ClientRepository: clientRepositoryMock,
 	}
-
 	for _, data := range badBodyUpdateClientByID {
 		w := httptest.NewRecorder()
 		r := getRequest(userContext, data.in)
-		context.Set(r, "id", uint(1))
-
-		updateClientByID().ServeHTTP(w, r)
-
+		nextCalled := false
+		next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { nextCalled = true })
+		withClientUpdateFromRequest(next).ServeHTTP(w, r)
+		is.Equal(nextCalled, false)
 		is.Equal(w.Code, http.StatusBadRequest)
 	}
 }
@@ -193,61 +192,49 @@ func TestUpdateClientByIDWithNonExistingClient(t *testing.T) {
 	userContext := &ApplicationContext{
 		ClientRepository: clientRepositoryMock,
 	}
-
 	w := httptest.NewRecorder()
-	r := getRequest(userContext, "{}")
+	r := getRequest(userContext, "")
 	context.Set(r, "id", uint(1))
-
+	context.Set(r, "clientUpdate", &ClientUpdate{})
 	updateClientByID().ServeHTTP(w, r)
-
 	is.Equal(w.Code, http.StatusNotFound)
 }
 
 func TestUpdateClientByIDWithFailedUpdate(t *testing.T) {
 	is := isHelper.New(t)
-	clientRepositoryMock := &ClientRepositoryMock{}
-	clientRepositoryMock.UpdateClientCall.Returns.Error = errors.New("nope")
 	userContext := &ApplicationContext{
-		ClientRepository: clientRepositoryMock,
+		ClientRepository: &ClientRepositoryMock{},
 	}
-
 	w := httptest.NewRecorder()
 	r := getRequest(userContext, "{}")
-	context.Set(r, "id", uint(1))
-
-	updateClientByID().ServeHTTP(w, r)
-
+	nextCalled := false
+	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { nextCalled = true })
+	withClientUpdateFromRequest(next).ServeHTTP(w, r)
+	is.Equal(nextCalled, false)
 	is.Equal(w.Code, http.StatusBadRequest)
 }
 
 func TestUpdateClientByID(t *testing.T) {
 	is := isHelper.New(t)
-	clientRepositoryMock := &ClientRepositoryMock{}
-	clientRepositoryMock.GetClientCall.Returns.Client = &Client{
-		User: User{
-			Model: Model{
-				ID: 1,
-			},
-		},
-	}
 	userContext := &ApplicationContext{
-		ClientRepository: clientRepositoryMock,
+		ClientRepository: &ClientRepositoryMock{},
 	}
-
 	r := getRequest(userContext, `
     {
         "timezone": "UTC",
-        "payment": "paypal",
-        "industry": "feet cartoon drawings"
+        "about": "about",
+		"birthdate": "27.07.2007",
+		"image": "url"
     }`)
 	w := httptest.NewRecorder()
-	context.Set(r, "id", uint(1))
-
-	updateClientByID().ServeHTTP(w, r)
-
+	nextCalled := false
+	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { nextCalled = true })
+	withClientUpdateFromRequest(next).ServeHTTP(w, r)
+	is.Equal(nextCalled, true)
+	clientUpdate := context.Get(r, "clientUpdate").(*ClientUpdate)
 	is.Equal(w.Code, http.StatusOK)
-	is.Equal(clientRepositoryMock.GetClientCall.Receives.ID, 1)
-	is.Equal(clientRepositoryMock.UpdateClientCall.Receives.Client.Timezone, "UTC")
-	is.Equal(clientRepositoryMock.UpdateClientCall.Receives.Client.Payment, "paypal")
-	is.Equal(clientRepositoryMock.UpdateClientCall.Receives.Client.Industry, "feet cartoon drawings")
+	is.Equal(clientUpdate.Timezone, "UTC")
+	is.Equal(clientUpdate.Birthdate, "27.07.2007")
+	is.Equal(clientUpdate.Image, "url")
+	is.Equal(clientUpdate.About, "about")
 }

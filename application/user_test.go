@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/cheekybits/is"
+	"github.com/fairlance/backend/middleware"
 	"github.com/gorilla/context"
 )
 
@@ -74,14 +75,13 @@ func TestWithUserWithNotAllDataInBody(t *testing.T) {
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		t.Error("Should not be called")
 	})
-
-	withUserToAdd(handler).ServeHTTP(w, r)
-
+	middleware.JSONEnvelope(withUserToAdd(handler)).ServeHTTP(w, r)
 	is.Equal(w.Code, http.StatusBadRequest)
 	var body map[string]interface{}
 	is.NoErr(json.Unmarshal(w.Body.Bytes(), &body))
-	is.Equal(body["firstName"], "non zero value required")
-	is.Equal(body["lastName"], "non zero value required")
-	is.Equal(body["password"], "non zero value required")
-	is.Equal(body["email"], "non zero value required")
+	data := body["data"].(map[string]interface{})
+	is.Equal(data["firstName"], "non zero value required")
+	is.Equal(data["lastName"], "non zero value required")
+	is.Equal(data["password"], "non zero value required")
+	is.Equal(data["email"], "non zero value required")
 }

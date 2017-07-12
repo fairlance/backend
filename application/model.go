@@ -73,14 +73,22 @@ type FreelancerUpdate struct {
 
 type Client struct {
 	User
-	Timezone string    `json:"timezone"`
-	Payment  string    `json:"payment"`
-	Industry string    `json:"industry"`
-	Rating   float64   `json:"rating"`
-	Jobs     []Job     `json:"jobs"`
-	Projects []Project `json:"projects"`
-	Reviews  []Review  `json:"reviews"`
-	Phone    string    `json:"phone"`
+	Image     string    `json:"image" valid:"required"`
+	Timezone  string    `json:"timezone"`
+	About     string    `json:"about"`
+	Birthdate string    `json:"birthdate"`
+	Rating    float64   `json:"rating"`
+	Jobs      []Job     `json:"jobs"`
+	Projects  []Project `json:"projects"`
+	Reviews   []Review  `json:"reviews"`
+	Phone     string    `json:"phone"`
+}
+
+type ClientUpdate struct {
+	Image     string `json:"image" valid:"required"`
+	About     string `json:"about" valid:"required"`
+	Timezone  string `json:"timezone" valid:"required"`
+	Birthdate string `json:"birthdate"`
 }
 
 type Project struct {

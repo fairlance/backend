@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/asaskevich/govalidator"
+	"github.com/fairlance/backend/models"
 	"github.com/gorilla/context"
 	"gopkg.in/matryer/respond.v1"
 )
@@ -82,8 +83,7 @@ func withReference(handler http.Handler) http.Handler {
 		}
 
 		if ok, err := govalidator.ValidateStruct(reference); ok == false || err != nil {
-			errs := govalidator.ErrorsByField(err)
-			respond.With(w, r, http.StatusBadRequest, errs)
+			respond.With(w, r, http.StatusBadRequest, models.GovalidatorErrors{Err: err})
 			return
 		}
 
@@ -119,8 +119,7 @@ func withReview(handler http.Handler) http.Handler {
 		}
 
 		if ok, err := govalidator.ValidateStruct(review); ok == false || err != nil {
-			errs := govalidator.ErrorsByField(err)
-			respond.With(w, r, http.StatusBadRequest, errs)
+			respond.With(w, r, http.StatusBadRequest, models.GovalidatorErrors{Err: err})
 			return
 		}
 
@@ -144,17 +143,16 @@ func addFreelancerReviewByID() http.Handler {
 	})
 }
 
-func withFreelancerUpdate(handler http.Handler) http.Handler {
+func withFreelancerUpdateFromRequest(handler http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		decoder := json.NewDecoder(r.Body)
-		defer r.Body.Close()
 		var freelancerUpdate FreelancerUpdate
-		if err := decoder.Decode(&freelancerUpdate); err != nil {
+		if err := json.NewDecoder(r.Body).Decode(&freelancerUpdate); err != nil {
 			respond.With(w, r, http.StatusBadRequest, err)
 			return
 		}
+		defer r.Body.Close()
 		if ok, err := govalidator.ValidateStruct(freelancerUpdate); ok == false || err != nil {
-			respond.With(w, r, http.StatusBadRequest, err)
+			respond.With(w, r, http.StatusBadRequest, models.GovalidatorErrors{Err: err})
 			return
 		}
 		// https://github.com/asaskevich/govalidator/issues/133

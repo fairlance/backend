@@ -113,7 +113,7 @@ func withJobFromRequest(handler http.Handler) http.Handler {
 		}
 
 		if ok, err := govalidator.ValidateStruct(job); ok == false || err != nil {
-			respond.With(w, r, http.StatusBadRequest, govalidator.ErrorsByField(err))
+			respond.With(w, r, http.StatusBadRequest, models.GovalidatorErrors{Err: err})
 			return
 		}
 
@@ -156,8 +156,7 @@ func withJobApplicationFromRequest(handler http.Handler) http.Handler {
 		}
 
 		if ok, err := govalidator.ValidateStruct(jobApplication); ok == false || err != nil {
-			errs := govalidator.ErrorsByField(err)
-			respond.With(w, r, http.StatusBadRequest, errs)
+			respond.With(w, r, http.StatusBadRequest, models.GovalidatorErrors{Err: err})
 			return
 		}
 

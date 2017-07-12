@@ -214,8 +214,6 @@ func (ac *ApplicationContext) FillTables() {
 			Email:     "client@mail.com",
 		},
 		Timezone: "UTC",
-		Payment:  "PayPal",
-		Industry: "Dildos",
 		Rating:   4.6,
 	})
 
@@ -227,8 +225,6 @@ func (ac *ApplicationContext) FillTables() {
 			Email:     "clientoni@mail.com",
 		},
 		Timezone: "UTC",
-		Payment:  "Skrill",
-		Industry: "Handcufs",
 		Rating:   2.4,
 	})
 

@@ -52,7 +52,7 @@ var routes = Routes{
 			whenFreelancer,
 			withUINT("id"),
 			whenIDBelongsToUser,
-			withFreelancerUpdate,
+			withFreelancerUpdateFromRequest,
 		)(updateFreelancerByID()),
 	},
 	Route{
@@ -272,6 +272,7 @@ var routes = Routes{
 			whenClient,
 			withUINT("id"),
 			whenIDBelongsToUser,
+			withClientUpdateFromRequest,
 		)(updateClientByID()),
 	},
 

@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/asaskevich/govalidator"
+	"github.com/fairlance/backend/models"
 	"github.com/gorilla/context"
 	"gopkg.in/matryer/respond.v1"
 )
@@ -52,35 +54,37 @@ func addClient() http.Handler {
 	})
 }
 
-func updateClientByID() http.Handler {
+func withClientUpdateFromRequest(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		decoder := json.NewDecoder(r.Body)
-		defer r.Body.Close()
-		var body struct {
-			Timezone string `json:"timezone"`
-			Payment  string `json:"payment"`
-			Industry string `json:"industry"`
-		}
-		if err := decoder.Decode(&body); err != nil {
+		var clientUpdate ClientUpdate
+		if err := json.NewDecoder(r.Body).Decode(&clientUpdate); err != nil {
 			respond.With(w, r, http.StatusBadRequest, err)
 			return
 		}
+		defer r.Body.Close()
+		if ok, err := govalidator.ValidateStruct(clientUpdate); ok == false || err != nil {
+			respond.With(w, r, http.StatusBadRequest, models.GovalidatorErrors{Err: err})
+			return
+		}
+		context.Set(r, "clientUpdate", &clientUpdate)
+		next.ServeHTTP(w, r)
+	})
+}
+
+func updateClientByID() http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var appContext = context.Get(r, "context").(*ApplicationContext)
+		var clientUpdate = context.Get(r, "clientUpdate").(*ClientUpdate)
 		var id = context.Get(r, "id").(uint)
 		client, err := appContext.ClientRepository.GetClient(id)
 		if err != nil {
 			respond.With(w, r, http.StatusNotFound, err)
 			return
 		}
-		if body.Timezone != "" {
-			client.Timezone = body.Timezone
-		}
-		if body.Payment != "" {
-			client.Payment = body.Payment
-		}
-		if body.Industry != "" {
-			client.Industry = body.Industry
-		}
+		client.Image = clientUpdate.Image
+		client.Birthdate = clientUpdate.Birthdate
+		client.About = clientUpdate.About
+		client.Timezone = clientUpdate.Timezone
 		if err := appContext.ClientRepository.UpdateClient(client); err != nil {
 			respond.With(w, r, http.StatusBadRequest, err)
 			return

@@ -219,7 +219,7 @@ func TestWithFreelancerUpdate(t *testing.T) {
 	r := getRequest(freelancerContext, requestBody)
 	nextCalled := false
 	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { nextCalled = true })
-	withFreelancerUpdate(next).ServeHTTP(w, r)
+	withFreelancerUpdateFromRequest(next).ServeHTTP(w, r)
 	is.Equal(w.Code, http.StatusOK)
 	is.Equal(nextCalled, true)
 	freelancerUpdate := context.Get(r, "freelancerUpdate").(*FreelancerUpdate)
@@ -254,7 +254,7 @@ func TestWithFreelancerUpdateWithErrorMaxSkills(t *testing.T) {
 		t.Error("Should not be called")
 	})
 
-	withFreelancerUpdate(next).ServeHTTP(w, r)
+	withFreelancerUpdateFromRequest(next).ServeHTTP(w, r)
 
 	if w.Code != http.StatusBadRequest {
 		t.Errorf("Bad status code %d, expected %d", w.Code, http.StatusBadRequest)
@@ -279,7 +279,7 @@ func TestWithFreelancerUpdateWithBadBody(t *testing.T) {
 			t.Error("Should not be called")
 		})
 
-		withFreelancerUpdate(next).ServeHTTP(w, r)
+		withFreelancerUpdateFromRequest(next).ServeHTTP(w, r)
 
 		if w.Code != data.out {
 			t.Errorf("Bad status code %d, expected %d", w.Code, data.out)

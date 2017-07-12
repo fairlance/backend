@@ -22,6 +22,9 @@ var opts = &respond.Options{
 		if err, ok := data.(error); ok {
 			dataEnvelope["error"] = err.Error()
 			dataEnvelope["success"] = false
+		} else if errs, ok := data.(models.Errors); ok {
+			dataEnvelope["data"] = errs.ErrorsAsMap()
+			dataEnvelope["success"] = false
 		} else {
 			dataEnvelope["data"] = data
 			dataEnvelope["success"] = true

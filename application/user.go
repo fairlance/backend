@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/asaskevich/govalidator"
+	"github.com/fairlance/backend/models"
 	"github.com/gorilla/context"
 	respond "gopkg.in/matryer/respond.v1"
 )
@@ -27,8 +28,7 @@ func withUserToAdd(handler http.Handler) http.Handler {
 			return
 		}
 		if ok, err := govalidator.ValidateStruct(body); ok == false || err != nil {
-			errs := govalidator.ErrorsByField(err)
-			respond.With(w, r, http.StatusBadRequest, errs)
+			respond.With(w, r, http.StatusBadRequest, models.GovalidatorErrors{Err: err})
 			return
 		}
 		user := &User{
