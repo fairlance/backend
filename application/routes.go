@@ -117,10 +117,7 @@ var routes = Routes{
 			whenLoggedIn,
 			whenClient,
 			withUINT("id"),
-			whenBasedOnUserType(
-				whenJobApplicationBelongsToClient,
-				whenJobApplicationBelongsToFreelancer,
-			),
+			whenJobApplicationBelongsToClientByID,
 		)(createProjectFromJobApplication()),
 	},
 	Route{
@@ -160,7 +157,6 @@ var routes = Routes{
 		"/project/{id}/extension",
 		middleware.Chain(
 			whenLoggedIn,
-			whenClient,
 			withUINT("id"),
 			whenBasedOnUserType(
 				whenProjectBelongsToClientByID,
@@ -175,6 +171,7 @@ var routes = Routes{
 		"/project/{id}/extension/{extension_id}/agree",
 		middleware.Chain(
 			whenLoggedIn,
+			withUINT("id"),
 			whenBasedOnUserType(
 				whenProjectBelongsToClientByID,
 				whenProjectBelongsToFreelancerByID,
@@ -294,7 +291,8 @@ var routes = Routes{
 		middleware.Chain(
 			whenLoggedIn,
 			whenClient,
-			withJob,
+			whenProfileCompleted,
+			withJobFromRequest,
 		)(addJob()),
 	},
 	Route{
@@ -313,9 +311,11 @@ var routes = Routes{
 		middleware.Chain(
 			whenLoggedIn,
 			whenFreelancer,
+			whenProfileCompleted,
 			withUINT("id"),
+			whenFreelancerHasNotAppliedBeforeByID,
 			withClientFromJobID,
-			withJobApplication,
+			withJobApplicationFromRequest,
 		)(addJobApplication()),
 	},
 	Route{
@@ -325,8 +325,8 @@ var routes = Routes{
 		middleware.Chain(
 			whenLoggedIn,
 			whenFreelancer,
-			whenJobApplicationBelongsToFreelancer,
 			withUINT("id"),
+			whenJobApplicationBelongsToFreelancerByID,
 		)(deleteJobApplicationByID()),
 	},
 }

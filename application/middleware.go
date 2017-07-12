@@ -86,6 +86,17 @@ func basedOnUserType(clientHandler http.Handler, freelancerHandler http.Handler)
 	})
 }
 
+func whenProfileCompleted(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		user := context.Get(r, "user").(*models.User)
+		if !user.ProfileCompleted {
+			respond.With(w, r, http.StatusForbidden, errors.New("user profile not completed"))
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
+}
+
 func whenCurrentProjectStatus(status string) middleware.Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

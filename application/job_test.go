@@ -426,7 +426,7 @@ func TestJobWithJob(t *testing.T) {
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		nextCalled = true
 	})
-	withJob(handler).ServeHTTP(w, r)
+	withJobFromRequest(handler).ServeHTTP(w, r)
 
 	is.Equal(w.Code, http.StatusOK)
 	is.Equal(nextCalled, true)
@@ -479,7 +479,7 @@ func TestJobWithJobErrorBadTooManyTags(t *testing.T) {
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		t.Error("Should not be called")
 	})
-	withJob(handler).ServeHTTP(w, r)
+	withJobFromRequest(handler).ServeHTTP(w, r)
 
 	is.Equal(w.Code, http.StatusBadRequest)
 }
@@ -494,7 +494,7 @@ func TestJobWithJobErrorBadJSON(t *testing.T) {
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		t.Error("Should not be called")
 	})
-	withJob(handler).ServeHTTP(w, r)
+	withJobFromRequest(handler).ServeHTTP(w, r)
 
 	is.Equal(w.Code, http.StatusBadRequest)
 }
@@ -523,7 +523,7 @@ func TestJobWithJobApplication(t *testing.T) {
 		nextCalled = true
 	})
 
-	withJobApplication(handler).ServeHTTP(w, r)
+	withJobApplicationFromRequest(handler).ServeHTTP(w, r)
 
 	is.Equal(w.Code, http.StatusOK)
 	is.Equal(nextCalled, true)
@@ -573,7 +573,7 @@ func TestJobWithJobApplicationErrorBadJSON(t *testing.T) {
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		t.Error("Should not be called")
 	})
-	withJobApplication(handler).ServeHTTP(w, r)
+	withJobApplicationFromRequest(handler).ServeHTTP(w, r)
 
 	is.Equal(w.Code, http.StatusBadRequest)
 }
@@ -785,8 +785,8 @@ func TestWhenJobApplicationBelongsToClient(t *testing.T) {
 
 		opts.Handler(
 			whenBasedOnUserType(
-				whenJobApplicationBelongsToClient,
-				whenJobApplicationBelongsToFreelancer,
+				whenJobApplicationBelongsToClientByID,
+				whenJobApplicationBelongsToFreelancerByID,
 			)(next),
 		).ServeHTTP(w, r)
 

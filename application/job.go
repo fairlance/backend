@@ -96,7 +96,7 @@ func getJob() http.Handler {
 	})
 }
 
-func withJob(handler http.Handler) http.Handler {
+func withJobFromRequest(handler http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		decoder := json.NewDecoder(r.Body)
 		defer r.Body.Close()
@@ -123,7 +123,27 @@ func withJob(handler http.Handler) http.Handler {
 	})
 }
 
-func withJobApplication(handler http.Handler) http.Handler {
+func whenFreelancerHasNotAppliedBeforeByID(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var appContext = context.Get(r, "context").(*ApplicationContext)
+		var jobID = context.Get(r, "id").(uint)
+		job, err := appContext.JobRepository.GetJob(jobID)
+		if err != nil {
+			respond.With(w, r, http.StatusInternalServerError, err)
+			return
+		}
+		var user = context.Get(r, "user").(*models.User)
+		for _, application := range job.JobApplications {
+			if application.FreelancerID == user.ID {
+				respond.With(w, r, http.StatusBadRequest, fmt.Errorf("freelancer already applied for the job"))
+				return
+			}
+		}
+		next.ServeHTTP(w, r)
+	})
+}
+
+func withJobApplicationFromRequest(handler http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		decoder := json.NewDecoder(r.Body)
 		defer r.Body.Close()
@@ -199,7 +219,7 @@ func deleteJobApplicationByID() http.Handler {
 	})
 }
 
-func whenJobApplicationBelongsToFreelancer(next http.Handler) http.Handler {
+func whenJobApplicationBelongsToFreelancerByID(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var id = context.Get(r, "id").(uint)
 		var user = context.Get(r, "user").(*models.User)
@@ -219,7 +239,7 @@ func whenJobApplicationBelongsToFreelancer(next http.Handler) http.Handler {
 	})
 }
 
-func whenJobApplicationBelongsToClient(next http.Handler) http.Handler {
+func whenJobApplicationBelongsToClientByID(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var id = context.Get(r, "id").(uint)
 		var user = context.Get(r, "user").(*models.User)
