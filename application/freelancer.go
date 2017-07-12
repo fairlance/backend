@@ -154,8 +154,7 @@ func withFreelancerUpdate(handler http.Handler) http.Handler {
 			return
 		}
 		if ok, err := govalidator.ValidateStruct(freelancerUpdate); ok == false || err != nil {
-			errs := govalidator.ErrorsByField(err)
-			respond.With(w, r, http.StatusBadRequest, errs)
+			respond.With(w, r, http.StatusBadRequest, err)
 			return
 		}
 		// https://github.com/asaskevich/govalidator/issues/133
