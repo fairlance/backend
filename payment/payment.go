@@ -53,7 +53,12 @@ func (p *payment) depositHandler() http.Handler {
 			respond.With(w, r, http.StatusBadRequest, fmt.Errorf("could not get project %d: %v", deposit.projectID, err))
 			return
 		}
-		transactionReceivers := p.buildTransactionReceivers(project)
+		transactionReceivers, err := p.buildTransactionReceivers(project)
+		if err != nil {
+			log.Printf("could not build transaction receivers for project %d: %v", deposit.projectID, err)
+			respond.With(w, r, http.StatusBadRequest, fmt.Errorf("could not build transaction receivers for project %d: %v", deposit.projectID, err))
+			return
+		}
 		t := &Transaction{
 			TrackID:   deposit.trackID,
 			ProjectID: deposit.projectID,
@@ -154,17 +159,20 @@ func (p *payment) notificationHandler() http.Handler {
 	})
 }
 
-func (p *payment) buildTransactionReceivers(proj *Project) []TransactionReceiver {
+func (p *payment) buildTransactionReceivers(proj *Project) ([]TransactionReceiver, error) {
 	freelancerAmount := proj.amount() * p.receiversPercentile / float64(len(proj.Freelancers))
 	var transactionReceivers []TransactionReceiver
 	for _, freelancer := range proj.Freelancers {
+		if freelancer.ID == 0 || freelancer.Email == "" {
+			return nil, fmt.Errorf("could not build TransactionReceiver, email or id is not provided: id=%d, email=%s", freelancer.ID, freelancer.Email)
+		}
 		transactionReceivers = append(transactionReceivers, TransactionReceiver{
 			FairlanceID: freelancer.ID,
 			Email:       freelancer.Email,
 			Amount:      fmt.Sprintf("%.2f", money(freelancerAmount)),
 		})
 	}
-	return transactionReceivers
+	return transactionReceivers, nil
 }
 
 func (p *payment) getProject(projectID uint) (*Project, error) {

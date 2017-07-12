@@ -19,7 +19,7 @@ var (
 	payPalClientID     = os.Getenv("PAYPAL_CLIENT_ID")
 	payPalSecret       = os.Getenv("PAYPAL_SECRET")
 	payPalOAuth2URL    = os.Getenv("PAYPAL_OAUTH2_URL")
-	ipnNotificationURL = os.Getenv("PAYPAL_IPN_NOTIFICATION_URL")
+	ipnNotificationURL = os.Getenv("PAYPAL_NOTIFICATION_URL")
 	applicationURL     = os.Getenv("APPLICATION_URL")
 	dbHost             = os.Getenv("DB_HOST")
 	dbUser             = os.Getenv("DB_USER")
