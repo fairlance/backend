@@ -147,7 +147,6 @@ func getDocFromDB(db gorm.DB, docType, docID string) (map[string]interface{}, er
 		docMap["CreatedAt"] = entity.CreatedAt
 		docMap["UpdatedAt"] = entity.UpdatedAt
 		docMap["Details"] = entity.Details
-		docMap["IsActive"] = entity.IsActive
 		docMap["Price"] = entity.Price
 		docMap["StartDate"] = entity.StartDate
 		docMap["Tags"] = entity.Tags
