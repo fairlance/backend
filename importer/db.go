@@ -138,7 +138,7 @@ func getDocFromDB(db gorm.DB, docType, docID string) (map[string]interface{}, er
 	switch docType {
 	case "jobs":
 		entity := &application.Job{}
-		if err := db.Find(entity, docID).Error; err != nil {
+		if err := db.Preload("JobApplications").Find(entity, docID).Error; err != nil {
 			return nil, err
 		}
 		docMap["ID"] = entity.ID
@@ -156,7 +156,7 @@ func getDocFromDB(db gorm.DB, docType, docID string) (map[string]interface{}, er
 		return docMap, nil
 	case "freelancers":
 		entity := &application.Freelancer{}
-		if err := db.Find(entity, docID).Error; err != nil {
+		if err := db.Preload("JobApplications").Find(entity, docID).Error; err != nil {
 			return nil, err
 		}
 
