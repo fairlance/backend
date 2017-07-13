@@ -24,7 +24,7 @@ func NewServeMux(requester Requester, paymentDB DB, applicationDispatcher dispat
 	mux.Handle("/public/webhook/paypal", middleware.Chain(
 		middleware.RecoverHandler,
 		middleware.LoggerHandler,
-		middleware.HTTPMethod(http.MethodGet),
+		middleware.HTTPMethod(http.MethodPost),
 	)(payment.notificationHandler()))
 
 	mux.Handle("/public/deposit", middleware.Chain(
