@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"net/url"
 	"strings"
@@ -59,6 +60,56 @@ func (p *PayPalRequester) Pay(r *PayRequest) (*PayResponse, error) {
 		PaymentKey: payoutResponse.BatchHeader.PayoutBatchID,
 		Status:     payoutResponse.BatchHeader.BatchStatus,
 	}, err
+}
+
+func (p *PayPalRequester) VerifyPayment(r *http.Request) (bool, error) {
+	if err := r.ParseForm(); err != nil {
+		log.Printf("could not parse IPN form: %v", err)
+		return false, fmt.Errorf("could not parse IPN form: %v", err)
+	}
+	notificationMap := make(map[string]string)
+	postStr := p.Options.IPNNotificationURL + "&cmd=_notify-validate&"
+	for key, v := range r.Form {
+		value := strings.Join(v, "")
+		log.Printf("key: %s, value: %s", key, value)
+		notificationMap[key] = value
+		postStr = postStr + key + "=" + url.QueryEscape(value) + "&"
+	}
+	// To verify the message from PayPal, we must send
+	// back the contents in the exact order they were received and precede it with
+	// the command _notify-validate
+	// PayPal will then send one single-word message, either VERIFIED,
+	// if the message is valid, or INVALID if the messages is not valid.
+	// See more at
+	// https://developer.paypal.com/webapps/developer/docs/classic/ipn/integration-guide/IPNIntro/
+	// post data back to PayPal
+	client := &http.Client{}
+	req, err := http.NewRequest("POST", postStr, nil)
+	if err != nil {
+		log.Printf("could not create verification POST request: %v", err)
+		return false, fmt.Errorf("could not create verification POST request: %v", err)
+	}
+	req.Header.Add("Content-Type: ", "application/x-www-form-urlencoded")
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Printf("could not send verification POST request: %v", err)
+		return false, fmt.Errorf("could not send verification POST request: %v", err)
+	}
+	log.Println("Response:")
+	log.Println(resp)
+	log.Println("Status:")
+	log.Println(resp.Status)
+	// convert response to string
+	respStr, _ := ioutil.ReadAll(resp.Body)
+	fmt.Println("Response String: ", string(respStr))
+	if string(respStr) != "VERIFIED" {
+		fmt.Println("IPN validation failed!")
+		fmt.Println("Do not send the stuff out yet!")
+		return false, nil
+	}
+	fmt.Println("IPN verified")
+	fmt.Println("TODO : Email receipt, increase credit, etc")
+	return true, nil
 }
 
 func (p *PayPalRequester) getToken() (string, error) {
