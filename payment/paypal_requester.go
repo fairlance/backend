@@ -88,13 +88,11 @@ func (p *PayPalRequester) VerifyPayment(r io.Reader) (bool, error) {
 	client := &http.Client{}
 	req, err := http.NewRequest("POST", p.Options.IPNNotificationURL, r)
 	if err != nil {
-		log.Printf("could not create verification POST request: %v", err)
 		return false, fmt.Errorf("could not create verification POST request: %v", err)
 	}
-	req.Header.Add("Content-Type: ", "application/x-www-form-urlencoded")
+	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Printf("could not send verification POST request: %v", err)
 		return false, fmt.Errorf("could not send verification POST request: %v", err)
 	}
 	log.Println("Response:")
@@ -103,14 +101,14 @@ func (p *PayPalRequester) VerifyPayment(r io.Reader) (bool, error) {
 	log.Println(resp.Status)
 	// convert response to string
 	respStr, _ := ioutil.ReadAll(resp.Body)
-	fmt.Println("Response String: ", string(respStr))
+	log.Println("Response String: ", string(respStr))
 	if string(respStr) != "VERIFIED" {
-		fmt.Println("IPN validation failed!")
-		fmt.Println("Do not send the stuff out yet!")
+		log.Println("IPN validation failed!")
+		log.Println("Do not send the stuff out yet!")
 		return false, nil
 	}
-	fmt.Println("IPN verified")
-	fmt.Println("TODO : Email receipt, increase credit, etc")
+	log.Println("IPN verified")
+	log.Println("TODO : Email receipt, increase credit, etc")
 	return true, nil
 }
 
