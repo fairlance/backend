@@ -1,8 +1,9 @@
 package payment
 
 type TransactionReceiver struct {
-	ID          uint
-	FairlanceID uint
-	Email       string
-	Amount      string
+	ID                 uint
+	FairlanceID        uint
+	ProviderIdentifier string
+	Amount             string
+	Status             string
 }

@@ -63,18 +63,19 @@ func (p *PayPalRequester) Pay(r *PayRequest) (*PayResponse, error) {
 }
 
 func (p *PayPalRequester) VerifyPayment(r *http.Request) (bool, error) {
-	if err := r.ParseForm(); err != nil {
-		log.Printf("could not parse IPN form: %v", err)
-		return false, fmt.Errorf("could not parse IPN form: %v", err)
-	}
-	notificationMap := make(map[string]string)
-	postStr := p.Options.IPNNotificationURL + "&cmd=_notify-validate&"
-	for key, v := range r.Form {
-		value := strings.Join(v, "")
-		log.Printf("key: %s, value: %s", key, value)
-		notificationMap[key] = value
-		postStr = postStr + key + "=" + url.QueryEscape(value) + "&"
-	}
+	// if err := r.ParseForm(); err != nil {
+	// 	log.Printf("could not parse IPN form: %v", err)
+	// 	return false, fmt.Errorf("could not parse IPN form: %v", err)
+	// }
+	// notificationMap := make(map[string]string)
+	// postStr := p.Options.IPNNotificationURL + "&cmd=_notify-validate&"
+	// for key, v := range r.Form {
+	// 	value := strings.Join(v, "")
+	// 	log.Printf("key: %s, value: %s", key, value)
+	// 	notificationMap[key] = value
+	// 	postStr = postStr + key + "=" + url.QueryEscape(value) + "&"
+	// }
+
 	// To verify the message from PayPal, we must send
 	// back the contents in the exact order they were received and precede it with
 	// the command _notify-validate
@@ -83,8 +84,13 @@ func (p *PayPalRequester) VerifyPayment(r *http.Request) (bool, error) {
 	// See more at
 	// https://developer.paypal.com/webapps/developer/docs/classic/ipn/integration-guide/IPNIntro/
 	// post data back to PayPal
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		log.Printf("could not read request body: %v", err)
+		return false, fmt.Errorf("could not read request body: %v", err)
+	}
 	client := &http.Client{}
-	req, err := http.NewRequest("POST", postStr, nil)
+	req, err := http.NewRequest("POST", p.Options.IPNNotificationURL, bytes.NewReader(body))
 	if err != nil {
 		log.Printf("could not create verification POST request: %v", err)
 		return false, fmt.Errorf("could not create verification POST request: %v", err)

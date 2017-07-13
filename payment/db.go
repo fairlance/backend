@@ -90,7 +90,7 @@ func (db *sqlDB) Insert(t *Transaction) error {
 		return err
 	}
 	for _, receiver := range t.Receivers {
-		_, err = txn.Exec(insertReceiverSQL, transactionID, receiver.FairlanceID, receiver.Email, receiver.Amount)
+		_, err = txn.Exec(insertReceiverSQL, transactionID, receiver.FairlanceID, receiver.ProviderIdentifier, receiver.Amount)
 		if err != nil {
 			return err
 		}
@@ -130,7 +130,7 @@ func (db *sqlDB) GetByProjectID(projectID uint) (*Transaction, error) {
 	defer rows.Close()
 	for rows.Next() {
 		var receiver TransactionReceiver
-		if err := rows.Scan(&receiver.ID, &receiver.FairlanceID, &receiver.Email, &receiver.Amount); err != nil {
+		if err := rows.Scan(&receiver.ID, &receiver.FairlanceID, &receiver.ProviderIdentifier, &receiver.Amount); err != nil {
 			return nil, err
 		}
 		t.Receivers = append(t.Receivers, receiver)
@@ -153,7 +153,7 @@ func (db *sqlDB) GetByProviderTransactionKey(providerTransactionKey string) (*Tr
 	defer rows.Close()
 	for rows.Next() {
 		var receiver TransactionReceiver
-		if err := rows.Scan(&receiver.ID, &receiver.FairlanceID, &receiver.Email, &receiver.Amount); err != nil {
+		if err := rows.Scan(&receiver.ID, &receiver.FairlanceID, &receiver.ProviderIdentifier, &receiver.Amount); err != nil {
 			return nil, err
 		}
 		t.Receivers = append(t.Receivers, receiver)

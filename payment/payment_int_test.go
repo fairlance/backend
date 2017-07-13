@@ -116,8 +116,8 @@ func TestDepositHandler(t *testing.T) {
 	if len(transaction.Receivers) != 1 {
 		t.Fatal("Error: Returned transaction len(transaction.Receivers)", len(transaction.Receivers), "instead of", 1)
 	}
-	if transaction.Receivers[0].Email != "freelancer@email.com" {
-		t.Fatal("Error: Returned transaction transaction.Receivers[0].Email", transaction.Receivers[0].Email, "instead of", "freelancer@email.com")
+	if transaction.Receivers[0].ProviderIdentifier != "freelancer@email.com" {
+		t.Fatal("Error: Returned transaction transaction.Receivers[0].Email", transaction.Receivers[0].ProviderIdentifier, "instead of", "freelancer@email.com")
 	}
 	if transaction.Receivers[0].Amount != "14.72" {
 		t.Fatal("Error: Returned transaction transaction.Receivers[0].Amount", transaction.Receivers[0].Amount, "instead of", "14.72")
@@ -132,10 +132,10 @@ func TestExecuteHandler(t *testing.T) {
 		TrackID:   "trackID",
 		Receivers: []payment.TransactionReceiver{
 			{
-				ID:          1,
-				Email:       "receiver@mail.com",
-				Amount:      "14.72",
-				FairlanceID: uint(1),
+				ID:                 1,
+				ProviderIdentifier: "receiver@mail.com",
+				Amount:             "14.72",
+				FairlanceID:        uint(1),
 			},
 		},
 	}
