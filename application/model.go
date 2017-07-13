@@ -80,7 +80,6 @@ type Client struct {
 	Jobs      []Job     `json:"jobs"`
 	Projects  []Project `json:"projects"`
 	Reviews   []Review  `json:"reviews"`
-	Phone     string    `json:"phone"`
 }
 
 type ClientUpdate struct {

@@ -85,6 +85,7 @@ func updateClientByID() http.Handler {
 		client.Birthdate = clientUpdate.Birthdate
 		client.About = clientUpdate.About
 		client.Timezone = clientUpdate.Timezone
+		client.ProfileCompleted = true
 		if err := appContext.ClientRepository.UpdateClient(client); err != nil {
 			respond.With(w, r, http.StatusBadRequest, err)
 			return

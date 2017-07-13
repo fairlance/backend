@@ -292,7 +292,7 @@ var routes = Routes{
 		middleware.Chain(
 			whenLoggedIn,
 			whenClient,
-			whenProfileCompleted,
+			whenClientProfileCompleted,
 			withJobFromRequest,
 		)(addJob()),
 	},
@@ -312,7 +312,7 @@ var routes = Routes{
 		middleware.Chain(
 			whenLoggedIn,
 			whenFreelancer,
-			whenProfileCompleted,
+			whenFreelancerProfileCompleted,
 			withUINT("id"),
 			whenFreelancerHasNotAppliedBeforeByID,
 			withClientFromJobID,

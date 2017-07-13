@@ -86,10 +86,33 @@ func basedOnUserType(clientHandler http.Handler, freelancerHandler http.Handler)
 	})
 }
 
-func whenProfileCompleted(next http.Handler) http.Handler {
+func whenFreelancerProfileCompleted(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		user := context.Get(r, "user").(*models.User)
-		if !user.ProfileCompleted {
+		appContext := context.Get(r, "context").(*ApplicationContext)
+		freelancer, err := appContext.FreelancerRepository.GetFreelancer(user.ID)
+		if err != nil {
+			respond.With(w, r, http.StatusInternalServerError, err)
+			return
+		}
+		if !freelancer.ProfileCompleted {
+			respond.With(w, r, http.StatusForbidden, errors.New("user profile not completed"))
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
+}
+
+func whenClientProfileCompleted(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		user := context.Get(r, "user").(*models.User)
+		appContext := context.Get(r, "context").(*ApplicationContext)
+		client, err := appContext.ClientRepository.GetClient(user.ID)
+		if err != nil {
+			respond.With(w, r, http.StatusInternalServerError, err)
+			return
+		}
+		if !client.ProfileCompleted {
 			respond.With(w, r, http.StatusForbidden, errors.New("user profile not completed"))
 			return
 		}
