@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -62,7 +63,7 @@ func (p *PayPalRequester) Pay(r *PayRequest) (*PayResponse, error) {
 	}, err
 }
 
-func (p *PayPalRequester) VerifyPayment(r *http.Request) (bool, error) {
+func (p *PayPalRequester) VerifyPayment(r io.Reader) (bool, error) {
 	// if err := r.ParseForm(); err != nil {
 	// 	log.Printf("could not parse IPN form: %v", err)
 	// 	return false, fmt.Errorf("could not parse IPN form: %v", err)
@@ -84,13 +85,8 @@ func (p *PayPalRequester) VerifyPayment(r *http.Request) (bool, error) {
 	// See more at
 	// https://developer.paypal.com/webapps/developer/docs/classic/ipn/integration-guide/IPNIntro/
 	// post data back to PayPal
-	body, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		log.Printf("could not read request body: %v", err)
-		return false, fmt.Errorf("could not read request body: %v", err)
-	}
 	client := &http.Client{}
-	req, err := http.NewRequest("POST", p.Options.IPNNotificationURL, bytes.NewReader(body))
+	req, err := http.NewRequest("POST", p.Options.IPNNotificationURL, r)
 	if err != nil {
 		log.Printf("could not create verification POST request: %v", err)
 		return false, fmt.Errorf("could not create verification POST request: %v", err)

@@ -1,8 +1,10 @@
 package payment
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 
@@ -137,7 +139,15 @@ func (p *payment) notificationHandler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		log.Println("IPN notificcation received")
 		go func(req *http.Request) {
-			verified, err := p.requester.VerifyPayment(req)
+			var buff bytes.Buffer
+			tee := io.TeeReader(req.Body, &buff)
+			var notification PayPalPaymentPayoutsBaseNotification
+			if err := json.NewDecoder(tee).Decode(&notification); err != nil {
+				log.Printf("could not decode notification: %v", err)
+				return
+			}
+			defer req.Body.Close()
+			verified, err := p.requester.VerifyPayment(&buff)
 			if err != nil {
 				log.Printf("could not verify payment: %v", err)
 				return
@@ -146,12 +156,6 @@ func (p *payment) notificationHandler() http.Handler {
 				log.Println("notification request is not verified")
 				return
 			}
-			var notification PayPalPaymentPayoutsBaseNotification
-			if err := json.NewDecoder(r.Body).Decode(&notification); err != nil {
-				log.Printf("could not decode notification: %v", err)
-				return
-			}
-			defer r.Body.Close()
 			log.Printf("IPN notificcation: %+v", notification)
 			var batchID string
 			switch notification.ResourceType {
