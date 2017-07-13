@@ -138,69 +138,67 @@ func (p *payment) executeHandler() http.Handler {
 func (p *payment) notificationHandler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		log.Println("IPN notificcation received")
-		go func(req *http.Request) {
-			var buff bytes.Buffer
-			tee := io.TeeReader(req.Body, &buff)
-			var notification PayPalPaymentPayoutsBaseNotification
-			if err := json.NewDecoder(tee).Decode(&notification); err != nil {
-				log.Printf("could not decode notification: %v", err)
+		var buff bytes.Buffer
+		tee := io.TeeReader(r.Body, &buff)
+		verified, err := p.requester.VerifyPayment(tee)
+		if err != nil {
+			log.Printf("could not verify payment: %v", err)
+			return
+		}
+		if !verified {
+			log.Println("notification request is not verified")
+			return
+		}
+		var notification PayPalPaymentPayoutsBaseNotification
+		if err := json.NewDecoder(&buff).Decode(&notification); err != nil {
+			log.Printf("could not decode notification: %v", err)
+			return
+		}
+		defer r.Body.Close()
+		log.Printf("IPN notificcation: %+v", notification)
+		var batchID string
+		switch notification.ResourceType {
+		case "payouts":
+			var batchResource PayPalPaymentPayoutsBatchNotificationResource
+			if err := json.Unmarshal(notification.Resource, &batchResource); err != nil {
+				log.Printf("could not decode the resource: %v", err)
 				return
 			}
-			defer req.Body.Close()
-			verified, err := p.requester.VerifyPayment(&buff)
+			batchID = batchResource.BatchHeader.PayoutBatchID
+			t, err := p.db.GetByProviderTransactionKey(batchID)
 			if err != nil {
-				log.Printf("could not verify payment: %v", err)
+				log.Printf("could not get transaction with provider transaction key: %s: %v", batchID, err)
 				return
 			}
-			if !verified {
-				log.Println("notification request is not verified")
+			t.ProviderStatus = batchResource.BatchHeader.BatchStatus
+			if err := p.db.Update(t); err != nil {
+				log.Printf("could not update transaction %s, status: %v", t.TrackID, err)
 				return
 			}
-			log.Printf("IPN notificcation: %+v", notification)
-			var batchID string
-			switch notification.ResourceType {
-			case "payouts":
-				var batchResource PayPalPaymentPayoutsBatchNotificationResource
-				if err := json.Unmarshal(notification.Resource, &batchResource); err != nil {
-					log.Printf("could not decode the resource: %v", err)
-					return
-				}
-				batchID = batchResource.BatchHeader.PayoutBatchID
-				t, err := p.db.GetByProviderTransactionKey(batchID)
-				if err != nil {
-					log.Printf("could not get transaction with provider transaction key: %s: %v", batchID, err)
-					return
-				}
-				t.ProviderStatus = batchResource.BatchHeader.BatchStatus
-				if err := p.db.Update(t); err != nil {
-					log.Printf("could not update transaction %s, status: %v", t.TrackID, err)
-					return
-				}
-				log.Printf("batch resource: %+v", batchResource)
-			case "payouts_item":
-				var itemResource PayPalPaymentPayoutsItemNotificationResource
-				if err := json.Unmarshal(notification.Resource, &itemResource); err != nil {
-					log.Printf("could not decode the resource: %v", err)
-					return
-				}
-				batchID = itemResource.PayoutBatchID
-				t, err := p.db.GetByProviderTransactionKey(batchID)
-				if err != nil {
-					log.Printf("could not get transaction with provider transaction key: %s: %v", batchID, err)
-					return
-				}
-				for _, receiver := range t.Receivers {
-					if receiver.ProviderIdentifier == itemResource.PayoutItem.Receiver {
-						receiver.Status = itemResource.TransactionStatus
-					}
-				}
-				if err := p.db.Update(t); err != nil {
-					log.Printf("could not update transaction %s, status: %v", t.TrackID, err)
-					return
-				}
-				log.Printf("item resource: %+v", itemResource)
+			log.Printf("batch resource: %+v", batchResource)
+		case "payouts_item":
+			var itemResource PayPalPaymentPayoutsItemNotificationResource
+			if err := json.Unmarshal(notification.Resource, &itemResource); err != nil {
+				log.Printf("could not decode the resource: %v", err)
+				return
 			}
-		}(r)
+			batchID = itemResource.PayoutBatchID
+			t, err := p.db.GetByProviderTransactionKey(batchID)
+			if err != nil {
+				log.Printf("could not get transaction with provider transaction key: %s: %v", batchID, err)
+				return
+			}
+			for _, receiver := range t.Receivers {
+				if receiver.ProviderIdentifier == itemResource.PayoutItem.Receiver {
+					receiver.Status = itemResource.TransactionStatus
+				}
+			}
+			if err := p.db.Update(t); err != nil {
+				log.Printf("could not update transaction %s, status: %v", t.TrackID, err)
+				return
+			}
+			log.Printf("item resource: %+v", itemResource)
+		}
 		respond.With(w, r, http.StatusOK, nil)
 	})
 }
