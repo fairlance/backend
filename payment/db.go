@@ -38,19 +38,21 @@ const (
 		email VARCHAR(255) NOT NULL,
 		amount VARCHAR(255) NOT NULL
     )`
-	insertEventSQL       = `INSERT INTO events (transaction_id, provider_transaction_key, provider_status, status, created_at) VALUES ($1,$2,$3,$4,$5)`
-	insertTransactionSQL = `INSERT INTO transactions (track_id, provider, provider_transaction_key, provider_status, project_id, amount, status, created_at, updated_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING id`
-	insertReceiverSQL    = `INSERT INTO receivers (transaction_id, fairlance_id, email, amount) VALUES ($1,$2,$3,$4)`
-	updateTransactionSQL = `UPDATE transactions SET provider=$1,provider_transaction_key=$2, provider_status=$3, status=$4, error_msg=$5, updated_at=$6 WHERE track_id=$7`
-	selectTransactionSQL = `SELECT id, track_id, provider, provider_transaction_key, provider_status, project_id, amount, status, error_msg, created_at, updated_at FROM transactions WHERE project_id = $1`
-	selectReceiverSQL    = `SELECT id, fairlance_id, email, amount FROM receivers WHERE transaction_id = $1`
+	insertEventSQL                               = `INSERT INTO events (transaction_id, provider_transaction_key, provider_status, status, created_at) VALUES ($1,$2,$3,$4,$5)`
+	insertTransactionSQL                         = `INSERT INTO transactions (track_id, provider, provider_transaction_key, provider_status, project_id, amount, status, created_at, updated_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING id`
+	insertReceiverSQL                            = `INSERT INTO receivers (transaction_id, fairlance_id, email, amount) VALUES ($1,$2,$3,$4)`
+	updateTransactionSQL                         = `UPDATE transactions SET provider=$1,provider_transaction_key=$2, provider_status=$3, status=$4, error_msg=$5, updated_at=$6 WHERE id=$7`
+	selectTransactionByProjectIDSQL              = `SELECT id, track_id, provider, provider_transaction_key, provider_status, project_id, amount, status, error_msg, created_at, updated_at FROM transactions WHERE project_id = $1`
+	selectTransactionByProviderTransactionKeySQL = `SELECT id, track_id, provider, provider_transaction_key, provider_status, project_id, amount, status, error_msg, created_at, updated_at FROM transactions WHERE provider_transaction_key = $1`
+	selectReceiverSQL                            = `SELECT id, fairlance_id, email, amount FROM receivers WHERE transaction_id = $1`
 )
 
 type DB interface {
 	Init()
 	Insert(t *Transaction) error
 	Update(t *Transaction) error
-	Get(projectID uint) (*Transaction, error)
+	GetByProjectID(projectID uint) (*Transaction, error)
+	GetByProviderTransactionKey(providerTransactionKey string) (*Transaction, error)
 }
 
 func NewDB(db *sql.DB) DB {
@@ -105,7 +107,7 @@ func (db *sqlDB) Insert(t *Transaction) error {
 
 func (db *sqlDB) Update(t *Transaction) error {
 	_, err := db.storage.Exec(updateTransactionSQL,
-		t.Provider, t.PaymentKey, t.ProviderStatus, t.Status, t.ErrorMsg, time.Now(), t.TrackID,
+		t.Provider, t.PaymentKey, t.ProviderStatus, t.Status, t.ErrorMsg, time.Now(), t.ID,
 	)
 	if _, err := db.storage.Exec(insertEventSQL, t.ID, t.PaymentKey, t.ProviderStatus, t.Status, time.Now()); err != nil {
 		log.Printf("could not create event for transaction %d: %v", t.ID, err)
@@ -113,9 +115,32 @@ func (db *sqlDB) Update(t *Transaction) error {
 	return err
 }
 
-func (db *sqlDB) Get(projectID uint) (*Transaction, error) {
+func (db *sqlDB) GetByProjectID(projectID uint) (*Transaction, error) {
 	var t Transaction
-	if err := db.storage.QueryRow(selectTransactionSQL, projectID).Scan(
+	if err := db.storage.QueryRow(selectTransactionByProjectIDSQL, projectID).Scan(
+		&t.ID, &t.TrackID, &t.Provider, &t.PaymentKey, &t.ProviderStatus, &t.ProjectID, &t.Amount, &t.Status, &t.ErrorMsg, &t.CreatedAt, &t.UpdatedAt,
+	); err != nil {
+		return nil, err
+	}
+	rows, err := db.storage.Query(selectReceiverSQL, t.ID)
+	if err != nil {
+		log.Printf("could not get receivers from db: %v", t)
+		return nil, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var receiver TransactionReceiver
+		if err := rows.Scan(&receiver.ID, &receiver.FairlanceID, &receiver.Email, &receiver.Amount); err != nil {
+			return nil, err
+		}
+		t.Receivers = append(t.Receivers, receiver)
+	}
+	return &t, nil
+}
+
+func (db *sqlDB) GetByProviderTransactionKey(providerTransactionKey string) (*Transaction, error) {
+	var t Transaction
+	if err := db.storage.QueryRow(selectTransactionByProviderTransactionKeySQL, providerTransactionKey).Scan(
 		&t.ID, &t.TrackID, &t.Provider, &t.PaymentKey, &t.ProviderStatus, &t.ProjectID, &t.Amount, &t.Status, &t.ErrorMsg, &t.CreatedAt, &t.UpdatedAt,
 	); err != nil {
 		return nil, err

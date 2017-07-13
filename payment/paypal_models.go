@@ -1,5 +1,7 @@
 package payment
 
+import "time"
+
 // "sender_batch_header":{
 //     "sender_batch_id":"2014021801",
 //     "email_subject":"You have a payout!",
@@ -94,4 +96,45 @@ type PayPalAuthTokenResponse struct {
 	TokenType   string `json:"token_type"`
 	AppID       string `json:"app_id"`
 	ExpiresIn   int    `json:"expires_in"`
+}
+
+type PayPalNotification struct {
+	ID           string    `json:"id"`
+	CreateTime   time.Time `json:"create_time"`
+	ResourceType string    `json:"resource_type"`
+	EventType    string    `json:"event_type"`
+	Summary      string    `json:"summary"`
+	Resource     struct {
+		TransactionStatus string `json:"transaction_status"`
+		PayoutItemFee     struct {
+			Currency string `json:"currency"`
+			Value    string `json:"value"`
+		} `json:"payout_item_fee"`
+		PayoutBatchID string `json:"payout_batch_id"`
+		PayoutItem    struct {
+			RecipientType string `json:"recipient_type"`
+			Amount        struct {
+				Currency string `json:"currency"`
+				Value    string `json:"value"`
+			} `json:"amount"`
+			Note         string `json:"note"`
+			Receiver     string `json:"receiver"`
+			SenderItemID string `json:"sender_item_id"`
+		} `json:"payout_item"`
+		Links []struct {
+			Href   string `json:"href"`
+			Rel    string `json:"rel"`
+			Method string `json:"method"`
+		} `json:"links"`
+		PayoutItemID  string    `json:"payout_item_id"`
+		TimeProcessed time.Time `json:"time_processed"`
+		TransactionID string    `json:"transaction_id"`
+	} `json:"resource"`
+	Links []struct {
+		Href    string `json:"href"`
+		Rel     string `json:"rel"`
+		Method  string `json:"method"`
+		EncType string `json:"encType"`
+	} `json:"links"`
+	EventVersion string `json:"event_version"`
 }

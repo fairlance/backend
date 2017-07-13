@@ -3,7 +3,6 @@ package payment
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/http"
 
@@ -133,28 +132,29 @@ func (p *payment) executeHandler() http.Handler {
 }
 
 // https://developer.paypal.com/docs/classic/ipn/integration-guide/IPNIntro/#id08CKFJ00JYK
+// https://developer.paypal.com/docs/classic/ipn/ht_ipn/
 func (p *payment) notificationHandler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		body, err := ioutil.ReadAll(r.Body)
-		if err != nil {
-			log.Printf("could not receive ipn notification: %v", err)
+		log.Println("IPN notificcation received")
+		var notification PayPalNotification
+		if err := json.NewDecoder(r.Body).Decode(&notification); err != nil {
+			log.Printf("could not decode notification: %v", err)
 			return
 		}
 		defer r.Body.Close()
-		log.Printf("IPN notificcation received: %v", string(body))
-		projectID := uint(0)
-		// https://developer.paypal.com/docs/classic/ipn/ht_ipn/
-		t, err := p.db.Get(projectID)
+		log.Printf("IPN notificcation: %v", notification)
+		t, err := p.db.GetByProviderTransactionKey(notification.Resource.PayoutBatchID)
 		if err != nil {
 			log.Printf("could not get transaction: %v", err)
+			respond.With(w, r, http.StatusBadRequest, fmt.Errorf("could not get transaction: %v", err))
 			return
 		}
-		t.Status = statusConfirmed
-		if err := p.db.Update(t); err != nil {
-			log.Printf("could not update transaction for project id %d, status: %v", projectID, err)
-			respond.With(w, r, http.StatusInternalServerError, fmt.Errorf("could not update transaction for project id %d: %v", projectID, err))
-			return
-		}
+		// t.Status = statusConfirmed
+		// if err := p.db.Update(t); err != nil {
+		// 	log.Printf("could not update transaction for transaction %s, status: %v", t.TrackID, err)
+		// 	respond.With(w, r, http.StatusInternalServerError, fmt.Errorf("could not update transaction for transaction %s: %v", t.TrackID, err))
+		// 	return
+		// }
 		respond.With(w, r, http.StatusOK, nil)
 	})
 }
