@@ -1,11 +1,8 @@
 package payment
 
-import "io"
-
 type Requester interface {
 	ProviderID() string
 	Pay(request *PayRequest) (*PayResponse, error)
-	VerifyPayment(reader io.Reader) (bool, error)
 }
 
 type PayRequest struct {

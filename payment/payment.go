@@ -1,10 +1,8 @@
 package payment
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
-	"io"
 	"log"
 	"net/http"
 
@@ -138,19 +136,8 @@ func (p *payment) executeHandler() http.Handler {
 func (p *payment) notificationHandler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		log.Println("IPN notificcation received")
-		var buff bytes.Buffer
-		tee := io.TeeReader(r.Body, &buff)
-		verified, err := p.requester.VerifyPayment(tee)
-		if err != nil {
-			log.Printf("could not verify payment: %v", err)
-			return
-		}
-		if !verified {
-			log.Println("notification request is not verified")
-			return
-		}
 		var notification PayPalPaymentPayoutsBaseNotification
-		if err := json.NewDecoder(&buff).Decode(&notification); err != nil {
+		if err := json.NewDecoder(r.Body).Decode(&notification); err != nil {
 			log.Printf("could not decode notification: %v", err)
 			return
 		}
