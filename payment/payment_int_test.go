@@ -14,8 +14,15 @@ import (
 )
 
 type dbMock struct {
-	getCall struct {
+	getByProjectIDCall struct {
 		receives struct{ projectID uint }
+		returns  struct {
+			transaction *payment.Transaction
+			err         error
+		}
+	}
+	getByProviderTransactionKeyCall struct {
+		receives struct{ providerTransactionKey string }
 		returns  struct {
 			transaction *payment.Transaction
 			err         error
@@ -40,9 +47,13 @@ func (db *dbMock) Update(t *payment.Transaction) error {
 	db.updateCall.receives.transactions = append(db.updateCall.receives.transactions, *t)
 	return db.updateCall.returns.err
 }
-func (db *dbMock) Get(projectID uint) (*payment.Transaction, error) {
-	db.getCall.receives.projectID = projectID
-	return db.getCall.returns.transaction, db.getCall.returns.err
+func (db *dbMock) GetByProjectID(projectID uint) (*payment.Transaction, error) {
+	db.getByProjectIDCall.receives.projectID = projectID
+	return db.getByProjectIDCall.returns.transaction, db.getByProjectIDCall.returns.err
+}
+func (db *dbMock) GetByProviderTransactionKey(providerTransactionKey string) (*payment.Transaction, error) {
+	db.getByProviderTransactionKeyCall.receives.providerTransactionKey = providerTransactionKey
+	return db.getByProviderTransactionKeyCall.returns.transaction, db.getByProviderTransactionKeyCall.returns.err
 }
 
 type applicationDispatcherMock struct {
@@ -115,7 +126,7 @@ func TestDepositHandler(t *testing.T) {
 
 func TestExecuteHandler(t *testing.T) {
 	db := &dbMock{}
-	db.getCall.returns.transaction = &payment.Transaction{
+	db.getByProjectIDCall.returns.transaction = &payment.Transaction{
 		ID:        1,
 		ProjectID: uint(7),
 		TrackID:   "trackID",

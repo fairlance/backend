@@ -82,7 +82,7 @@ func (p *payment) executeHandler() http.Handler {
 			respond.With(w, r, http.StatusBadRequest, fmt.Errorf("could not parse execute request (%+v): %v", execute, err))
 			return
 		}
-		t, err := p.db.Get(execute.projectID)
+		t, err := p.db.GetByProjectID(execute.projectID)
 		if err != nil {
 			log.Printf("could not get transaction: %v", err)
 			respond.With(w, r, http.StatusBadRequest, fmt.Errorf("could not get transaction (%+v): %v", execute, err))
@@ -143,7 +143,7 @@ func (p *payment) notificationHandler() http.Handler {
 		}
 		defer r.Body.Close()
 		log.Printf("IPN notificcation: %v", notification)
-		t, err := p.db.GetByProviderTransactionKey(notification.Resource.PayoutBatchID)
+		_, err := p.db.GetByProviderTransactionKey(notification.Resource.PayoutBatchID)
 		if err != nil {
 			log.Printf("could not get transaction: %v", err)
 			respond.With(w, r, http.StatusBadRequest, fmt.Errorf("could not get transaction: %v", err))
