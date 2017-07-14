@@ -32,8 +32,12 @@ type dbMock struct {
 		receives struct{ transaction *payment.Transaction }
 		returns  struct{ err error }
 	}
-	updateCall struct {
+	updateTransactionCall struct {
 		receives struct{ transactions []payment.Transaction }
+		returns  struct{ err error }
+	}
+	updateReceiverCall struct {
+		receives struct{ receivers []payment.TransactionReceiver }
 		returns  struct{ err error }
 	}
 }
@@ -43,9 +47,13 @@ func (db *dbMock) Insert(t *payment.Transaction) error {
 	db.insertCall.receives.transaction = t
 	return db.insertCall.returns.err
 }
-func (db *dbMock) Update(t *payment.Transaction) error {
-	db.updateCall.receives.transactions = append(db.updateCall.receives.transactions, *t)
-	return db.updateCall.returns.err
+func (db *dbMock) UpdateTransaction(t *payment.Transaction) error {
+	db.updateTransactionCall.receives.transactions = append(db.updateTransactionCall.receives.transactions, *t)
+	return db.updateTransactionCall.returns.err
+}
+func (db *dbMock) UpdateReceiver(r *payment.TransactionReceiver) error {
+	db.updateReceiverCall.receives.receivers = append(db.updateReceiverCall.receives.receivers, *r)
+	return db.updateReceiverCall.returns.err
 }
 func (db *dbMock) GetByProjectID(projectID uint) (*payment.Transaction, error) {
 	db.getByProjectIDCall.receives.projectID = projectID
@@ -152,11 +160,11 @@ func TestExecuteHandler(t *testing.T) {
 	if respRec.Code != http.StatusOK {
 		t.Fatal("Server error: Returned ", respRec.Code, " instead of ", http.StatusBadRequest)
 	}
-	if len(db.updateCall.receives.transactions) != 2 {
-		t.Fatal("Error: Update called", len(db.updateCall.receives.transactions), "times instead of", 2)
+	if len(db.updateTransactionCall.receives.transactions) != 2 {
+		t.Fatal("Error: Update called", len(db.updateTransactionCall.receives.transactions), "times instead of", 2)
 	}
-	firstTransactionUpdate := db.updateCall.receives.transactions[0]
-	secondTransactionUpdate := db.updateCall.receives.transactions[1]
+	firstTransactionUpdate := db.updateTransactionCall.receives.transactions[0]
+	secondTransactionUpdate := db.updateTransactionCall.receives.transactions[1]
 	if firstTransactionUpdate.Status != "awaiting_confirmation" {
 		t.Fatal("Error: Status is", firstTransactionUpdate.Status, "instead of", "awaiting_confirmation")
 	}

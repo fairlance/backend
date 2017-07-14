@@ -26,19 +26,5 @@ func NewServeMux(requester Requester, paymentDB DB, applicationDispatcher dispat
 		middleware.LoggerHandler,
 		middleware.HTTPMethod(http.MethodPost),
 	)(payment.notificationHandler()))
-
-	mux.Handle("/public/deposit", middleware.Chain(
-		middleware.RecoverHandler,
-		middleware.LoggerHandler,
-		middleware.JSONEnvelope,
-		middleware.HTTPMethod(http.MethodPost),
-	)(payment.depositHandler()))
-	mux.Handle("/public/execute", middleware.Chain(
-		middleware.RecoverHandler,
-		middleware.LoggerHandler,
-		middleware.JSONEnvelope,
-		middleware.HTTPMethod(http.MethodPost),
-	)(payment.executeHandler()))
-
 	return mux
 }
