@@ -23,14 +23,14 @@ type project struct {
 }
 
 type paymentHandler struct {
-	db         *sql.DB
-	dispatcher dispatcher.ApplicationDispatcher
+	db                    *sql.DB
+	applicationDispatcher dispatcher.Application
 }
 
 func newPaymentHandler(db *sql.DB, applicationURL string) *paymentHandler {
 	return &paymentHandler{
-		db:         db,
-		dispatcher: dispatcher.NewApplicationDispatcher(applicationURL),
+		db: db,
+		applicationDispatcher: dispatcher.NewApplication(applicationURL),
 	}
 }
 
@@ -42,7 +42,7 @@ func (p *paymentHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			log.Printf("could not parse id: %v", err)
 		}
-		if err := p.dispatcher.SetProjectFunded(uint(projectID)); err != nil {
+		if err := p.applicationDispatcher.SetProjectFunded(uint(projectID)); err != nil {
 			log.Printf("could not set project status to funded: %v", err)
 			return
 		}

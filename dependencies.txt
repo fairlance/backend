@@ -12,4 +12,3 @@ github.com/cheekybits/is
 github.com/blevesearch/bleve/...
 github.com/gorilla/websocket
 github.com/PuerkitoBio/goquery
-github.com/nu7hatch/gouuid

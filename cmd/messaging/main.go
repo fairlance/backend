@@ -101,11 +101,13 @@ func main() {
 		return messaging.NewRoom(id, users), nil
 	}
 
-	hub := messaging.NewHub(messaging.NewMessageDB(mongoHost), dispatcher.NewHTTPNotifier(notificationURL), getARoom)
+	hub := messaging.NewHub(messaging.NewMessageDB(mongoHost), dispatcher.NewNotifier(notificationURL), getARoom)
 	go hub.Run()
 
-	// todo: make safe
-	router.Handle("/{room}/send", middleware.RecoverHandler(
+	router.Handle("/private/{room}/send", middleware.Chain(
+		middleware.RecoverHandler,
+		middleware.HTTPMethod(http.MethodPost),
+	)(
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			room := mux.Vars(r)["room"]
 			var message messaging.Message
@@ -119,7 +121,7 @@ func main() {
 		})))
 
 	// requires a GET 'token' parameter
-	router.Handle("/{room}/ws", middleware.Chain(
+	router.Handle("/public/{room}/ws", middleware.Chain(
 		middleware.RecoverHandler,
 		messaging.WithRoom(hub),
 		messaging.WithTokenFromParams,

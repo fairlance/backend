@@ -130,17 +130,27 @@ func (repo *PostgreJobRepository) GetJobForFreelancer(jobID, freelancerID uint) 
 		Where("freelancer_id = ?", freelancerID).Error; err != nil {
 		return job, err
 	}
+	for i := range jobApplications {
+		if err := repo.db.Model(&Freelancer{}).Where("id = ?", jobApplications[i].FreelancerID).Count(&jobApplications[i].FreelancerNumProjects).Error; err != nil {
+			return nil, err
+		}
+	}
 	return job, nil
 }
 
 func (repo *PostgreJobRepository) GetJobApplication(jobApplicationID uint) (*JobApplication, error) {
 	var jobApplication JobApplication
-	err := repo.db.
+	if err := repo.db.
 		Preload("Freelancer").
 		Preload("Examples", "type IN (?)", fileTypeJobApplicationExample).
 		Preload("Attachments", "type IN (?)", fileTypeJobApplicationAttachment).
-		Find(&jobApplication, jobApplicationID).Error
-	return &jobApplication, err
+		Find(&jobApplication, jobApplicationID).Error; err != nil {
+		return nil, err
+	}
+	if err := repo.db.Model(&Freelancer{}).Where("id = ?", jobApplication.FreelancerID).Count(&jobApplication.FreelancerNumProjects).Error; err != nil {
+		return nil, err
+	}
+	return &jobApplication, nil
 }
 
 func (repo *PostgreJobRepository) AddJobApplication(jobApplication *JobApplication) error {

@@ -13,22 +13,22 @@
                 <a href="/api/importer">Home</a>
             </div>
         </div>
-        <div class="row">
+        <!-- <div class="row">
             <div class="col-xs-12">
                 <form method="POST" action="payment">
                     <label>Project Id: <input required type="number" name="project_id"/></label>
                     <label>Status: <select required name="status">
-                        <option disabled>finalizing_terms</option>
-                        <option disabled>pending_funds</option>
+                        <option>finalizing_terms</option>
+                        <option>pending_funds</option>
                         <option>in_progress</option>
-                        <option disabled>pending_finished</option>
-                        <option disabled>done</option>
+                        <option>pending_finished</option>
+                        <option>done</option>
                     </select></label>
                     <input type="hidden" name="get_params" value="{{ .GETParams }}" />
                     <button type="submit" class="btn btn-primary">Update</button>
                 </form>
             </div>
-        </div>
+        </div> -->
         <div class="row">
             <div class="col-xs-12">
                 <form method="GET" action="payment">

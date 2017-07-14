@@ -28,7 +28,7 @@ type PayPalPayoutRequest struct {
 }
 
 type PayPalPayoutSenderBatchHeader struct {
-	// SenderBatchID string `json:"sender_batch_id"`
+	SenderBatchID string `json:"sender_batch_id"`
 	EmailSubject  string `json:"email_subject"`
 	RecipientType string `json:"recipient_type"`
 }

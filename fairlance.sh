@@ -50,9 +50,6 @@ case $CMD in
         docker save -o notification_image fairlance/notification
         docker save -o payment_image fairlance/payment
         ;;
-    ngrok )
-        docker run -d -p 4040:4040 --net="host" --name ngrok fnichol/ngrok 8000
-        ;;
      *)
         echo $"Usage: $0 {init|deps|ssh|build|buildAll|saveImages|ngrok}"
         exit 1

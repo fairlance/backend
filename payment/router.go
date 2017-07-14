@@ -8,7 +8,7 @@ import (
 )
 
 // NewServeMux creates an http.ServeMux with all the routes configured and handeled
-func NewServeMux(requester Requester, paymentDB DB, applicationDispatcher dispatcher.ApplicationDispatcher) *http.ServeMux {
+func NewServeMux(requester Requester, paymentDB DB, applicationDispatcher dispatcher.Application) *http.ServeMux {
 	payment := newPayment(requester, paymentDB, applicationDispatcher)
 	mux := http.NewServeMux()
 	mux.Handle("/private/deposit", middleware.Chain(

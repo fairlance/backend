@@ -12,7 +12,9 @@ import (
 )
 
 const (
-	payEndpoint = "payouts"
+	payEndpoint           = "payouts"
+	payPalEmailNoteFormat = "Thank you for finishing project: %s"
+	payPalEmailSubject    = "Fairlance and PayPal just gave you money!"
 )
 
 type PayPalRequester struct {
@@ -125,16 +127,16 @@ func (p *PayPalRequester) buildPayoutRequest(r *PayRequest) *PayPalPayoutRequest
 				Value:    receiver.Amount,
 				Currency: "EUR",
 			},
-			Note:         fmt.Sprintf("Project %d", r.ProjectID),
+			Note:         fmt.Sprintf(payPalEmailNoteFormat, r.ProjectName),
 			SenderItemID: time.Now().String(),
 			Receiver:     receiver.Email,
 		})
 	}
 	return &PayPalPayoutRequest{
 		SenderBatchHeader: PayPalPayoutSenderBatchHeader{
-			// SenderBatchID: t.TrackID,
+			SenderBatchID: r.TrackID,
 			RecipientType: "EMAIL",
-			EmailSubject:  fmt.Sprintf("Payment for project %d!", r.ProjectID),
+			EmailSubject:  fmt.Sprint(payPalEmailSubject),
 		},
 		Items: receivers,
 	}

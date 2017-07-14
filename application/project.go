@@ -213,6 +213,10 @@ func projectFunded() http.Handler {
 			respond.With(w, r, http.StatusInternalServerError, fmt.Errorf("could not update project"))
 			return
 		}
+		if err := appContext.PaymentDispatcher.deposit(project.ID); err != nil {
+			log.Printf("could not deposit funds to payment service for project %d: %v", project.ID, err)
+			return
+		}
 		if err := appContext.MessagingDispatcher.sendProjectStateChanged(project); err != nil {
 			log.Printf("could not sendProjectStateChanged: %v", err)
 		}

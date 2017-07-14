@@ -44,7 +44,7 @@ func main() {
 	mux := payment.NewServeMux(
 		&payment.PayPalRequester{Options: options},
 		paymentDB,
-		dispatcher.NewApplicationDispatcher(applicationURL),
+		dispatcher.NewApplication(applicationURL),
 	)
 
 	log.Printf("Listening on: %s", port)

@@ -6,8 +6,10 @@ type Requester interface {
 }
 
 type PayRequest struct {
-	ProjectID uint
-	Receivers []PayRequestReceiver
+	TrackID     string
+	ProjectID   uint
+	ProjectName string
+	Receivers   []PayRequestReceiver
 }
 
 type PayRequestReceiver struct {

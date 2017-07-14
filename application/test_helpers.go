@@ -52,6 +52,10 @@ type testPayment struct {
 	callback testPaymentCallback
 }
 
+func (p *testPayment) Deposit(projectID uint) error {
+	return p.callback(projectID)
+}
+
 func (p *testPayment) Execute(projectID uint) error {
 	return p.callback(projectID)
 }

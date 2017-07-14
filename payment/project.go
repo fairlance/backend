@@ -4,6 +4,7 @@ type Project struct {
 	ID          uint         `json:"id"`
 	Freelancers []Freelancer `json:"freelancers"`
 	Contract    Contract     `json:"contract"`
+	Name        string       `json:"name"`
 }
 
 func (p *Project) amount() float64 {

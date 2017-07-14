@@ -2,63 +2,37 @@ package dispatcher
 
 import (
 	"fmt"
-	"io/ioutil"
 	"net/http"
+	"time"
 )
 
-type ApplicationDispatcher interface {
+type Application interface {
 	GetProject(id uint) ([]byte, error)
 	SetProjectFunded(id uint) error
 }
 
-func NewApplicationDispatcher(url string) ApplicationDispatcher {
-	return &applicationDispatcher{url}
+func NewApplication(url string) Application {
+	return &httpApplication{
+		url: url,
+		client: &http.Client{
+			Timeout: time.Duration(30 * time.Second),
+		},
+	}
 }
 
-type applicationDispatcher struct {
-	url string
+type httpApplication struct {
+	url    string
+	client *http.Client
 }
 
-func (d *applicationDispatcher) GetProject(id uint) ([]byte, error) {
+func (d *httpApplication) GetProject(id uint) ([]byte, error) {
 	url := fmt.Sprintf("%s/private/project/%d", d.url, id)
-	request, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		return nil, err
-	}
-	response, err := http.DefaultClient.Do(request)
-	if err != nil {
-		return nil, err
-	}
-	content, err := ioutil.ReadAll(response.Body)
-	if err != nil {
-		return nil, err
-	}
-	defer response.Body.Close()
-	if response.StatusCode != http.StatusOK {
-		err = fmt.Errorf("status: %s, body: %s, url: %s", response.Status, content, url)
-		return nil, err
-	}
-	return content, nil
+	content, err := doGET(d.client, url)
+	return content, err
 }
 
-func (d *applicationDispatcher) SetProjectFunded(id uint) error {
+func (d *httpApplication) SetProjectFunded(id uint) error {
 	url := fmt.Sprintf("%s/private/project/%d/fund", d.url, id)
-	request, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		return err
-	}
-	response, err := http.DefaultClient.Do(request)
-	if err != nil {
-		return err
-	}
-	content, err := ioutil.ReadAll(response.Body)
-	if err != nil {
-		return err
-	}
-	defer response.Body.Close()
-	if response.StatusCode != http.StatusOK {
-		err = fmt.Errorf("status: %s, body: %s, url: %s", response.Status, content, url)
-		return err
-	}
-	return nil
+	_, err := doGET(d.client, url)
+	return err
 }

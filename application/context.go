@@ -59,9 +59,9 @@ func NewContext(options ContextOptions) (*ApplicationContext, error) {
 		ProjectRepository:      projectRepository,
 		ReferenceRepository:    referenceRepository,
 		JwtSecret:              options.Secret, //base64.StdEncoding.EncodeToString([]byte(options.Secret)),
-		NotificationDispatcher: NewNotificationDispatcher(dispatcher.NewHTTPNotifier(options.NotificationURL)),
-		MessagingDispatcher:    NewMessagingDispatcher(dispatcher.NewHTTPMessaging(options.MessagingURL)),
-		PaymentDispatcher:      NewPaymentDispatcher(dispatcher.NewHTTPPayment(options.PaymentURL)),
+		NotificationDispatcher: NewNotificationDispatcher(dispatcher.NewNotifier(options.NotificationURL)),
+		MessagingDispatcher:    NewMessagingDispatcher(dispatcher.NewMessaging(options.MessagingURL)),
+		PaymentDispatcher:      NewPaymentDispatcher(dispatcher.NewPayment(options.PaymentURL)),
 		Indexer:                NewHTTPIndexer(options.SearcherURL),
 		Mailer:                 mailer.NewMailgun(options.MailerOptions),
 	}

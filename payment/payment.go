@@ -20,7 +20,7 @@ const (
 	statusError                = "error"
 )
 
-func newPayment(requester Requester, db DB, applicationDispatcher dispatcher.ApplicationDispatcher) *payment {
+func newPayment(requester Requester, db DB, applicationDispatcher dispatcher.Application) *payment {
 	return &payment{
 		requester:             requester,
 		receiversPercentile:   0.92,
@@ -34,7 +34,7 @@ type payment struct {
 	receiversPercentile             float64
 	paymentProviderChargePercentile float64
 	paymentProviderChargeFixed      float64
-	applicationDispatcher           dispatcher.ApplicationDispatcher
+	applicationDispatcher           dispatcher.Application
 	db                              DB
 }
 
@@ -82,7 +82,14 @@ func (p *payment) executeHandler() http.Handler {
 			respond.With(w, r, http.StatusBadRequest, fmt.Errorf("could not parse execute request (%+v): %v", execute, err))
 			return
 		}
-		t, err := p.db.GetByProjectID(execute.projectID)
+		project, err := p.getProject(execute.projectID)
+		if err != nil {
+			log.Printf("could not get project %d: %v", execute.projectID, err)
+			respond.With(w, r, http.StatusBadRequest, fmt.Errorf("could not get project %d: %v", execute.projectID, err))
+			return
+		}
+
+		t, err := p.db.GetByProjectID(project.ID)
 		if err != nil {
 			log.Printf("could not get transaction: %v", err)
 			respond.With(w, r, http.StatusBadRequest, fmt.Errorf("could not get transaction (%+v): %v", execute, err))
@@ -90,15 +97,15 @@ func (p *payment) executeHandler() http.Handler {
 		}
 		t.Status = statusAwaitingConfirmation
 		t.Provider = p.requester.ProviderID()
-		if err := p.db.Update(t); err != nil {
+		if err := p.db.UpdateTransaction(t); err != nil {
 			log.Printf("could not update transaction %s, status: %v", t.TrackID, err)
 			respond.With(w, r, http.StatusInternalServerError, fmt.Errorf("could not update transaction %s, status: %v", t.TrackID, err))
 			return
 		}
-		response, err := p.requester.Pay(p.buildPayRequest(t))
+		response, err := p.requester.Pay(p.buildPayRequest(t, project))
 		if err != nil {
 			t.Status = statusError
-			if err := p.db.Update(t); err != nil {
+			if err := p.db.UpdateTransaction(t); err != nil {
 				log.Printf("could not update transaction %s: %v", t.TrackID, err)
 				respond.With(w, r, http.StatusInternalServerError, fmt.Errorf("could not update transaction %s: %v", t.TrackID, err))
 				return
@@ -111,7 +118,7 @@ func (p *payment) executeHandler() http.Handler {
 			t.ProviderStatus = response.Status
 			t.ErrorMsg = response.ErrorMessage
 			t.Status = statusError
-			if err := p.db.Update(t); err != nil {
+			if err := p.db.UpdateTransaction(t); err != nil {
 				log.Printf("could not update transaction %s, status: %v", t.TrackID, err)
 				respond.With(w, r, http.StatusInternalServerError, fmt.Errorf("could not update transaction %s: %v", t.TrackID, err))
 				return
@@ -120,29 +127,26 @@ func (p *payment) executeHandler() http.Handler {
 			return
 		}
 		t.ProviderStatus = response.Status
-		t.PaymentKey = response.PaymentKey
+		t.ProviderTransactionKey = response.PaymentKey
 		t.Status = statusInitiated
-		if err := p.db.Update(t); err != nil {
-			log.Printf("could not update transaction %s, status: %v", t.TrackID, err)
-			respond.With(w, r, http.StatusInternalServerError, fmt.Errorf("could not update transaction %s: %v", t.TrackID, err))
+		if err := p.db.UpdateTransaction(t); err != nil {
+			log.Printf("could not update transaction %d, status: %v", t.ID, err)
+			respond.With(w, r, http.StatusInternalServerError, fmt.Errorf("could not update transaction %d: %v", t.ID, err))
 			return
 		}
 		respond.With(w, r, http.StatusOK, response)
 	})
 }
 
-// https://developer.paypal.com/docs/classic/ipn/integration-guide/IPNIntro/#id08CKFJ00JYK
-// https://developer.paypal.com/docs/classic/ipn/ht_ipn/
 func (p *payment) notificationHandler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		log.Println("IPN notificcation received")
 		var notification PayPalPaymentPayoutsBaseNotification
 		if err := json.NewDecoder(r.Body).Decode(&notification); err != nil {
 			log.Printf("could not decode notification: %v", err)
 			return
 		}
 		defer r.Body.Close()
-		log.Printf("IPN notificcation: %+v", notification)
+		log.Printf("webhook: id=%s type=%s summary=%s resource_type=%s", notification.ID, notification.EventType, notification.Summary, notification.ResourceType)
 		var batchID string
 		switch notification.ResourceType {
 		case "payouts":
@@ -158,11 +162,17 @@ func (p *payment) notificationHandler() http.Handler {
 				return
 			}
 			t.ProviderStatus = batchResource.BatchHeader.BatchStatus
-			if err := p.db.Update(t); err != nil {
+			switch notification.EventType {
+			case "PAYMENT.PAYOUTSBATCH.PROCESSING":
+			case "PAYMENT.PAYOUTSBATCH.DENIED":
+				t.Status = statusError
+			case "PAYMENT.PAYOUTSBATCH.SUCCESS":
+				t.Status = statusConfirmed
+			}
+			if err := p.db.UpdateTransaction(t); err != nil {
 				log.Printf("could not update transaction %s, status: %v", t.TrackID, err)
 				return
 			}
-			log.Printf("batch resource: %+v", batchResource)
 		case "payouts_item":
 			var itemResource PayPalPaymentPayoutsItemNotificationResource
 			if err := json.Unmarshal(notification.Resource, &itemResource); err != nil {
@@ -175,16 +185,27 @@ func (p *payment) notificationHandler() http.Handler {
 				log.Printf("could not get transaction with provider transaction key: %s: %v", batchID, err)
 				return
 			}
+			switch notification.EventType {
+			case "PAYMENT.PAYOUTS-ITEM.BLOCKED":
+			case "PAYMENT.PAYOUTS-ITEM.CANCELED":
+			case "PAYMENT.PAYOUTS-ITEM.DENIED":
+			case "PAYMENT.PAYOUTS-ITEM.FAILED":
+			case "PAYMENT.PAYOUTS-ITEM.HELD":
+			case "PAYMENT.PAYOUTS-ITEM.REFUNDED":
+			case "PAYMENT.PAYOUTS-ITEM.RETURNED":
+			case "PAYMENT.PAYOUTS-ITEM.SUCCEEDED":
+			case "PAYMENT.PAYOUTS-ITEM.UNCLAIMED":
+			}
 			for _, receiver := range t.Receivers {
 				if receiver.ProviderIdentifier == itemResource.PayoutItem.Receiver {
-					receiver.Status = itemResource.TransactionStatus
+					receiver.ProviderTransactionKey = itemResource.PayoutItemID
+					receiver.ProviderStatus = itemResource.TransactionStatus
+					if err := p.db.UpdateReceiver(&receiver); err != nil {
+						log.Printf("could not update transaction %s, status: %v", t.TrackID, err)
+						return
+					}
 				}
 			}
-			if err := p.db.Update(t); err != nil {
-				log.Printf("could not update transaction %s, status: %v", t.TrackID, err)
-				return
-			}
-			log.Printf("item resource: %+v", itemResource)
 		}
 		respond.With(w, r, http.StatusOK, nil)
 	})
@@ -218,7 +239,7 @@ func (p *payment) getProject(projectID uint) (*Project, error) {
 	return &project, nil
 }
 
-func (p *payment) buildPayRequest(t *Transaction) *PayRequest {
+func (p *payment) buildPayRequest(t *Transaction, project *Project) *PayRequest {
 	var receivers []PayRequestReceiver
 	for _, r := range t.Receivers {
 		receivers = append(receivers, PayRequestReceiver{
@@ -227,8 +248,10 @@ func (p *payment) buildPayRequest(t *Transaction) *PayRequest {
 		})
 	}
 	return &PayRequest{
-		ProjectID: t.ProjectID,
-		Receivers: receivers,
+		TrackID:     t.TrackID,
+		ProjectID:   project.ID,
+		ProjectName: project.Name,
+		Receivers:   receivers,
 	}
 }
 

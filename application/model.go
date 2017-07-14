@@ -253,14 +253,15 @@ func (job *Job) BeforeSave() error {
 
 type JobApplication struct {
 	Model
-	Message      string      `json:"message"`
-	HourPrice    float64     `json:"hourPrice"`
-	Hours        int         `json:"hours"`
-	Freelancer   *Freelancer `json:"freelancer,omitempty"`
-	FreelancerID uint        `json:"-"`
-	JobID        uint        `json:"-"`
-	Attachments  []File      `json:"attachments" gorm:"polymorphic:Owner;"`
-	Examples     []File      `json:"examples" gorm:"polymorphic:Owner;"`
+	Message               string      `json:"message"`
+	HourPrice             float64     `json:"hourPrice"`
+	Hours                 int         `json:"hours"`
+	Freelancer            *Freelancer `json:"freelancer,omitempty"`
+	FreelancerID          uint        `json:"-"`
+	FreelancerNumProjects int         `json:"freelancer_num_projects" sql:"-"`
+	JobID                 uint        `json:"-"`
+	Attachments           []File      `json:"attachments" gorm:"polymorphic:Owner;"`
+	Examples              []File      `json:"examples" gorm:"polymorphic:Owner;"`
 }
 
 // BeforeSave updates file types before saving

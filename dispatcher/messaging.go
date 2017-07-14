@@ -1,12 +1,11 @@
 package dispatcher
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/http"
+	"time"
 )
 
 type Messaging interface {
@@ -28,41 +27,26 @@ type Message struct {
 	ProjectID string                 `json:"projectId" bson:"projectId"`
 }
 
-type HTTPMessaging struct {
-	MessagingURL string
+type httpMessaging struct {
+	url    string
+	client *http.Client
 }
 
-func NewHTTPMessaging(MessagingURL string) Messaging {
-	return &HTTPMessaging{MessagingURL}
+func NewMessaging(messagingURL string) Messaging {
+	return &httpMessaging{
+		url: messagingURL,
+		client: &http.Client{
+			Timeout: time.Duration(30 * time.Second),
+		},
+	}
 }
 
-func (m *HTTPMessaging) Send(msg *Message) error {
-	payload, err := json.Marshal(msg)
+func (m *httpMessaging) Send(msg *Message) error {
+	url := fmt.Sprintf("%s/private/%s/send", m.url, msg.ProjectID)
+	b, err := json.Marshal(msg)
 	if err != nil {
 		log.Printf("could not mashall msg: %v", err)
 		return err
 	}
-	url := fmt.Sprintf("%s/%s/send", m.MessagingURL, msg.ProjectID)
-	request, err := http.NewRequest("POST", url, bytes.NewReader(payload))
-	if err != nil {
-		log.Println(err)
-		return err
-	}
-	response, err := http.DefaultClient.Do(request)
-	if err != nil {
-		log.Println(err)
-		return err
-	}
-	if response.StatusCode != http.StatusOK {
-		contents, err := ioutil.ReadAll(response.Body)
-		if err != nil {
-			log.Println(err)
-			return err
-		}
-		err = fmt.Errorf("status: %s, body: %s, url: %s", response.Status, contents, url)
-		response.Body.Close()
-		return err
-	}
-
-	return nil
+	return doPOST(m.client, url, b)
 }

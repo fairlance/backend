@@ -2,10 +2,10 @@ package payment
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 
-	uuid "github.com/nu7hatch/gouuid"
+	"fmt"
+	"time"
 )
 
 type depositRequest struct {
@@ -23,14 +23,10 @@ func newDepositFromRequest(r *http.Request) (deposit, error) {
 		return deposit{}, err
 	}
 	r.Body.Close()
-	trackID, err := uuid.NewV4()
-	if err != nil {
-		fmt.Printf("could not generate uuid: %v", err)
-		return deposit{}, nil
-	}
+	trackID := timeToMillis(time.Now())
 	return deposit{
 		projectID: depositReq.ProjectID,
-		trackID:   trackID.String(),
+		trackID:   fmt.Sprintf("%d", trackID),
 	}, nil
 }
 
@@ -51,4 +47,8 @@ func newExecuteFromRequest(r *http.Request) (*execute, error) {
 	return &execute{
 		projectID: executeReq.ProjectID,
 	}, nil
+}
+
+func timeToMillis(t time.Time) int64 {
+	return t.UnixNano() / 1000000
 }

@@ -160,8 +160,8 @@ func TestExecuteHandler(t *testing.T) {
 	if firstTransactionUpdate.Status != "awaiting_confirmation" {
 		t.Fatal("Error: Status is", firstTransactionUpdate.Status, "instead of", "awaiting_confirmation")
 	}
-	if firstTransactionUpdate.PaymentKey != "" {
-		t.Fatal("Error: PaymentKey is", firstTransactionUpdate.PaymentKey, "instead of", "")
+	if firstTransactionUpdate.ProviderTransactionKey != "" {
+		t.Fatal("Error: PaymentKey is", firstTransactionUpdate.ProviderTransactionKey, "instead of", "")
 	}
 	if firstTransactionUpdate.ProviderStatus != "" {
 		t.Fatal("Error: ProviderStatus is", firstTransactionUpdate.ProviderStatus, "instead of", "")
@@ -172,8 +172,8 @@ func TestExecuteHandler(t *testing.T) {
 	if secondTransactionUpdate.Status != "initiated" {
 		t.Fatal("Error: Status is", secondTransactionUpdate.Status, "instead of", "initiated")
 	}
-	if secondTransactionUpdate.PaymentKey != "fakeKey" {
-		t.Fatal("Error: PaymentKey is", secondTransactionUpdate.PaymentKey, "instead of", "fakeKey")
+	if secondTransactionUpdate.ProviderTransactionKey != "fakeKey" {
+		t.Fatal("Error: PaymentKey is", secondTransactionUpdate.ProviderTransactionKey, "instead of", "fakeKey")
 	}
 	if secondTransactionUpdate.ProviderStatus != "fakeStatus" {
 		t.Fatal("Error: ProviderStatus is", secondTransactionUpdate.ProviderStatus, "instead of", "fakeStatus")
