@@ -33,7 +33,7 @@ func main() {
 		middleware.CORSHandler,
 		middleware.JSONEnvelope,
 		middleware.WithTokenFromHeader,
-		middleware.AuthenticateTokenWithClaims(secret),
+		middleware.AuthenticateTokenWithUser(secret),
 		middleware.HTTPMethod("POST"),
 	)(upload()))
 
