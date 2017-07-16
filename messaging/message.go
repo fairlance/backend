@@ -3,8 +3,6 @@ package messaging
 import (
 	"bytes"
 	"time"
-
-	"github.com/gorilla/websocket"
 )
 
 func NewMessage(projectID, userID uint, userType, username string, text []byte) Message {
@@ -35,14 +33,6 @@ type Message struct {
 	Timestamp int64                  `json:"timestamp,omitempty"`
 	Read      bool                   `json:"read"`
 	ProjectID uint                   `json:"projectId" bson:"projectId"`
-}
-
-type userConn struct {
-	userType  string
-	userID    uint
-	projectID uint
-	conn      *websocket.Conn
-	// hub       *Hub
 }
 
 func timeToMillis(t time.Time) int64 {

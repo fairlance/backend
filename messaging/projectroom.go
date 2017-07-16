@@ -1,52 +1,78 @@
 package messaging
 
+import (
+	"sync"
+)
+
 type ProjectRoom struct {
-	id      uint
-	users   map[User]bool
-	project *Project
+	id           uint
+	usersMU      sync.RWMutex
+	users        map[*User]bool
+	allowedUsers map[*AllowedUser]bool
 }
 
-// func (r *ProjectRoom) getUser(userType string, userID uint) *User {
-// 	for user := range r.Users {
-// 		if user.userType == userType && user.ID == userID {
-// 			return &user
-// 		}
-// 	}
-// 	return nil
-// }
+func newProjectRoom(projectID uint, allowedUsers map[*AllowedUser]bool) *ProjectRoom {
+	return &ProjectRoom{
+		id:           projectID,
+		allowedUsers: allowedUsers,
+		users:        make(map[*User]bool),
+	}
+}
 
-// func (r *ProjectRoom) HasReasonToExist() bool {
-// 	for _, user := range r.Users {
-// 		if user.online {
-// 			return true
-// 		}
-// 	}
-// 	return false
-// }
+func (r *ProjectRoom) getAllowedUser(userType string, userID uint) *AllowedUser {
+	for u := range r.allowedUsers {
+		if userType == u.fairlanceType && userID == u.fairlanceID {
+			return u
+		}
+	}
+	return nil
+}
 
-// func (r *ProjectRoom) StartReadWrite(conn *userConn) (*User, error) {
-// 	user, ok := r.Users[conn.id]
-// 	if ok {
-// 		user.Activate(conn)
-// 		go user.startWriting()
-// 		go user.startReading()
-// 		return user, nil
-// 	}
+func (r *ProjectRoom) addUser(user *User) {
+	r.usersMU.Lock()
+	r.users[user] = true
+	r.usersMU.Unlock()
+}
 
-// 	return nil, fmt.Errorf("user %s not found", conn.id)
-// }
+func (r *ProjectRoom) removeUser(user *User) {
+	r.usersMU.Lock()
+	delete(r.users, user)
+	r.usersMU.Unlock()
+}
 
-// func (r *ProjectRoom) Close() {
-// 	for _, user := range r.Users {
-// 		user.Close()
-// 	}
-// }
+func (r *ProjectRoom) hasReasonToExist() bool {
+	r.usersMU.RLock()
+	defer r.usersMU.RUnlock()
+	if len(r.users) > 0 {
+		return true
+	}
+	return false
+}
 
-// func (r *ProjectRoom) HasUser(user *models.User) bool {
-// 	for _, u := range r.Users {
-// 		if user.ID == u.id && user.Type == u.userType {
-// 			return true
-// 		}
-// 	}
-// 	return false
-// }
+func (r *ProjectRoom) isUserAllowed(userType string, userID uint) bool {
+	for u := range r.allowedUsers {
+		if userType == u.fairlanceType && userID == u.fairlanceID {
+			return true
+		}
+	}
+	return false
+}
+
+func (r *ProjectRoom) getAbsentUsers() []*AllowedUser {
+	var absent []*AllowedUser
+	for allowedUser := range r.allowedUsers {
+		if !r.isUserConnected(allowedUser) {
+			absent = append(absent, allowedUser)
+		}
+	}
+	return absent
+}
+
+func (r *ProjectRoom) isUserConnected(allowedUser *AllowedUser) bool {
+	for u := range r.users {
+		if allowedUser.UniqueID() == u.UniqueID() {
+			return true
+		}
+	}
+	return false
+}

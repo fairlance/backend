@@ -1,6 +1,7 @@
 package messaging
 
 import (
+	"fmt"
 	"log"
 
 	mgo "gopkg.in/mgo.v2"
@@ -27,14 +28,14 @@ type mongoDB struct {
 func (m *mongoDB) save(msg Message) error {
 	session := m.s.Copy()
 	defer session.Close()
-	return session.DB("messaging").C("project_" + msg.ProjectID).Insert(&msg)
+	return session.DB("messaging").C(fmt.Sprintf("project_%d", msg.ProjectID)).Insert(&msg)
 }
 
 func (m *mongoDB) loadLastMessagesForUser(user *User, num int) ([]Message, error) {
 	session := m.s.Copy()
 	defer session.Close()
 
-	roomName := "project_" + user.room
+	roomName := fmt.Sprintf("project_%d", user.projectID)
 	messages := []Message{}
 
 	count, err := session.DB("messaging").C(roomName).Count()

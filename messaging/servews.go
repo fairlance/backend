@@ -1,12 +1,14 @@
 package messaging
 
 import (
+	"errors"
 	"log"
 	"net/http"
 
-	"github.com/fairlance/backend/models"
+	respond "gopkg.in/matryer/respond.v1"
 
-	"strconv"
+	"github.com/fairlance/backend/middleware"
+	"github.com/fairlance/backend/models"
 
 	"github.com/gorilla/context"
 	"github.com/gorilla/websocket"
@@ -23,15 +25,10 @@ var upgrader = websocket.Upgrader{
 func ServeWS(hub *Hub) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		appUser := context.Get(r, "user").(*models.User)
-		projectRoom := context.Get(r, "room").(string)
+		projectID := context.Get(r, "projectID").(uint)
 		conn, err := upgrader.Upgrade(w, r, nil)
 		if err != nil {
 			log.Printf("could not upgrade connection: %v", err)
-			return
-		}
-		projectID, err := strconv.Atoi(projectRoom)
-		if err != nil {
-			log.Printf("could not get project id: %v", err)
 			return
 		}
 		newConnection := &userConn{
@@ -39,39 +36,40 @@ func ServeWS(hub *Hub) http.Handler {
 			userID:    appUser.ID,
 			conn:      conn,
 			projectID: uint(projectID),
-			// hub:       hub,
 		}
 		hub.register <- newConnection
 	})
 }
 
-type hasAccessFunc func(userID uint, userType, token, room string) (bool, error)
+type userConn struct {
+	userType  string
+	userID    uint
+	projectID uint
+	conn      *websocket.Conn
+}
 
-// func ValidateUser(hub *Hub) middleware.Middleware {
-// 	return func(next http.Handler) http.Handler {
-// 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-// 			roomName := context.Get(r, "room").(string)
-// 			user, ok := context.Get(r, "user").(*models.User)
-// 			if !ok {
-// 				log.Println("validate user: user not of type application.User")
-// 				respond.With(w, r, http.StatusInternalServerError, errors.New("could not validate user"))
-// 				return
-// 			}
-// 			room, ok := hub.rooms[roomName]
-// 			if !ok {
-// 				log.Println("room not found")
-// 				respond.With(w, r, http.StatusNotFound, errors.New("room not found"))
-// 				return
-// 			}
-// 			if !room.HasUser(user) {
-// 				log.Println("unauthorized")
-// 				respond.With(w, r, http.StatusUnauthorized, errors.New("unauthorized"))
-// 				return
-// 			}
-// 			next.ServeHTTP(w, r)
-// 		})
-// 	}
-// }
+func validateUser(hub *Hub) middleware.Middleware {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			projectID := context.Get(r, "projectID").(uint)
+			user := context.Get(r, "user").(*models.User)
+			projectRoom, err := hub.getProjectRoom(projectID)
+			if err != nil {
+				log.Printf("could not get project room: %v", err)
+				respond.With(w, r, http.StatusFailedDependency, errors.New("could not get project room"))
+				return
+			}
+			if !projectRoom.isUserAllowed(user.Type, user.ID) {
+				log.Printf("unauthorized user: %s %d", user.Type, user.ID)
+				respond.With(w, r, http.StatusUnauthorized, errors.New("unauthorized"))
+				return
+			}
+			next.ServeHTTP(w, r)
+		})
+	}
+}
+
+// type hasAccessFunc func(userID uint, userType, token, room string) (bool, error)
 
 // func WithTokenFromParams(next http.Handler) http.Handler {
 // 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

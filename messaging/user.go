@@ -19,28 +19,41 @@ const (
 	maxMessageSize = 2048
 )
 
-type User struct {
-	// hub       *Hub
-	conn      *websocket.Conn
-	send      chan Message
-	projectID uint
-	id        uint
-	username  string
-	userType  string
-	online    bool
+type AllowedUser struct {
+	fairlanceType string
+	fairlanceID   uint
+	firstName     string
+	lastName      string
 }
 
-// func newUser(userConn userConn) *User {
-// 	return &User{
-// 		id:       userConn.id,
-// 		username: firstName + " " + lastName,
-// 		userType: userType,
-// 		room:     room,
-// 	}
-// }
+func (u *AllowedUser) UniqueID() string {
+	return fmt.Sprintf("%s.%d", u.fairlanceType, u.fairlanceID)
+}
+
+type User struct {
+	fairlanceType string
+	fairlanceID   uint
+	username      string
+	projectID     uint
+	conn          *websocket.Conn
+	send          chan Message
+	hub           *Hub
+}
 
 func (u *User) UniqueID() string {
-	return fmt.Sprintf("%s.%d", u.userType, u.id)
+	return fmt.Sprintf("%s.%d", u.fairlanceType, u.fairlanceID)
+}
+
+func newUser(hub *Hub, userConn *userConn, user *AllowedUser) *User {
+	return &User{
+		fairlanceID:   userConn.userID,
+		fairlanceType: userConn.userType,
+		username:      fmt.Sprintf("%s %s", user.firstName, user.lastName),
+		projectID:     userConn.projectID,
+		conn:          userConn.conn,
+		send:          make(chan Message, 256),
+		hub:           hub,
+	}
 }
 
 // func (u *User) Activate(conn *userConn) {
@@ -76,7 +89,7 @@ func (u *User) startReading() {
 			}
 			break
 		}
-		u.hub.broadcast <- NewMessage(u.projectID, u.id, u.userType, u.username, msgBytes)
+		u.hub.broadcast <- NewMessage(u.projectID, u.fairlanceID, u.fairlanceType, u.username, msgBytes)
 	}
 }
 

@@ -3,12 +3,16 @@ package messaging
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"log"
+	"sync"
+	"time"
 
 	"github.com/fairlance/backend/dispatcher"
 )
 
 type Hub struct {
+	projectRoomsMU         sync.RWMutex
 	projectRooms           map[uint]*ProjectRoom
 	broadcast              chan Message
 	register               chan *userConn
@@ -34,43 +38,50 @@ func (h *Hub) Run() {
 	for {
 		select {
 		case newConnection := <-h.register:
+			log.Println("registering", newConnection.userType, newConnection.userID, "to room:", newConnection.projectID)
 			projectRoom, err := h.getProjectRoom(newConnection.projectID)
 			if err != nil {
 				log.Println(err)
 				break
 			}
-			// user := projectRoom.getUser("", newConnection.id)
-			// projectRoom.register(*user, newConnection)
-			// log.Println("registering", newConnection.id, "to room:", user.projectID)
-			// h.sendOldMessagesToUser(user)
+			allowedUser := projectRoom.getAllowedUser(newConnection.userType, newConnection.userID)
+			if allowedUser == nil {
+				break
+			}
+			user := newUser(h, newConnection, allowedUser)
+			projectRoom.addUser(user)
+			go user.startWriting()
+			go user.startReading()
+			h.sendOldMessagesToUser(user)
 		case user := <-h.unregister:
-			// log.Println("unregistering user", user.id, "of type", user.userType, "from room:", user.projectID)
-			// h.removeUser(user)
+			log.Println("unregistering user", user.fairlanceType, user.fairlanceID, "from room:", user.projectID)
+			h.removeUser(user)
 		case msg := <-h.broadcast:
-			// log.Println("broadcasting message", msg)
-			// h.db.save(msg)
-			// room, err := h.getRoom(msg.ProjectID)
-			// if err != nil {
-			// 	log.Printf("could get room %d: %v", msg.ProjectID, err)
-			// 	break
-			// }
-			// for _, usr := range room.Users {
-			// if usr.online {
-			// 	select {
-			// 	case usr.send <- msg:
-			// 	default:
-			// 		usr.Close()
-			// 	}
-			// } else {
-			// 	h.notifyUser(usr, msg)
-			// }
-			// }
+			log.Println("broadcasting message", msg)
+			h.db.save(msg)
+			projectRoom, err := h.getProjectRoom(msg.ProjectID)
+			if err != nil {
+				log.Printf("could get projectRoom %d: %v", msg.ProjectID, err)
+				break
+			}
+			for usr := range projectRoom.users {
+				select {
+				case usr.send <- msg:
+				default:
+					h.removeUser(usr)
+				}
+			}
+			for _, usr := range projectRoom.getAbsentUsers() {
+				h.notifyUser(usr.fairlanceType, usr.fairlanceID, msg)
+			}
 		}
 	}
 }
 
 func (h *Hub) getProjectRoom(projectID uint) (*ProjectRoom, error) {
+	h.projectRoomsMU.RLock()
 	projectRoom, ok := h.projectRooms[projectID]
+	h.projectRoomsMU.RUnlock()
 	if ok {
 		return projectRoom, nil
 	}
@@ -82,91 +93,97 @@ func (h *Hub) getProjectRoom(projectID uint) (*ProjectRoom, error) {
 	if err := json.NewDecoder(bytes.NewReader(projectBytes)).Decode(&project); err != nil {
 		return nil, err
 	}
-	// users := make(map[string]*User)
-	// client := &User{
-	// 	id:        project.Client.ID,
-	// 	userType:  "client",
-	// 	username:  fmt.Sprintf("%s %s", project.Client.FirstName, project.Client.LastName),
-	// 	projectID: projectID,
-	// }
-	// users[fmt.Sprintf("%d_%s", timeToMillis(time.Now()), client.UniqueID())] = client
-	// for _, freelancer := range project.Freelancers {
-	// 	f := &User{
-	// 		id:       freelancer.ID,
-	// 		username: fmt.Sprintf("%s %s", freelancer.FirstName, freelancer.LastName),
-	// 		userType: "freelancer",
-	// 		room:     projectID,
-	// 	}
-	// 	users[f.UniqueID()] = f
-	// }
-
-	projectRoom = &ProjectRoom{
-		id:      projectID,
-		project: &project,
-	}
+	users := buildAllowedUsersMap(project)
+	projectRoom = newProjectRoom(projectID, users)
+	h.projectRoomsMU.Lock()
 	h.projectRooms[projectID] = projectRoom
+	h.projectRoomsMU.Unlock()
 	return projectRoom, nil
 }
 
-// func (h *Hub) removeUser(userToUnregister *User) {
-// 	for _, usr := range h.rooms[userToUnregister.room].Users {
-// 		if userToUnregister.username == usr.username {
-// 			usr.Close()
-// 		}
-// 	}
+func buildAllowedUsersMap(project Project) map[*AllowedUser]bool {
+	users := make(map[*AllowedUser]bool)
+	client := &AllowedUser{
+		fairlanceID:   project.Client.ID,
+		fairlanceType: "client",
+		firstName:     project.Client.FirstName,
+		lastName:      project.Client.LastName,
+	}
+	users[client] = true
+	for _, freelancer := range project.Freelancers {
+		f := &AllowedUser{
+			fairlanceID:   freelancer.ID,
+			fairlanceType: "freelancer",
+			firstName:     freelancer.FirstName,
+			lastName:      freelancer.LastName,
+		}
+		users[f] = true
+	}
+	return users
+}
 
-// 	if !h.rooms[userToUnregister.room].HasReasonToExist() {
-// 		h.rooms[userToUnregister.room].Close()
-// 		delete(h.rooms, userToUnregister.room)
-// 	}
-// }
+func (h *Hub) removeUser(userToUnregister *User) {
+	h.projectRoomsMU.Lock()
+	close(userToUnregister.send)
+	h.projectRooms[userToUnregister.projectID].removeUser(userToUnregister)
+	h.projectRoomsMU.Unlock()
+	if !h.projectRooms[userToUnregister.projectID].hasReasonToExist() {
+		h.projectRoomsMU.Lock()
+		delete(h.projectRooms, userToUnregister.projectID)
+		h.projectRoomsMU.Unlock()
+	}
+}
 
 func (h *Hub) SendMessage(room string, msg Message) {
 	h.broadcast <- msg
 }
 
-// func (h *Hub) notifyUser(u *User, msg Message) {
-// 	log.Printf("notifying %s with %+v", u.username, msg.Data)
-// 	h.notifier.Notify(&dispatcher.Notification{
-// 		To: []dispatcher.NotificationUser{
-// 			dispatcher.NotificationUser{
-// 				ID:   u.id,
-// 				Type: u.userType,
-// 			},
-// 		},
-// 		From: dispatcher.NotificationUser{
-// 			ID:   msg.From.ID,
-// 			Type: msg.From.Type,
-// 		},
-// 		Type: "new_message",
-// 		Data: map[string]interface{}{
-// 			"message":   msg,
-// 			"username":  msg.From.Username,
-// 			"timestamp": fmt.Sprintf("%d", msg.Timestamp),
-// 			"time":      time.Unix(0, msg.Timestamp*1000000),
-// 			"projectId": msg.ProjectID,
-// 		},
-// 	})
-// }
+func (h *Hub) notifyUser(userType string, userID uint, msg Message) {
+	log.Printf("notifying %s %d with %+v", userType, userID, msg.Data)
+	h.notificationDispatcher.Notify(&dispatcher.Notification{
+		To: []dispatcher.NotificationUser{
+			dispatcher.NotificationUser{
+				ID:   userID,
+				Type: userType,
+			},
+		},
+		From: dispatcher.NotificationUser{
+			ID:   msg.From.ID,
+			Type: msg.From.Type,
+		},
+		Type: "new_message",
+		Data: map[string]interface{}{
+			"message":   msg,
+			"username":  msg.From.Username,
+			"timestamp": fmt.Sprintf("%d", msg.Timestamp),
+			"time":      time.Unix(0, msg.Timestamp*1000000),
+			"projectId": msg.ProjectID,
+		},
+	})
+}
 
-// func (h *Hub) sendOldMessagesToUser(u *User) {
-// 	messages, err := h.db.loadLastMessagesForUser(u, 20)
-// 	if err != nil {
-// 		log.Println(err)
-// 		return
-// 	}
+func (h *Hub) sendOldMessagesToUser(u *User) {
+	messages, err := h.db.loadLastMessagesForUser(u, 20)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	for _, msg := range messages {
+		u.send <- msg
+	}
+}
 
-// 	for _, msg := range messages {
-// 		u.send <- msg
-// 	}
-// }
-
-// func (h *Hub) printRooms() {
-// 	log.Println("no of rooms", len(h.rooms))
-// 	for _, room := range h.rooms {
-// 		log.Printf("in room %s", room.ID)
-// 		for _, usr := range room.Users {
-// 			log.Printf("    %s, online: %t ", usr.username, usr.online)
-// 		}
-// 	}
-// }
+func (h *Hub) printRooms() {
+	log.Println("no of rooms", len(h.projectRooms))
+	for _, room := range h.projectRooms {
+		log.Printf("in room %d", room.id)
+		log.Println("allowed users")
+		for usr := range room.allowedUsers {
+			log.Printf("    %s %s", usr.firstName, usr.lastName)
+		}
+		log.Println("connected users")
+		for usr := range room.users {
+			log.Printf("    %s", usr.username)
+		}
+	}
+}
