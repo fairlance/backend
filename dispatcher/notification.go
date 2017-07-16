@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-type Notifier interface {
+type Notifications interface {
 	Notify(n *Notification) error
 }
 
@@ -33,7 +33,7 @@ type httpNotifier struct {
 	client *http.Client
 }
 
-func NewNotifier(notificationURL string) Notifier {
+func NewNotifications(notificationURL string) Notifications {
 	return &httpNotifier{
 		url: notificationURL,
 		client: &http.Client{

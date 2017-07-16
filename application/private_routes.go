@@ -8,7 +8,7 @@ var privateRoutes = Routes{
 		"GET",
 		"/project/{id}",
 		middleware.Chain(
-			withUINT("id"),
+			middleware.WithUINT("id"),
 		)(getProjectByID()),
 	},
 	Route{
@@ -16,7 +16,7 @@ var privateRoutes = Routes{
 		"GET",
 		"/project/{id}/fund",
 		middleware.Chain(
-			withUINT("id"),
+			middleware.WithUINT("id"),
 			withProjectByID,
 		)(projectFunded()),
 	},

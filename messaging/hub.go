@@ -18,11 +18,11 @@ type Hub struct {
 	register               chan *userConn
 	unregister             chan *User
 	db                     messageDB
-	notificationDispatcher dispatcher.Notifier
+	notificationDispatcher dispatcher.Notifications
 	applicationDispatcher  dispatcher.Application
 }
 
-func NewHub(db messageDB, notificationDispatcher dispatcher.Notifier, applicationDispatcher dispatcher.Application) *Hub {
+func NewHub(db messageDB, notificationDispatcher dispatcher.Notifications, applicationDispatcher dispatcher.Application) *Hub {
 	return &Hub{
 		broadcast:    make(chan Message),
 		register:     make(chan *userConn),

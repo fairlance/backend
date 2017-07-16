@@ -35,8 +35,7 @@ func (n Notifications) Handler() http.Handler {
 		middleware.RecoverHandler,
 		middleware.LoggerHandler,
 		middleware.WithTokenFromParams,
-		middleware.AuthenticateTokenWithClaims(n.secret),
-		middleware.WithUserFromClaims,
+		middleware.AuthenticateTokenWithUser(n.secret),
 	)(n.router.ServeWS())
 }
 

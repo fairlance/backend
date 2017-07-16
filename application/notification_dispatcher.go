@@ -3,10 +3,10 @@ package application
 import "github.com/fairlance/backend/dispatcher"
 
 type NotificationDispatcher struct {
-	notifier dispatcher.Notifier
+	notifier dispatcher.Notifications
 }
 
-func NewNotificationDispatcher(notifier dispatcher.Notifier) *NotificationDispatcher {
+func NewNotificationDispatcher(notifier dispatcher.Notifications) *NotificationDispatcher {
 	return &NotificationDispatcher{notifier}
 }
 

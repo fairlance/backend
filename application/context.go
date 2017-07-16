@@ -59,7 +59,7 @@ func NewContext(options ContextOptions) (*ApplicationContext, error) {
 		ProjectRepository:      projectRepository,
 		ReferenceRepository:    referenceRepository,
 		JwtSecret:              options.Secret, //base64.StdEncoding.EncodeToString([]byte(options.Secret)),
-		NotificationDispatcher: NewNotificationDispatcher(dispatcher.NewNotifier(options.NotificationURL)),
+		NotificationDispatcher: NewNotificationDispatcher(dispatcher.NewNotifications(options.NotificationURL)),
 		MessagingDispatcher:    NewMessagingDispatcher(dispatcher.NewMessaging(options.MessagingURL)),
 		PaymentDispatcher:      NewPaymentDispatcher(dispatcher.NewPayment(options.PaymentURL)),
 		Indexer:                NewHTTPIndexer(options.SearcherURL),

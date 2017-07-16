@@ -21,7 +21,7 @@ func main() {
 	var applicationURL = os.Getenv("APPLICATION_URL")
 	hub := messaging.NewHub(
 		messaging.NewMessageDB(mongoHost),
-		dispatcher.NewNotifier(notificationURL),
+		dispatcher.NewNotifications(notificationURL),
 		&fakeDispatcher{applicationURL}, //dispatcher.NewApplication(applicationURL),
 	)
 	go hub.Run()
