@@ -40,7 +40,7 @@ var routes = Routes{
 		"/freelancer/{id}",
 		middleware.Chain(
 			whenLoggedIn,
-			withUINT("id"),
+			middleware.WithUINT("id"),
 		)(getFreelancerByID()),
 	},
 	Route{
@@ -50,7 +50,7 @@ var routes = Routes{
 		middleware.Chain(
 			whenLoggedIn,
 			whenFreelancer,
-			withUINT("id"),
+			middleware.WithUINT("id"),
 			whenIDBelongsToUser,
 			withFreelancerUpdateFromRequest,
 		)(updateFreelancerByID()),
@@ -62,7 +62,7 @@ var routes = Routes{
 		middleware.Chain(
 			whenLoggedIn,
 			whenFreelancer,
-			withUINT("id"),
+			middleware.WithUINT("id"),
 			whenIDBelongsToUser,
 		)(deleteFreelancerByID()),
 	},
@@ -73,7 +73,7 @@ var routes = Routes{
 		middleware.Chain(
 			whenLoggedIn,
 			whenFreelancer,
-			withUINT("id"),
+			middleware.WithUINT("id"),
 			withReference,
 		)(addFreelancerReferenceByID()),
 	},
@@ -83,7 +83,7 @@ var routes = Routes{
 		"/freelancer/{id}/review",
 		middleware.Chain(
 			whenLoggedIn,
-			withUINT("id"),
+			middleware.WithUINT("id"),
 			withReview,
 		)(addFreelancerReviewByID()),
 	},
@@ -102,7 +102,7 @@ var routes = Routes{
 		"/project/{id}",
 		middleware.Chain(
 			whenLoggedIn,
-			withUINT("id"),
+			middleware.WithUINT("id"),
 			whenBasedOnUserType(
 				whenProjectBelongsToClientByID,
 				whenProjectBelongsToFreelancerByID,
@@ -116,7 +116,7 @@ var routes = Routes{
 		middleware.Chain(
 			whenLoggedIn,
 			whenClient,
-			withUINT("id"),
+			middleware.WithUINT("id"),
 			whenJobApplicationBelongsToClientByID,
 		)(createProjectFromJobApplication()),
 	},
@@ -126,7 +126,7 @@ var routes = Routes{
 		"/project/{id}/contract/proposal",
 		middleware.Chain(
 			whenLoggedIn,
-			withUINT("id"),
+			middleware.WithUINT("id"),
 			whenBasedOnUserType(
 				whenProjectBelongsToClientByID,
 				whenProjectBelongsToFreelancerByID,
@@ -142,7 +142,7 @@ var routes = Routes{
 		"/project/{id}/contract/agree",
 		middleware.Chain(
 			whenLoggedIn,
-			withUINT("id"),
+			middleware.WithUINT("id"),
 			whenBasedOnUserType(
 				whenProjectBelongsToClientByID,
 				whenProjectBelongsToFreelancerByID,
@@ -157,7 +157,7 @@ var routes = Routes{
 		"/project/{id}/extension",
 		middleware.Chain(
 			whenLoggedIn,
-			withUINT("id"),
+			middleware.WithUINT("id"),
 			whenBasedOnUserType(
 				whenProjectBelongsToClientByID,
 				whenProjectBelongsToFreelancerByID,
@@ -171,14 +171,14 @@ var routes = Routes{
 		"/project/{id}/extension/{extension_id}/agree",
 		middleware.Chain(
 			whenLoggedIn,
-			withUINT("id"),
+			middleware.WithUINT("id"),
 			whenBasedOnUserType(
 				whenProjectBelongsToClientByID,
 				whenProjectBelongsToFreelancerByID,
 			),
 			withProjectByID,
 			whenCurrentProjectStatus(projectStatusInProgress),
-			withUINT("extension_id"),
+			middleware.WithUINT("extension_id"),
 			withExtensionWhenBelongsToProject,
 		)(agreeToExtensionTerms()),
 	},
@@ -188,7 +188,7 @@ var routes = Routes{
 		"/project/{id}/extension/{extension_id}/proposal",
 		middleware.Chain(
 			whenLoggedIn,
-			withUINT("id"),
+			middleware.WithUINT("id"),
 			whenBasedOnUserType(
 				whenProjectBelongsToClientByID,
 				whenProjectBelongsToFreelancerByID,
@@ -196,7 +196,7 @@ var routes = Routes{
 			withProjectByID,
 			whenCurrentProjectStatus(projectStatusInProgress),
 			withProposal,
-			withUINT("extension_id"),
+			middleware.WithUINT("extension_id"),
 			withExtensionWhenBelongsToProject,
 		)(setProposalToProjectContractExtension()),
 	},
@@ -207,7 +207,7 @@ var routes = Routes{
 		middleware.Chain(
 			whenLoggedIn,
 			whenClient,
-			withUINT("id"),
+			middleware.WithUINT("id"),
 			whenProjectBelongsToClientByID,
 			withProjectByID,
 			whenCurrentProjectStatus(projectStatusPendingFunds),
@@ -220,7 +220,7 @@ var routes = Routes{
 		middleware.Chain(
 			whenLoggedIn,
 			whenFreelancer,
-			withUINT("id"),
+			middleware.WithUINT("id"),
 			whenProjectBelongsToFreelancerByID,
 			withProjectByID,
 			whenCurrentProjectStatus(projectStatusInProgress),
@@ -233,7 +233,7 @@ var routes = Routes{
 		middleware.Chain(
 			whenLoggedIn,
 			whenClient,
-			withUINT("id"),
+			middleware.WithUINT("id"),
 			whenProjectBelongsToClientByID,
 			withProjectByID,
 			whenCurrentProjectStatus(projectStatusPendingFinished),
@@ -260,7 +260,7 @@ var routes = Routes{
 		"/client/{id}",
 		middleware.Chain(
 			whenLoggedIn,
-			withUINT("id"),
+			middleware.WithUINT("id"),
 		)(getClientByID()),
 	},
 	Route{
@@ -270,7 +270,7 @@ var routes = Routes{
 		middleware.Chain(
 			whenLoggedIn,
 			whenClient,
-			withUINT("id"),
+			middleware.WithUINT("id"),
 			whenIDBelongsToUser,
 			withClientUpdateFromRequest,
 		)(updateClientByID()),
@@ -302,7 +302,7 @@ var routes = Routes{
 		"/job/{id}",
 		middleware.Chain(
 			whenLoggedIn,
-			withUINT("id"),
+			middleware.WithUINT("id"),
 		)(getJob()),
 	},
 	Route{
@@ -313,7 +313,7 @@ var routes = Routes{
 			whenLoggedIn,
 			whenFreelancer,
 			whenFreelancerProfileCompleted,
-			withUINT("id"),
+			middleware.WithUINT("id"),
 			whenFreelancerHasNotAppliedBeforeByID,
 			withClientFromJobID,
 			withJobApplicationFromRequest,
@@ -326,7 +326,7 @@ var routes = Routes{
 		middleware.Chain(
 			whenLoggedIn,
 			whenFreelancer,
-			withUINT("id"),
+			middleware.WithUINT("id"),
 			whenJobApplicationBelongsToFreelancerByID,
 		)(deleteJobApplicationByID()),
 	},

@@ -5,35 +5,14 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"strconv"
 
 	"github.com/gorilla/context"
-	"github.com/gorilla/mux"
 
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/fairlance/backend/middleware"
 	"github.com/fairlance/backend/models"
 	respond "gopkg.in/matryer/respond.v1"
 )
-
-func withUINT(param string) middleware.Middleware {
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			vars := mux.Vars(r)
-			if vars[param] == "" {
-				respond.With(w, r, http.StatusBadRequest, fmt.Errorf("%s not provided", param))
-				return
-			}
-			value, err := strconv.ParseUint(vars[param], 10, 32)
-			if err != nil {
-				respond.With(w, r, http.StatusBadRequest, err)
-				return
-			}
-			context.Set(r, param, uint(value))
-			next.ServeHTTP(w, r)
-		})
-	}
-}
 
 func contextAwareHandler(appContext *ApplicationContext) middleware.Middleware {
 	return func(next http.Handler) http.Handler {

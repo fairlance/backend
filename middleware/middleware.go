@@ -6,11 +6,13 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/fairlance/backend/models"
 	"github.com/gorilla/context"
+	"github.com/gorilla/mux"
 
 	jwt "github.com/dgrijalva/jwt-go"
 	respond "gopkg.in/matryer/respond.v1"
@@ -145,7 +147,7 @@ func WithTokenFromParams(next http.Handler) http.Handler {
 	})
 }
 
-func AuthenticateTokenWithClaims(secret string) Middleware {
+func AuthenticateTokenWithUser(secret string) Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			tokenFromContext := context.Get(r, "token").(string)
@@ -165,33 +167,16 @@ func AuthenticateTokenWithClaims(secret string) Middleware {
 				respond.With(w, r, http.StatusUnauthorized, errors.New("not logged in"))
 				return
 			}
-			context.Set(r, "claims", claims)
+			user, err := getUserFomClaims(claims)
+			if err != nil {
+				log.Printf("could not get user from claims: %v", err)
+				respond.With(w, r, http.StatusInternalServerError, fmt.Errorf("could not get user from claims: %v", err))
+				return
+			}
+			context.Set(r, "user", user)
 			next.ServeHTTP(w, r)
 		})
 	}
-}
-
-func WithUserFromClaims(handler http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		user := &models.User{}
-		claims, ok := context.Get(r, "claims").(jwt.MapClaims)
-		if !ok {
-			respond.With(w, r, http.StatusInternalServerError, errors.New("claims are missing from token"))
-			return
-		}
-		userMap, ok := claims["user"].(map[string]interface{})
-		if !ok {
-			respond.With(w, r, http.StatusInternalServerError, errors.New("valid user is missing from token"))
-			return
-		}
-		user.ID = uint(userMap["id"].(float64))
-		user.Email = userMap["email"].(string)
-		user.FirstName = userMap["firstName"].(string)
-		user.LastName = userMap["lastName"].(string)
-		user.Type = claims["userType"].(string)
-		context.Set(r, "user", user)
-		handler.ServeHTTP(w, r)
-	})
 }
 
 func WhenUserType(allowedUserType string) Middleware {
@@ -217,4 +202,39 @@ func HTTPMethod(method string) Middleware {
 			next.ServeHTTP(w, r)
 		})
 	}
+}
+
+func WithUINT(param string) Middleware {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			vars := mux.Vars(r)
+			if vars[param] == "" {
+				respond.With(w, r, http.StatusBadRequest, fmt.Errorf("%s not provided", param))
+				return
+			}
+			value, err := strconv.ParseUint(vars[param], 10, 32)
+			if err != nil {
+				respond.With(w, r, http.StatusBadRequest, err)
+				return
+			}
+			context.Set(r, param, uint(value))
+			next.ServeHTTP(w, r)
+		})
+	}
+}
+
+func getUserFomClaims(claims map[string]interface{}) (*models.User, error) {
+	user := &models.User{}
+	userMap, ok := claims["user"].(map[string]interface{})
+	if !ok {
+		return user, errors.New("valid user is missing from token")
+	}
+	user.ID = uint(userMap["id"].(float64))
+	user.Email = userMap["email"].(string)
+	user.FirstName = userMap["firstName"].(string)
+	user.LastName = userMap["lastName"].(string)
+	user.Image = userMap["image"].(string)
+	user.Type = claims["userType"].(string)
+
+	return user, nil
 }
