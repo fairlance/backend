@@ -46,9 +46,6 @@ func addJob() http.Handler {
 		job := context.Get(r, "job").(*Job)
 		user := context.Get(r, "user").(*models.User)
 		job.ClientID = user.ID
-		if job.StartDate.IsZero() {
-			job.StartDate = time.Now()
-		}
 		if job.Deadline.IsZero() {
 			job.Deadline = time.Now()
 		}
@@ -98,27 +95,62 @@ func getJob() http.Handler {
 
 func withJobFromRequest(handler http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		user := context.Get(r, "user").(*models.User)
 		decoder := json.NewDecoder(r.Body)
 		defer r.Body.Close()
-
-		var job Job
-		if err := decoder.Decode(&job); err != nil {
+		var newJob struct {
+			Name                string     `json:"name" valid:"required"`
+			Details             string     `json:"details" valid:"required"`
+			Summary             string     `json:"summary" valid:"required"`
+			PriceFrom           int        `json:"priceFrom" valid:"required"`
+			PriceTo             int        `json:"priceTo" valid:"required"`
+			Tags                stringList `json:"tags" valid:"required"`
+			Deadline            string     `json:"deadline" valid:"required"`
+			DeadlineFlexibility int        `json:"flexibility" valid:"required"`
+			Attachments         []File     `json:"attachments"`
+			Examples            []File     `json:"examples"`
+		}
+		if err := decoder.Decode(&newJob); err != nil {
+			log.Printf("could not decode job: %v", err)
 			respond.With(w, r, http.StatusBadRequest, err)
 			return
 		}
-
-		if len(job.Tags) > 10 {
+		if len(newJob.Tags) > 10 {
+			log.Printf("could not create job: too many tags")
 			respond.With(w, r, http.StatusBadRequest, errors.New("max of 10 tags are allowed"))
 			return
 		}
-
-		if ok, err := govalidator.ValidateStruct(job); ok == false || err != nil {
+		if ok, err := govalidator.ValidateStruct(newJob); ok == false || err != nil {
+			log.Printf("could not create job: job not valid")
 			respond.With(w, r, http.StatusBadRequest, models.GovalidatorErrors{Err: err})
 			return
 		}
-
-		context.Set(r, "job", &job)
-
+		if newJob.PriceFrom > newJob.PriceTo {
+			log.Printf("could not create job: priceFrom must be larger that priceTo")
+			respond.With(w, r, http.StatusBadRequest, errors.New("priceFrom must be larger that priceTo"))
+			return
+		}
+		deadlilne, err := time.Parse(time.RFC3339, newJob.Deadline)
+		if err != nil {
+			err := fmt.Errorf("could not parse deadline")
+			log.Printf("could not create job: %v", err)
+			respond.With(w, r, http.StatusBadRequest, err)
+			return
+		}
+		job := &Job{
+			Name:                newJob.Name,
+			Summary:             newJob.Summary,
+			PriceFrom:           newJob.PriceFrom,
+			PriceTo:             newJob.PriceTo,
+			Tags:                newJob.Tags,
+			Details:             newJob.Details,
+			ClientID:            user.ID,
+			Deadline:            deadlilne,
+			DeadlineFlexibility: newJob.DeadlineFlexibility,
+			Attachments:         newJob.Attachments,
+			Examples:            newJob.Examples,
+		}
+		context.Set(r, "job", job)
 		handler.ServeHTTP(w, r)
 	})
 }

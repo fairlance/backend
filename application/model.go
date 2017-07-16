@@ -226,18 +226,19 @@ type Extension struct {
 
 type Job struct {
 	Model
-	Name            string           `json:"name"`
-	Summary         string           `json:"summary"`
-	Details         string           `json:"details"`
-	ClientID        uint             `json:"-"`
-	Client          *Client          `json:"client,omitempty"`
-	Price           int              `json:"price"`
-	StartDate       time.Time        `json:"startDate"`
-	Deadline        time.Time        `json:"deadline"`
-	Tags            stringList       `json:"tags" sql:"type:JSONB NOT NULL DEFAULT '{}'::JSONB"`
-	JobApplications []JobApplication `json:"jobApplications"`
-	Attachments     []File           `json:"attachments" gorm:"polymorphic:Owner;"`
-	Examples        []File           `json:"examples" gorm:"polymorphic:Owner;"`
+	Name                string           `json:"name"`
+	Summary             string           `json:"summary"`
+	PriceFrom           int              `json:"priceFrom"`
+	PriceTo             int              `json:"priceTo"`
+	Tags                stringList       `json:"tags" sql:"type:JSONB NOT NULL DEFAULT '{}'::JSONB"`
+	Details             string           `json:"details"`
+	ClientID            uint             `json:"-"`
+	Client              *Client          `json:"client,omitempty"`
+	Deadline            time.Time        `json:"deadline"`
+	DeadlineFlexibility int              `json:"flexibility"`
+	JobApplications     []JobApplication `json:"jobApplications"`
+	Attachments         []File           `json:"attachments" gorm:"polymorphic:Owner;"`
+	Examples            []File           `json:"examples" gorm:"polymorphic:Owner;"`
 }
 
 // BeforeSave updates file types before saving

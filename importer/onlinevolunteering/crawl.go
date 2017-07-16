@@ -50,11 +50,12 @@ func GetJobs() []application.Job {
 		}
 
 		job := application.Job{
-			Name:    title,
-			Summary: category + ", " + time + " hour/week",
-			Details: body,
-			Price:   0,
-			Tags:    tags,
+			Name:      title,
+			Summary:   category + ", " + time + " hour/week",
+			Details:   body,
+			PriceFrom: 0,
+			PriceTo:   0,
+			Tags:      tags,
 			Attachments: []application.File{
 				{
 					Name: linkText,

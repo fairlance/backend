@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/fairlance/backend/dispatcher"
 	"github.com/fairlance/backend/models"
@@ -27,11 +28,12 @@ func TestJobIndexJob(t *testing.T) {
 				Model: Model{
 					ID: 1,
 				},
-				Name:     "Name1",
-				Summary:  "Summary1",
-				Details:  "Details1",
-				ClientID: 1,
-				Price:    100,
+				Name:      "Name1",
+				Summary:   "Summary1",
+				Details:   "Details1",
+				ClientID:  1,
+				PriceFrom: 100,
+				PriceTo:   150,
 				Examples: []File{
 					{
 						Name: "example",
@@ -64,7 +66,8 @@ func TestJobIndexJob(t *testing.T) {
 	is.Equal(body[0].Name, "Name1")
 	is.Equal(body[0].Summary, "Summary1")
 	is.Equal(body[0].Details, "Details1")
-	is.Equal(body[0].Price, 100)
+	is.Equal(body[0].PriceFrom, 100)
+	is.Equal(body[0].PriceTo, 150)
 	is.Equal(len(body[0].Examples), 1)
 	is.Equal(body[0].Examples[0].Name, "example")
 	is.Equal(body[0].Examples[0].URL, "www.example.com")
@@ -129,11 +132,12 @@ func TestJobAddJob(t *testing.T) {
 		},
 	}
 	job := &Job{
-		Name:     "Name1",
-		Summary:  "Summary1",
-		Details:  "Details1",
-		ClientID: 1,
-		Price:    100,
+		Name:      "Name1",
+		Summary:   "Summary1",
+		Details:   "Details1",
+		ClientID:  1,
+		PriceFrom: 100,
+		PriceTo:   150,
 		Examples: []File{
 			{
 				Name: "example",
@@ -164,7 +168,8 @@ func TestJobAddJob(t *testing.T) {
 	is.Equal(jobRepositoryMock.AddJobCall.Receives.Job.Summary, "Summary1")
 	is.Equal(jobRepositoryMock.AddJobCall.Receives.Job.Details, "Details1")
 	is.Equal(jobRepositoryMock.AddJobCall.Receives.Job.ClientID, 1)
-	is.Equal(jobRepositoryMock.AddJobCall.Receives.Job.Price, 100)
+	is.Equal(jobRepositoryMock.AddJobCall.Receives.Job.PriceFrom, 100)
+	is.Equal(jobRepositoryMock.AddJobCall.Receives.Job.PriceTo, 150)
 	is.Equal(len(jobRepositoryMock.AddJobCall.Receives.Job.Examples), 1)
 	is.Equal(jobRepositoryMock.AddJobCall.Receives.Job.Examples[0].Name, "example")
 	is.Equal(jobRepositoryMock.AddJobCall.Receives.Job.Examples[0].URL, "www.example.com")
@@ -224,11 +229,12 @@ func TestJobGetJobForClient(t *testing.T) {
 		Model: Model{
 			ID: 123456789,
 		},
-		Name:     "Name1",
-		Summary:  "Summary1",
-		Details:  "Details1",
-		ClientID: 1,
-		Price:    100,
+		Name:      "Name1",
+		Summary:   "Summary1",
+		Details:   "Details1",
+		ClientID:  1,
+		PriceFrom: 100,
+		PriceTo:   150,
 	}
 	var jobContext = &ApplicationContext{
 		JobRepository: &jobRepositoryMock,
@@ -251,7 +257,8 @@ func TestJobGetJobForClient(t *testing.T) {
 	is.Equal(body.Name, "Name1")
 	is.Equal(body.Summary, "Summary1")
 	is.Equal(body.Details, "Details1")
-	is.Equal(body.Price, 100)
+	is.Equal(body.PriceFrom, 100)
+	is.Equal(body.PriceTo, 150)
 }
 
 func TestJobGetJobForFreelancer(t *testing.T) {
@@ -260,11 +267,12 @@ func TestJobGetJobForFreelancer(t *testing.T) {
 		Model: Model{
 			ID: 123456789,
 		},
-		Name:     "Name1",
-		Summary:  "Summary1",
-		Details:  "Details1",
-		ClientID: 1,
-		Price:    100,
+		Name:      "Name1",
+		Summary:   "Summary1",
+		Details:   "Details1",
+		ClientID:  1,
+		PriceFrom: 100,
+		PriceTo:   150,
 	}
 	var jobContext = &ApplicationContext{
 		JobRepository: &jobRepositoryMock,
@@ -287,7 +295,8 @@ func TestJobGetJobForFreelancer(t *testing.T) {
 	is.Equal(body.Name, "Name1")
 	is.Equal(body.Summary, "Summary1")
 	is.Equal(body.Details, "Details1")
-	is.Equal(body.Price, 100)
+	is.Equal(body.PriceFrom, 100)
+	is.Equal(body.PriceTo, 150)
 }
 
 func TestJobGetJobByIDError(t *testing.T) {
@@ -405,12 +414,17 @@ func TestJobWithJob(t *testing.T) {
 		"name": "Name1",
 		"details": "Details1",
 		"summary": "Summary1",
+		"priceFrom": 12,
+		"priceTo": 15,
+		"deadline": "2017-07-27T00:00:00.000Z",
+		"flexibility": 2,
 		"examples": [
 			{"name": "example", "url": "www.example.com"}
 		],
 		"attachments": [
 			{"name": "attachment", "url": "www.attachment.com"}
-		]
+		],
+		"tags": ["one", "two"]
 	}`
 	r := getRequest(jobContext, requestBody)
 
@@ -418,20 +432,31 @@ func TestJobWithJob(t *testing.T) {
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		nextCalled = true
 	})
+	context.Set(r, "user", &models.User{ID: 1})
 	withJobFromRequest(handler).ServeHTTP(w, r)
-
 	is.Equal(w.Code, http.StatusOK)
 	is.Equal(nextCalled, true)
 	job := context.Get(r, "job").(*Job)
+	is.Equal(job.ClientID, 1)
 	is.Equal(job.Name, "Name1")
 	is.Equal(job.Details, "Details1")
 	is.Equal(job.Summary, "Summary1")
+	is.Equal(job.PriceFrom, 12)
+	is.Equal(job.PriceTo, 15)
+	deadline, err := time.Parse(time.RFC3339, "2017-07-27T00:00:00.000Z")
+	if err != nil {
+		t.Fatal(err)
+	}
+	is.Equal(job.Deadline, deadline)
+	is.Equal(job.DeadlineFlexibility, 2)
 	is.Equal(len(job.Examples), 1)
 	is.Equal(job.Examples[0].Name, "example")
 	is.Equal(job.Examples[0].URL, "www.example.com")
 	is.Equal(len(job.Attachments), 1)
 	is.Equal(job.Attachments[0].Name, "attachment")
 	is.Equal(job.Attachments[0].URL, "www.attachment.com")
+	is.Equal(job.Tags[0], "one")
+	is.Equal(job.Tags[1], "two")
 }
 
 // func TestJobWithJobError(t *testing.T) {
@@ -471,6 +496,7 @@ func TestJobWithJobErrorBadTooManyTags(t *testing.T) {
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		t.Error("Should not be called")
 	})
+	context.Set(r, "user", &models.User{ID: 1})
 	withJobFromRequest(handler).ServeHTTP(w, r)
 
 	is.Equal(w.Code, http.StatusBadRequest)
@@ -486,6 +512,7 @@ func TestJobWithJobErrorBadJSON(t *testing.T) {
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		t.Error("Should not be called")
 	})
+	context.Set(r, "user", &models.User{ID: 1})
 	withJobFromRequest(handler).ServeHTTP(w, r)
 
 	is.Equal(w.Code, http.StatusBadRequest)

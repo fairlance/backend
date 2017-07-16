@@ -22,7 +22,6 @@ func reGenerateTestData(db gorm.DB, selectedType string) error {
 		for i := 0; i < len(jobs); i++ {
 			job := &jobs[i]
 			job.ClientID = 1
-			job.StartDate = time.Now().Add(time.Duration(i*24+1) * time.Hour)
 			job.Deadline = time.Now().Add(time.Duration(i*24*i+1) * time.Hour)
 			if err := db.Create(job).Error; err != nil {
 				return err
@@ -147,8 +146,10 @@ func getDocFromDB(db gorm.DB, docType, docID string) (map[string]interface{}, er
 		docMap["CreatedAt"] = entity.CreatedAt
 		docMap["UpdatedAt"] = entity.UpdatedAt
 		docMap["Details"] = entity.Details
-		docMap["Price"] = entity.Price
-		docMap["StartDate"] = entity.StartDate
+		docMap["PriceFrom"] = entity.PriceFrom
+		docMap["PriceTo"] = entity.PriceTo
+		docMap["Deadline"] = entity.Deadline
+		docMap["DeadlineFlexibility"] = entity.DeadlineFlexibility
 		docMap["Tags"] = entity.Tags
 		docMap["Summary"] = entity.Summary
 		docMap["Number of applications"] = len(entity.JobApplications)
