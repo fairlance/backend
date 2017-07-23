@@ -1,7 +1,6 @@
 package main
 
 import (
-	"flag"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -16,38 +15,27 @@ import (
 	_ "github.com/blevesearch/bleve/config"
 )
 
-var port = flag.String("port", "3003", "http listen address")
-var dataDir = flag.String("dataDir", "/tmp/indices", "data directory")
-
-func init() {
-	// f, err := os.OpenFile("/var/log/fairlance/searcher.log", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
-	// if err != nil {
-	// 	log.Fatalf("error opening file: %v", err)
-	// }
-	// log.SetOutput(f)
-
-	if err := os.MkdirAll(*dataDir, 0755); err != nil {
+func main() {
+	log.SetFlags(log.Lshortfile)
+	port := os.Getenv("PORT")
+	dataDir := os.Getenv("DATA_DIR")
+	if err := os.MkdirAll(dataDir, 0755); err != nil {
 		log.Fatalf("error creating data dir: %v", err)
 	}
-	if err := initIndex("jobs"); err != nil {
+	if err := initIndex(dataDir, "jobs"); err != nil {
 		log.Fatalf("error initializing index: %v", err)
 	}
-	if err := initIndex("freelancers"); err != nil {
+	if err := initIndex(dataDir, "freelancers"); err != nil {
 		log.Fatalf("error initializing index: %v", err)
 	}
-}
-
-func main() {
-	flag.Parse()
-
 	// walk the data dir and register index names
-	dirEntries, err := ioutil.ReadDir(*dataDir)
+	dirEntries, err := ioutil.ReadDir(dataDir)
 	if err != nil {
 		log.Fatalf("error reading data dir: %v", err)
 	}
 
 	for _, dirInfo := range dirEntries {
-		indexPath := *dataDir + string(os.PathSeparator) + dirInfo.Name()
+		indexPath := dataDir + string(os.PathSeparator) + dirInfo.Name()
 
 		// skip single files in data dir since a valid index is a directory that
 		// contains multiple files
@@ -70,7 +58,7 @@ func main() {
 	router := mux.NewRouter()
 	router.StrictSlash(true)
 
-	createIndexHandler := bleveHttp.NewCreateIndexHandler(*dataDir)
+	createIndexHandler := bleveHttp.NewCreateIndexHandler(dataDir)
 	createIndexHandler.IndexNameLookup = indexNameLookup
 	router.Handle("/api/{indexName}", createIndexHandler).Methods("PUT")
 
@@ -78,7 +66,7 @@ func main() {
 	getIndexHandler.IndexNameLookup = indexNameLookup
 	router.Handle("/api/{indexName}", getIndexHandler).Methods("GET")
 
-	deleteIndexHandler := bleveHttp.NewDeleteIndexHandler(*dataDir)
+	deleteIndexHandler := bleveHttp.NewDeleteIndexHandler(dataDir)
 	deleteIndexHandler.IndexNameLookup = indexNameLookup
 	router.Handle("/api/{indexName}", deleteIndexHandler).Methods("DELETE")
 
@@ -121,13 +109,13 @@ func main() {
 	router.Handle("/api/_aliases", aliasHandler).Methods("POST")
 
 	// start the HTTP server
-	log.Printf("listening on :%s", *port)
+	log.Printf("listening on :%s", port)
 	http.Handle("/", router)
-	log.Fatal(http.ListenAndServe(":"+*port, nil))
+	log.Fatal(http.ListenAndServe(":"+port, nil))
 }
 
-func initIndex(name string) error {
-	indexPath := *dataDir + string(os.PathSeparator) + name
+func initIndex(dataDir, name string) error {
+	indexPath := dataDir + string(os.PathSeparator) + name
 	if _, err := os.Stat(indexPath); os.IsNotExist(err) {
 		log.Printf("%s does not exist. Creating...", name)
 		index, err := bleve.New(indexPath, bleve.NewIndexMapping())

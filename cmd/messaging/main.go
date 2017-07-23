@@ -12,6 +12,7 @@ import (
 )
 
 func main() {
+	log.SetFlags(log.Lshortfile)
 	var port = os.Getenv("PORT")
 	var secret = os.Getenv("SECRET")
 	var mongoHost = os.Getenv("MONGO_HOST")

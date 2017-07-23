@@ -1,7 +1,6 @@
 package application
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/fairlance/backend/dispatcher"
@@ -24,7 +23,7 @@ func (m *MessagingDispatcher) send(projectID uint, data map[string]interface{}) 
 			Username: "system",
 		},
 		Data:      data,
-		ProjectID: fmt.Sprint(projectID),
+		ProjectID: projectID,
 		Timestamp: timeToMillis(time.Now()),
 	}
 	return m.messaging.Send(message)

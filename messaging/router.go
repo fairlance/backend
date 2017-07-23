@@ -2,7 +2,10 @@ package messaging
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
+
+	"fmt"
 
 	"github.com/fairlance/backend/middleware"
 	"github.com/gorilla/mux"
@@ -31,6 +34,7 @@ func privateSend(hub *Hub) http.Handler {
 		projectID := mux.Vars(r)["projectID"]
 		var message Message
 		if err := json.NewDecoder(r.Body).Decode(&message); err != nil {
+			log.Println(fmt.Sprintf("could not read message: %v", err))
 			w.WriteHeader(http.StatusBadRequest)
 			w.Write([]byte("could not reade message from body"))
 			return

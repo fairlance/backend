@@ -4,11 +4,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"flag"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"strconv"
 	"time"
 
@@ -21,33 +21,22 @@ import (
 	"github.com/blevesearch/bleve/search/query"
 )
 
-var (
-	port           int
-	searcherURL    string
-	respondOptions *respond.Options
-)
-
-func init() {
-	// f, err := os.OpenFile("/var/log/fairlance/search.log", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
-	// if err != nil {
-	// 	log.Fatalf("error opening file: %v", err)
-	// }
-	// log.SetOutput(f)
-}
-
 func main() {
-	flag.IntVar(&port, "port", 3002, "Port.")
-	flag.StringVar(&searcherURL, "searcherURL", "http://localhost:3003", "Url of the searcher.")
-	flag.Parse()
-	http.Handle("/job", middleware.CORSHandler(middleware.JSONEnvelope(jobs())))
-	http.Handle("/job/tags", middleware.CORSHandler(middleware.JSONEnvelope(jobTags())))
-	http.Handle("/freelancer", middleware.CORSHandler(middleware.JSONEnvelope(freelancers())))
-
-	log.Printf("Listening on: %d", port)
-	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), nil))
+	log.SetFlags(log.Lshortfile)
+	var port = os.Getenv("PORT")
+	var searcherURL = os.Getenv("SEARCHER_URL")
+	corsJSON := middleware.Chain(
+		middleware.CORSHandler,
+		middleware.JSONEnvelope,
+	)
+	http.Handle("/job", corsJSON(jobs(searcherURL)))
+	http.Handle("/job/tags", corsJSON(jobTags(searcherURL)))
+	http.Handle("/freelancer", corsJSON(freelancers(searcherURL)))
+	log.Printf("Listening on: %s", port)
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%s", port), nil))
 }
 
-func jobs() http.Handler {
+func jobs(searcherURL string) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		searchRequest, err := getJobSearchRequest(r)
 		if err != nil {
@@ -55,7 +44,7 @@ func jobs() http.Handler {
 			return
 		}
 
-		jobsSearchResults, err := doRequest("jobs", searchRequest)
+		jobsSearchResults, err := doRequest(searcherURL, "jobs", searchRequest)
 		if err != nil {
 			respond.With(w, r, http.StatusBadGateway, err)
 			return
@@ -76,7 +65,7 @@ func jobs() http.Handler {
 	})
 }
 
-func jobTags() http.Handler {
+func jobTags(searcherURL string) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
 		query := bleve.NewMatchAllQuery()
@@ -87,7 +76,7 @@ func jobTags() http.Handler {
 		tagsFacet := bleve.NewFacetRequest("tags", 99999)
 		searchRequest.AddFacet("tags", tagsFacet)
 
-		jobsSearchResults, err := doRequest("jobs", searchRequest)
+		jobsSearchResults, err := doRequest(searcherURL, "jobs", searchRequest)
 		if err != nil {
 			respond.With(w, r, http.StatusInternalServerError, err)
 			return
@@ -108,13 +97,13 @@ func jobTags() http.Handler {
 	})
 }
 
-func freelancers() http.Handler {
+func freelancers(searcherURL string) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
 		searchRequest := bleve.NewSearchRequest(bleve.NewMatchAllQuery())
 		searchRequest.Fields = []string{"*"}
 
-		freelnacersSearchResults, err := doRequest("freelancers", searchRequest)
+		freelnacersSearchResults, err := doRequest(searcherURL, "freelancers", searchRequest)
 		if err != nil {
 			respond.With(w, r, http.StatusInternalServerError, err)
 			return
@@ -224,7 +213,7 @@ func getJobSearchRequest(r *http.Request) (*bleve.SearchRequest, error) {
 	return searchRequest, nil
 }
 
-func doRequest(index string, searchRequest *bleve.SearchRequest) (bleve.SearchResult, error) {
+func doRequest(searcherURL, index string, searchRequest *bleve.SearchRequest) (bleve.SearchResult, error) {
 	var jobsSearchResults bleve.SearchResult
 	jsonBytes, err := json.Marshal(searchRequest)
 	if err != nil {

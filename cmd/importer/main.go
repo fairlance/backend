@@ -12,24 +12,17 @@ import (
 
 // Indexed 50000 documents, in 6334.31s (average 126.69ms/doc)
 func main() {
+	log.SetFlags(log.Lshortfile)
 	var port = os.Getenv("PORT")
-	var dbHost = os.Getenv("DB_HOST")
-	var dbName = os.Getenv("DB_NAME")
-	var dbUser = os.Getenv("DB_USER")
-	var dbPass = os.Getenv("DB_PASS")
-	var searcherURL = os.Getenv("SEARCHER_URL")
-	var applicationURL = os.Getenv("APPLICATION_URL")
-
 	// start the HTTP server
 	http.Handle("/", importer.NewServeMux(importer.Options{
-		DBHost:         dbHost,
-		DBName:         dbName,
-		DBUser:         dbUser,
-		DBPass:         dbPass,
-		SearcherURL:    searcherURL,
-		ApplicationURL: applicationURL,
+		DBHost:         os.Getenv("DB_HOST"),
+		DBName:         os.Getenv("DB_NAME"),
+		DBUser:         os.Getenv("DB_USER"),
+		DBPass:         os.Getenv("DB_PASS"),
+		SearcherURL:    os.Getenv("SEARCHER_URL"),
+		ApplicationURL: os.Getenv("APPLICATION_URL"),
 	}))
-
 	log.Printf("Listening on: %s", port)
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%s", port), nil))
 }

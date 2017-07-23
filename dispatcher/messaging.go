@@ -24,7 +24,7 @@ type Message struct {
 	Data      map[string]interface{} `json:"data,omitempty"`
 	Timestamp int64                  `json:"timestamp,omitempty"`
 	Read      bool                   `json:"read"`
-	ProjectID string                 `json:"projectId" bson:"projectId"`
+	ProjectID uint                   `json:"projectId" bson:"projectId"`
 }
 
 type httpMessaging struct {
@@ -42,7 +42,7 @@ func NewMessaging(messagingURL string) Messaging {
 }
 
 func (m *httpMessaging) Send(msg *Message) error {
-	url := fmt.Sprintf("%s/private/%s/send", m.url, msg.ProjectID)
+	url := fmt.Sprintf("%s/private/%d/send", m.url, msg.ProjectID)
 	b, err := json.Marshal(msg)
 	if err != nil {
 		log.Printf("could not mashall msg: %v", err)

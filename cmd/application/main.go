@@ -12,10 +12,8 @@ import (
 )
 
 func main() {
+	log.SetFlags(log.Lshortfile)
 	var port = os.Getenv("PORT")
-	if port == "" {
-		log.Fatal("PORT is missing")
-	}
 	options := application.ContextOptions{
 		DbHost:          os.Getenv("DB_HOST"),
 		DbName:          os.Getenv("DB_NAME"),

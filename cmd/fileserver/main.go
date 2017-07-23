@@ -12,36 +12,31 @@ import (
 	respond "gopkg.in/matryer/respond.v1"
 )
 
-const folderPath = "/tmp/files"
-
 func main() {
+	log.SetFlags(log.Lshortfile)
 	port := os.Getenv("PORT")
 	secret := os.Getenv("SECRET")
-
-	err := os.MkdirAll(folderPath, 0755)
-	if err != nil {
+	dataDir := os.Getenv("DATA_DIR")
+	if err := os.MkdirAll(dataDir, 0755); err != nil {
 		log.Fatalf("error creating folder: %v", err)
 	}
-
 	http.Handle("/file/", middleware.Chain(
 		middleware.CORSHandler,
 		middleware.JSONEnvelope,
 		middleware.HTTPMethod("GET"),
-	)(http.StripPrefix("/file/", http.FileServer(http.Dir(folderPath)))))
-
+	)(http.StripPrefix("/file/", http.FileServer(http.Dir(dataDir)))))
 	http.Handle("/upload", middleware.Chain(
 		middleware.CORSHandler,
 		middleware.JSONEnvelope,
 		middleware.WithTokenFromHeader,
 		middleware.AuthenticateTokenWithUser(secret),
 		middleware.HTTPMethod("POST"),
-	)(upload()))
-
+	)(upload(dataDir)))
 	log.Printf("Listening on: %s", port)
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%s", port), nil))
 }
 
-func upload() http.Handler {
+func upload(dataDir string) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != "POST" {
 			respond.With(w, r, http.StatusMethodNotAllowed, errors.New("bad method, only POST is allowed"))
@@ -81,7 +76,7 @@ func upload() http.Handler {
 			return
 		}
 
-		f, err := os.Create(folderPath + "/" + header.Filename)
+		f, err := os.Create(dataDir + "/" + header.Filename)
 		if err != nil {
 			log.Println(err)
 			respond.With(w, r, http.StatusInternalServerError, err)
