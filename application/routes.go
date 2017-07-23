@@ -306,7 +306,7 @@ var routes = Routes{
 		)(getJob()),
 	},
 	Route{
-		"ApplyForJob", // todo: prevent freelancers to apply twice
+		"ApplyForJob",
 		"PUT",
 		"/job/{id}/apply",
 		middleware.Chain(
@@ -315,7 +315,7 @@ var routes = Routes{
 			whenFreelancerProfileCompleted,
 			middleware.WithUINT("id"),
 			whenFreelancerHasNotAppliedBeforeByID,
-			withClientFromJobID,
+			withClientFromJobByID,
 			withJobApplicationFromRequest,
 		)(addJobApplication()),
 	},
