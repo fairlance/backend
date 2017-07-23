@@ -340,7 +340,7 @@ func TestJobHandleApplyForJob(t *testing.T) {
 	jobRepositoryMock := JobRepositoryMock{}
 	jobApplication := &JobApplication{
 		JobID:       1,
-		Message:     "message",
+		Title:       "title",
 		HourPrice:   1.1,
 		Hours:       1,
 		Examples:    []File{{Name: "example", URL: "www.example.com"}},
@@ -374,7 +374,7 @@ func TestJobHandleApplyForJob(t *testing.T) {
 	is.Equal(w.Code, http.StatusOK)
 	is.Equal(jobRepositoryMock.AddJobApplicationCall.Receives.JobApplication.JobID, 1)
 	is.Equal(jobRepositoryMock.AddJobApplicationCall.Receives.JobApplication.FreelancerID, 1)
-	is.Equal(jobRepositoryMock.AddJobApplicationCall.Receives.JobApplication.Message, "message")
+	is.Equal(jobRepositoryMock.AddJobApplicationCall.Receives.JobApplication.Title, "title")
 	is.Equal(jobRepositoryMock.AddJobApplicationCall.Receives.JobApplication.HourPrice, 1.1)
 	is.Equal(jobRepositoryMock.AddJobApplicationCall.Receives.JobApplication.Hours, 1)
 	is.Equal(len(jobRepositoryMock.AddJobApplicationCall.Receives.JobApplication.Examples), 1)
@@ -523,16 +523,17 @@ func TestJobWithJobApplication(t *testing.T) {
 	is := isHelper.New(t)
 	w := httptest.NewRecorder()
 	requestBody := `{
-		"message":"message",
-		"milestones": ["one", "two"],
-		"freelancerId": 1,
-		"hours": 1,
+		"summary": "summary",
+		"solution": "solution",
+		"deadline": "2017-07-27T00:00:00.000Z",
+		"title":"title",
+		"hours": 12,
 		"hourPrice": 1.1,
-		"examples": [
-			{"name": "example", "url": "www.example.com"}
-		],
 		"attachments": [
 			{"name": "attachment", "url": "www.attachment.com"}
+		],
+		"examples": [
+			{"name": "example", "url": "www.example.com"}
 		]
 	}`
 	r := getRequest(jobContext, requestBody)
@@ -541,15 +542,26 @@ func TestJobWithJobApplication(t *testing.T) {
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		nextCalled = true
 	})
-
+	var jobID uint = 1
+	var userID uint = 11
+	context.Set(r, "id", jobID)
+	context.Set(r, "user", &models.User{ID: userID})
 	withJobApplicationFromRequest(handler).ServeHTTP(w, r)
 
 	is.Equal(w.Code, http.StatusOK)
 	is.Equal(nextCalled, true)
 	jobApplication := context.Get(r, "jobApplication").(*JobApplication)
-	is.Equal(jobApplication.Message, "message")
-	is.Equal(jobApplication.FreelancerID, 0) // ignore provided id
-	is.Equal(jobApplication.Hours, 1)
+	is.Equal(jobApplication.Summary, "summary")
+	is.Equal(jobApplication.Solution, "solution")
+	is.Equal(jobApplication.Title, "title")
+	deadline, err := time.Parse(time.RFC3339, "2017-07-27T00:00:00.000Z")
+	if err != nil {
+		t.Fatal(err)
+	}
+	is.Equal(jobApplication.Deadline, deadline)
+	is.Equal(jobApplication.FreelancerID, userID)
+	is.Equal(jobApplication.JobID, jobID)
+	is.Equal(jobApplication.Hours, 12)
 	is.Equal(jobApplication.HourPrice, 1.1)
 	is.Equal(len(jobApplication.Examples), 1)
 	is.Equal(jobApplication.Examples[0].Name, "example")
@@ -592,6 +604,8 @@ func TestJobWithJobApplicationErrorBadJSON(t *testing.T) {
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		t.Error("Should not be called")
 	})
+	context.Set(r, "id", uint(1))
+	context.Set(r, "user", &models.User{ID: uint(1)})
 	withJobApplicationFromRequest(handler).ServeHTTP(w, r)
 
 	is.Equal(w.Code, http.StatusBadRequest)

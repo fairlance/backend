@@ -177,23 +177,48 @@ func whenFreelancerHasNotAppliedBeforeByID(next http.Handler) http.Handler {
 
 func withJobApplicationFromRequest(handler http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var jobID = context.Get(r, "id").(uint)
+		var user = context.Get(r, "user").(*models.User)
 		decoder := json.NewDecoder(r.Body)
 		defer r.Body.Close()
-
-		var jobApplication JobApplication
-
-		if err := decoder.Decode(&jobApplication); err != nil {
+		var newJobApplication struct {
+			Summary     string  `json:"summary" valid:"required"`
+			Solution    string  `json:"solution" valid:"required"`
+			Deadline    string  `json:"deadline" valid:"required"`
+			Title       string  `json:"title" valid:"required"`
+			Hours       int     `json:"hours" valid:"required"`
+			HourPrice   float64 `json:"hourPrice" valid:"required"`
+			Attachments []File  `json:"attachments"`
+			Examples    []File  `json:"examples"`
+		}
+		if err := decoder.Decode(&newJobApplication); err != nil {
 			respond.With(w, r, http.StatusBadRequest, err)
 			return
 		}
-
-		if ok, err := govalidator.ValidateStruct(jobApplication); ok == false || err != nil {
+		if ok, err := govalidator.ValidateStruct(newJobApplication); ok == false || err != nil {
 			respond.With(w, r, http.StatusBadRequest, models.GovalidatorErrors{Err: err})
 			return
 		}
-
+		deadlilne, err := time.Parse(time.RFC3339, newJobApplication.Deadline)
+		if err != nil {
+			err := fmt.Errorf("could not parse deadline")
+			log.Printf("could not create job: %v", err)
+			respond.With(w, r, http.StatusBadRequest, err)
+			return
+		}
+		jobApplication := JobApplication{
+			Summary:      newJobApplication.Summary,
+			Solution:     newJobApplication.Solution,
+			Title:        newJobApplication.Title,
+			Deadline:     deadlilne,
+			FreelancerID: user.ID,
+			Hours:        newJobApplication.Hours,
+			HourPrice:    newJobApplication.HourPrice,
+			Attachments:  newJobApplication.Attachments,
+			Examples:     newJobApplication.Examples,
+			JobID:        jobID,
+		}
 		context.Set(r, "jobApplication", &jobApplication)
-
 		handler.ServeHTTP(w, r)
 	})
 }

@@ -197,7 +197,7 @@ func (ac *ApplicationContext) FillTables() {
 	}).Association("Freelancers").Append([]Freelancer{*f2})
 
 	jobApplication := ac.db.Create(&JobApplication{
-		Message:      "I apply",
+		Title:        "I apply",
 		JobID:        1,
 		FreelancerID: 1,
 		HourPrice:    9.5,
