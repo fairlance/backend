@@ -17,6 +17,7 @@ import (
 	"strings"
 
 	isHelper "github.com/cheekybits/is"
+	"github.com/fairlance/backend/middleware"
 	"github.com/gorilla/context"
 )
 
@@ -459,26 +460,32 @@ func TestJobWithJob(t *testing.T) {
 	is.Equal(job.Tags[1], "two")
 }
 
-// func TestJobWithJobError(t *testing.T) {
-// 	var jobContext = &ApplicationContext{}
-// 	is := isHelper.New(t)
-// 	w := httptest.NewRecorder()
-// 	requestBody := `{}`
-// 	r := getRequest(jobContext, requestBody)
+func TestJobWithJobError(t *testing.T) {
+	var jobContext = &ApplicationContext{}
+	is := isHelper.New(t)
+	w := httptest.NewRecorder()
+	requestBody := `{}`
+	r := getRequest(jobContext, requestBody)
 
-// 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-// 		t.Error("Should not be called")
-// 	})
-// 	withJob(handler).ServeHTTP(w, r)
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		t.Error("Should not be called")
+	})
+	context.Set(r, "user", &models.User{ID: 1})
+	middleware.JSONEnvelope(withJobFromRequest(handler)).ServeHTTP(w, r)
 
-// 	is.Equal(w.Code, http.StatusBadRequest)
-// 	var body map[string]string
-// 	is.NoErr(json.Unmarshal(w.Body.Bytes(), &body))
-// 	is.Equal(len(body), 4)
-// 	is.Equal(body["details"], "non zero value required")
-// 	is.Equal(body["name"], "non zero value required")
-// 	is.Equal(body["summary"], "non zero value required")
-// }
+	is.Equal(w.Code, http.StatusBadRequest)
+	var body map[string]interface{}
+	is.NoErr(json.Unmarshal(w.Body.Bytes(), &body))
+	data := body["data"].(map[string]interface{})
+	is.Equal(len(data), 7)
+	is.Equal(data["summary"], "non zero value required")
+	is.Equal(data["tags"], "non zero value required")
+	is.Equal(data["deadline"], "non zero value required")
+	is.Equal(data["details"], "non zero value required")
+	is.Equal(data["name"], "non zero value required")
+	is.Equal(data["priceFrom"], "non zero value required")
+	is.Equal(data["priceTo"], "non zero value required")
+}
 
 func TestJobWithJobErrorBadTooManyTags(t *testing.T) {
 	var jobContext = &ApplicationContext{}

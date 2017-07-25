@@ -106,7 +106,7 @@ func withJobFromRequest(handler http.Handler) http.Handler {
 			PriceTo             int        `json:"priceTo" valid:"required"`
 			Tags                stringList `json:"tags" valid:"required"`
 			Deadline            string     `json:"deadline" valid:"required"`
-			DeadlineFlexibility int        `json:"flexibility" valid:"required"`
+			DeadlineFlexibility int        `json:"flexibility"`
 			Attachments         []File     `json:"attachments"`
 			Examples            []File     `json:"examples"`
 		}
