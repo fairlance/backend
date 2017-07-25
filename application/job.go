@@ -182,14 +182,15 @@ func withJobApplicationFromRequest(handler http.Handler) http.Handler {
 		decoder := json.NewDecoder(r.Body)
 		defer r.Body.Close()
 		var newJobApplication struct {
-			Summary     string  `json:"summary" valid:"required"`
-			Solution    string  `json:"solution" valid:"required"`
-			Deadline    string  `json:"deadline" valid:"required"`
-			Title       string  `json:"title" valid:"required"`
-			Hours       int     `json:"hours" valid:"required"`
-			HourPrice   float64 `json:"hourPrice" valid:"required"`
-			Attachments []File  `json:"attachments"`
-			Examples    []File  `json:"examples"`
+			Summary             string  `json:"summary" valid:"required"`
+			Solution            string  `json:"solution" valid:"required"`
+			Deadline            string  `json:"deadline" valid:"required"`
+			DeadlineFlexibility int     `json:"flexibility"`
+			Title               string  `json:"title" valid:"required"`
+			Hours               int     `json:"hours" valid:"required"`
+			HourPrice           float64 `json:"hourPrice" valid:"required"`
+			Attachments         []File  `json:"attachments"`
+			Examples            []File  `json:"examples"`
 		}
 		if err := decoder.Decode(&newJobApplication); err != nil {
 			respond.With(w, r, http.StatusBadRequest, err)
@@ -207,16 +208,17 @@ func withJobApplicationFromRequest(handler http.Handler) http.Handler {
 			return
 		}
 		jobApplication := JobApplication{
-			Summary:      newJobApplication.Summary,
-			Solution:     newJobApplication.Solution,
-			Title:        newJobApplication.Title,
-			Deadline:     deadlilne,
-			FreelancerID: user.ID,
-			Hours:        newJobApplication.Hours,
-			HourPrice:    newJobApplication.HourPrice,
-			Attachments:  newJobApplication.Attachments,
-			Examples:     newJobApplication.Examples,
-			JobID:        jobID,
+			Summary:             newJobApplication.Summary,
+			Solution:            newJobApplication.Solution,
+			Title:               newJobApplication.Title,
+			Deadline:            deadlilne,
+			DeadlineFlexibility: newJobApplication.DeadlineFlexibility,
+			FreelancerID:        user.ID,
+			Hours:               newJobApplication.Hours,
+			HourPrice:           newJobApplication.HourPrice,
+			Attachments:         newJobApplication.Attachments,
+			Examples:            newJobApplication.Examples,
+			JobID:               jobID,
 		}
 		context.Set(r, "jobApplication", &jobApplication)
 		handler.ServeHTTP(w, r)

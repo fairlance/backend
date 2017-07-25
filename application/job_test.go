@@ -526,6 +526,7 @@ func TestJobWithJobApplication(t *testing.T) {
 		"summary": "summary",
 		"solution": "solution",
 		"deadline": "2017-07-27T00:00:00.000Z",
+		"flexibility": 2,
 		"title":"title",
 		"hours": 12,
 		"hourPrice": 1.1,
@@ -559,6 +560,7 @@ func TestJobWithJobApplication(t *testing.T) {
 		t.Fatal(err)
 	}
 	is.Equal(jobApplication.Deadline, deadline)
+	is.Equal(jobApplication.DeadlineFlexibility, 2)
 	is.Equal(jobApplication.FreelancerID, userID)
 	is.Equal(jobApplication.JobID, jobID)
 	is.Equal(jobApplication.Hours, 12)

@@ -257,6 +257,7 @@ type JobApplication struct {
 	Summary               string      `json:"summary"`
 	Solution              string      `json:"solution"`
 	Deadline              time.Time   `json:"deadline"`
+	DeadlineFlexibility   int         `json:"flexibility"`
 	Title                 string      `json:"title"`
 	Hours                 int         `json:"hours"`
 	HourPrice             float64     `json:"hourPrice"`
