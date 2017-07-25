@@ -43,7 +43,7 @@ func NewNotifications(notificationURL string) Notifications {
 }
 
 func (n *httpNotifier) Notify(notification *Notification) error {
-	url := n.url + "/send"
+	url := n.url + "/private/send"
 	body, err := json.Marshal(notification)
 	if err != nil {
 		log.Println(err)

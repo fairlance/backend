@@ -1,11 +1,10 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"os"
-
-	"fmt"
 
 	"github.com/fairlance/backend/notification"
 )
@@ -19,10 +18,10 @@ func main() {
 	var port = os.Getenv("PORT")
 	var secret = os.Getenv("SECRET")
 	var mongoHost = os.Getenv("MONGO_HOST")
-	notifications := notification.New(secret, mongoHost)
-	http.Handle("/", notifications.Handler())
-	http.Handle("/send", notifications.SendHandler())
-	go notifications.Run()
+	hub := notification.NewHub(mongoHost)
+	router := notification.NewRouter(hub, secret)
+	http.Handle("/", router)
+	go hub.Run()
 	log.Printf("Listening on: %s", port)
 	http.ListenAndServe(fmt.Sprintf(":%s", port), nil)
 }

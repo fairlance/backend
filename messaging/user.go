@@ -56,22 +56,6 @@ func newUser(hub *Hub, userConn *userConn, user *AllowedUser) *User {
 	}
 }
 
-// func (u *User) Activate(conn *userConn) {
-// 	u.hub = conn.hub
-// 	u.conn = conn.conn
-// 	u.send = make(chan Message, 256)
-// 	u.online = true
-// }
-
-// func (u *User) Close() {
-// 	if u.online {
-// 		log.Println("close user", u.UniqueID(), u.online, u.send)
-// 		u.hub = nil
-// 		u.online = false
-// 		close(u.send)
-// 	}
-// }
-
 func (u *User) startReading() {
 	defer func() {
 		u.hub.unregister <- u

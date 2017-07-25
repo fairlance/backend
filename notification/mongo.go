@@ -3,8 +3,6 @@ package notification
 import (
 	"log"
 
-	"github.com/fairlance/backend/notification/wsrouter"
-
 	mgo "gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 )
@@ -22,7 +20,7 @@ type mongoDB struct {
 	dbName string
 }
 
-func (m mongoDB) save(collection string, doc wsrouter.Message) error {
+func (m mongoDB) save(collection string, doc Message) error {
 	session := m.s.Copy()
 	defer session.Close()
 
@@ -33,7 +31,7 @@ func (m mongoDB) markRead(collection string, timestamp int64) error {
 	session := m.s.Copy()
 	defer session.Close()
 
-	var msg wsrouter.Message
+	var msg Message
 	if err := session.DB(m.dbName).C(collection).Find(bson.M{"timestamp": timestamp}).One(&msg); err != nil {
 		return err
 	}
@@ -42,11 +40,11 @@ func (m mongoDB) markRead(collection string, timestamp int64) error {
 	return session.DB(m.dbName).C(collection).Update(bson.M{"timestamp": msg.Timestamp}, msg)
 }
 
-func (m mongoDB) loadLastDocs(collection string, num int) ([]wsrouter.Message, error) {
+func (m mongoDB) loadLastDocs(collection string, num int) ([]Message, error) {
 	session := m.s.Copy()
 	defer session.Close()
 
-	documents := []wsrouter.Message{}
+	documents := []Message{}
 
 	count, err := session.DB(m.dbName).C(collection).Count()
 	if err != nil {
