@@ -69,6 +69,8 @@ func (r *ProjectRoom) getAbsentUsers() []*AllowedUser {
 }
 
 func (r *ProjectRoom) isUserConnected(allowedUser *AllowedUser) bool {
+	r.usersMU.RLock()
+	defer r.usersMU.RUnlock()
 	for u := range r.users {
 		if allowedUser.UniqueID() == u.UniqueID() {
 			return true
