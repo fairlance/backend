@@ -13,12 +13,11 @@ var writeWait = 10 * time.Second
 var readWait = 4 * time.Hour
 
 type User struct {
-	Username string `json:"username"`
-	ID       uint   `json:"id"`
-	Type     string `json:"type"`
-	send     chan Message
-	conn     *websocket.Conn
-	hub      *Hub
+	ID   uint   `json:"id"`
+	Type string `json:"type"`
+	send chan Message
+	conn *websocket.Conn
+	hub  *Hub
 }
 
 func (u *User) uniqueID() string {
