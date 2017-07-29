@@ -38,7 +38,7 @@ func (h *Hub) Run() {
 	for {
 		select {
 		case newConnection := <-h.register:
-			log.Println("registering", newConnection.userType, newConnection.userID, "to room:", newConnection.projectID)
+			// log.Println("registering", newConnection.userType, newConnection.userID, "to room:", newConnection.projectID)
 			projectRoom, err := h.getProjectRoom(newConnection.projectID)
 			if err != nil {
 				log.Println(err)
@@ -46,18 +46,22 @@ func (h *Hub) Run() {
 			}
 			allowedUser := projectRoom.getAllowedUser(newConnection.userType, newConnection.userID)
 			if allowedUser == nil {
-				break
+				log.Println("user not allowed", newConnection.userType, newConnection.userID)
+				continue
 			}
 			user := newUser(h, newConnection, allowedUser)
 			projectRoom.addUser(user)
 			go user.startWriting()
 			go user.startReading()
-			h.sendOldMessagesToUser(user)
+			if err := h.sendOldMessagesToUser(user); err != nil {
+				log.Println("could not send old messages to", newConnection.userType, newConnection.userID)
+				continue
+			}
 		case user := <-h.unregister:
-			log.Println("unregistering user", user.fairlanceType, user.fairlanceID, "from room:", user.projectID)
+			// log.Println("unregistering user", user.fairlanceType, user.fairlanceID, "from room:", user.projectID)
 			h.removeUser(user)
 		case msg := <-h.broadcast:
-			log.Println("broadcasting message", msg)
+			// log.Println("broadcasting message", msg)
 			h.db.save(msg)
 			projectRoom, err := h.getProjectRoom(msg.ProjectID)
 			if err != nil {
@@ -139,7 +143,7 @@ func (h *Hub) SendMessage(room string, msg Message) {
 }
 
 func (h *Hub) notifyUser(userType string, userID uint, msg Message) {
-	log.Printf("notifying %s %d with %+v", userType, userID, msg.Data)
+	// log.Printf("notifying %s %d with %+v", userType, userID, msg.Data)
 	h.notificationDispatcher.Notify(&dispatcher.Notification{
 		To: []dispatcher.NotificationUser{
 			dispatcher.NotificationUser{
@@ -162,15 +166,15 @@ func (h *Hub) notifyUser(userType string, userID uint, msg Message) {
 	})
 }
 
-func (h *Hub) sendOldMessagesToUser(u *User) {
+func (h *Hub) sendOldMessagesToUser(u *User) error {
 	messages, err := h.db.loadLastMessagesForUser(u, 20)
 	if err != nil {
-		log.Println(err)
-		return
+		return err
 	}
 	for _, msg := range messages {
 		u.send <- msg
 	}
+	return nil
 }
 
 func (h *Hub) printRooms() {
